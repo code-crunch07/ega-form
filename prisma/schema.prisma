@@ -1,0 +1,329 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          Role      @default(APPLICANT)
+  accounts      Account[]
+  sessions      Session[]
+
+  profile      Profile?
+  applications Application[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Profile {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Info
+  title         String?
+  firstName     String?
+  middleName    String?
+  lastName      String?
+  preferredName String?
+  gender        String?
+  dob           DateTime?
+  nationality   String?
+  countryOfBirth String?
+  maritalStatus String?
+  
+  // Passport / ID
+  passportNumber String?
+  passportExpiry DateTime?
+  nationalId     String?
+
+  // Contact Info
+  phone       String?
+  whatsApp    String?
+  address     String?
+  country     String?
+  state       String?
+  city        String?
+  postalCode  String?
+
+  // Emergency Contact
+  emergencyContactName     String?
+  emergencyContactRelation String?
+  emergencyContactPhone    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Application {
+  id          String  @id @default(cuid())
+  appNumber   String  @unique
+  userId      String
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  status      String  @default("Draft")
+  currentStep Int     @default(1)
+
+  // Step 1: Applicant Type
+  applicantType String? // Local, Permanent Resident, International
+
+  // Step 2: Programme Selection
+  campus           String?
+  school           String?
+  programmeLevel   String?
+  programmeId      String?
+  major            String?
+  intake           String?
+  studyMode        String?
+  scholarshipApply Boolean? @default(false)
+
+  // Relations for Steps 5, 6, 7, 8
+  educationHistory  EducationHistory[]
+  employmentHistory EmploymentHistory[]
+  englishTests      EnglishTest[]
+  documents         Document[]
+
+  // New Relations for Phase 7
+  payments          Payment[]
+  interviews        Interview[]
+  offers            Offer[]
+
+  // Step 9: Declaration
+  termsAccepted      Boolean @default(false)
+  privacyAccepted    Boolean @default(false)
+  digitalSignature   String?
+  submittedAt        DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EducationHistory {
+  id             String      @id @default(cuid())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  qualification  String
+  institution    String
+  country        String
+  board          String?
+  major          String?
+  startDate      DateTime?
+  endDate        DateTime?
+  grade          String?
+  transcriptUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EmploymentHistory {
+  id             String      @id @default(cuid())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  currentlyEmployed Boolean @default(false)
+  employer          String?
+  position          String?
+  industry          String?
+  yearsExperience   Int?
+  salary            String?
+  resumeUrl         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model EnglishTest {
+  id             String      @id @default(cuid())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  testName       String // IELTS, TOEFL, PTE, Duolingo
+  score          String
+  testDate       DateTime?
+  certificateUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Document {
+  id             String      @id @default(cuid())
+  applicationId  String
+  application    Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  
+  type           String // Passport, Photo, Transcript, Degree, Resume, Recommendation Letter, CV, English Certificate, Visa, Other Documents
+  url            String
+  filename       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- NEW MODELS FOR PHASE 7 (ADMIN PORTAL) ---
+
+model School {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  description String?
+  programmes  Programme[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Programme {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  schoolId        String
+  school          School   @relation(fields: [schoolId], references: [id])
+  level           String
+  duration        String
+  credits         Int
+  applicationFee  Float
+  status          String   @default("Active")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Intake {
+  id        String   @id @default(cuid())
+  name      String   // e.g. "January 2026"
+  openDate  DateTime
+  closeDate DateTime
+  status    String   @default("Open")
+  capacity  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Payment {
+  id            String      @id @default(cuid())
+  invoiceNumber String      @unique
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  amount        Float
+  gateway       String      // Stripe
+  status        String      @default("Pending")
+  receiptUrl    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Interview {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  interviewerId String?     // ID of the User who is interviewing
+  date          DateTime
+  time          String
+  meetingLink   String?
+  result        String?     // Pass, Fail, Pending
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Offer {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type          String      // Conditional, Unconditional
+  documentUrl   String?
+  status        String      @default("Issued") // Issued, Accepted, Declined
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Message {
+  id            String   @id @default(cuid())
+  senderId      String
+  receiverId    String?
+  content       String
+  isInternal    Boolean  @default(false) // If true, only staff can see it
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  performedBy String   // User ID
+  details     String?
+
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMISSIONS_MANAGER
+  ADMISSIONS_OFFICER
+  FINANCE_OFFICER
+  INTERVIEW_PANEL
+  APPLICANT
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
