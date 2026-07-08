@@ -2,6 +2,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { auth } from "@/auth";
+import bcrypt from "bcryptjs";
+
 
 export async function createSchool(formData: FormData) {
   const name = formData.get("name") as string;
@@ -102,3 +105,43 @@ export async function updateApplicationStatus(id: string, status: string) {
     return { error: error.message || "Failed to update application status." };
   }
 }
+
+export async function getAdminSession() {
+  const session = await auth();
+  if (!session || !session.user || (session.user as any).role === "APPLICANT") {
+    return null;
+  }
+  return session;
+}
+
+export async function seedDefaultAdmin() {
+  try {
+    // Check if the default admin user exists
+    const existingAdmin = await prisma.user.findFirst({
+      where: {
+        role: {
+          not: "APPLICANT"
+        }
+      }
+    });
+
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+      await prisma.user.create({
+        data: {
+          name: "Admin User",
+          email: "admin@educare.com",
+          password: hashedPassword,
+          role: "SUPER_ADMIN",
+        }
+      });
+      return { success: true, seeded: true };
+    }
+
+    return { success: true, seeded: false };
+  } catch (error: any) {
+    console.error("Failed to seed default admin:", error);
+    return { error: error.message || "Failed to seed default admin." };
+  }
+}
+

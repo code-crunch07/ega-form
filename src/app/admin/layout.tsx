@@ -1,9 +1,11 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
+import { getAdminSession } from "@/app/actions/admin";
+import { signOut } from "next-auth/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const formatRole = (role: string) => {
+  return role.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ');
+};
+
 const NAV_ITEMS = [
   { href: "/admin", icon: LayoutDashboard, label: "Dashboard", exact: true },
   { href: "/admin/applications", icon: FileCheck, label: "Applications" },
@@ -49,8 +55,52 @@ const NAV_ITEMS = [
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname() || "";
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [adminUser, setAdminUser] = useState<{ name?: string | null; email?: string | null; role?: string } | null>(null);
+
+  useEffect(() => {
+    if (pathname === "/admin/login") {
+      setIsAuthenticated(true);
+      return;
+    }
+
+    getAdminSession().then((session) => {
+      if (!session) {
+        window.location.href = "/admin/login";
+      } else {
+        setAdminUser({
+          name: session.user?.name,
+          email: session.user?.email,
+          role: (session.user as any).role
+        });
+        setIsAuthenticated(true);
+      }
+    });
+  }, [pathname]);
   
   const isSettingsActive = pathname.startsWith("/admin/settings");
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return "AD";
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  };
+
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-[#090a0f] flex flex-col items-center justify-center font-sans text-white">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm font-medium text-neutral-400 uppercase tracking-widest animate-pulse">Verifying Access...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#0a0a0a] font-sans selection:bg-blue-200 dark:selection:bg-blue-900">
@@ -153,20 +203,28 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
             <DropdownMenu>
               <DropdownMenuTrigger className="outline-none group">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 text-left">
                   <div className="hidden sm:flex flex-col items-end">
-                    <span className="text-sm font-semibold text-neutral-900 dark:text-white leading-none">Admin User</span>
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-none">Super Admin</span>
+                    <span className="text-sm font-semibold text-neutral-900 dark:text-white leading-none">
+                      {adminUser?.name || "Admin User"}
+                    </span>
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 leading-none">
+                      {adminUser?.role ? formatRole(adminUser.role) : "Super Admin"}
+                    </span>
                   </div>
                   <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:shadow-md group-hover:ring-2 ring-blue-500/20 ring-offset-2 dark:ring-offset-neutral-950 transition-all duration-200">
-                    AD
+                    {getInitials(adminUser?.name)}
                   </div>
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 mt-2 rounded-xl shadow-xl border-neutral-200/60 dark:border-neutral-800/60 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md p-1.5">
-                <div className="px-2 py-2.5 mb-1">
-                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">Admin User</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">admin@educare.com</p>
+                <div className="px-2 py-2.5 mb-1 text-left">
+                  <p className="text-sm font-semibold text-neutral-900 dark:text-white">
+                    {adminUser?.name || "Admin User"}
+                  </p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                    {adminUser?.email || "admin@educare.com"}
+                  </p>
                 </div>
                 <DropdownMenuSeparator className="bg-neutral-100 dark:bg-neutral-800 mb-1" />
                 <DropdownMenuGroup>
@@ -184,7 +242,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   </Link>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-neutral-100 dark:bg-neutral-800 my-1" />
-                <DropdownMenuItem className="cursor-pointer py-2 px-2.5 rounded-lg text-sm text-red-600 focus:bg-red-50 focus:text-red-700 dark:text-red-500 dark:focus:bg-red-500/10 transition-colors">
+                <DropdownMenuItem 
+                  onClick={() => signOut({ callbackUrl: "/admin/login" })}
+                  className="cursor-pointer py-2 px-2.5 rounded-lg text-sm text-red-600 focus:bg-red-50 focus:text-red-700 dark:text-red-500 dark:focus:bg-red-500/10 transition-colors"
+                >
                   <LogOut className="mr-2.5 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
