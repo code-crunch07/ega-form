@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-neutral-800 flex items-center justify-center p-4 md:p-8 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#f0f0f0bd] text-neutral-800 flex items-center justify-center p-4 md:p-8 relative overflow-hidden font-sans">
       {/* Soft Multi-Colored Mesh Gradients */}
       <div className="absolute top-[-30%] left-[-20%] w-[65%] h-[65%] rounded-full bg-blue-100/50 blur-[130px] pointer-events-none animate-pulse duration-[8s]" />
       <div className="absolute bottom-[-30%] right-[-20%] w-[65%] h-[65%] rounded-full bg-violet-100/50 blur-[130px] pointer-events-none animate-pulse duration-[10s]" />
@@ -111,7 +111,7 @@ export default function AdminLoginPage() {
       {/* Main Single Centered Card */}
       <div className="w-full max-w-[480px] z-10 space-y-6">
         
-        <Card className="border border-neutral-200/80 bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] rounded-3xl overflow-hidden py-6 px-4">
+        <Card className="border-none bg-white/80 backdrop-blur-xl shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] rounded-3xl overflow-hidden py-6 px-4">
           <CardContent className="space-y-6 text-left p-2">
             
             {/* Logo Container */}
