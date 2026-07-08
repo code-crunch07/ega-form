@@ -79,7 +79,7 @@ export default async function AdminApplicantsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              applicants.map((user, i) => {
+              applicants.map((user: any, i: number) => {
                 const displayName = user.profile ? `${user.profile.firstName || ''} ${user.profile.lastName || ''}`.trim() : user.name || "Unknown";
                 const phone = user.profile?.phone || "No phone";
                 const country = user.profile?.country || "Unknown";
