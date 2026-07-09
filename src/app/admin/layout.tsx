@@ -112,7 +112,7 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
     links: [
       { href: "/admin/users", icon: UserCog, label: "Users & Roles" },
       { href: "/admin/settings", icon: Settings, label: "Settings" },
-      { href: "/admin/audit", icon: Shield, label: "Audit Logs" },
+      { href: "/admin/audit-logs", icon: Shield, label: "Audit Logs" },
     ]
   }
 ];

@@ -5,6 +5,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserPlus, MoreHorizontal, Edit, Shield } from "lucide-react";
+import { InviteStaffDialog } from "./invite-staff-dialog";
 
 const formatRole = (role: string) => {
   return role.split('_').map(word => word.charAt(0) + word.slice(1).toLowerCase()).join(' ');
@@ -27,9 +28,7 @@ export default async function AdminUsersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Staff Users</h1>
           <p className="text-neutral-500 mt-1 dark:text-neutral-400">Manage internal staff accounts and Role-Based Access Control (RBAC).</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-          <UserPlus size={16} /> Invite Staff
-        </Button>
+        <InviteStaffDialog />
       </div>
 
       <div className="rounded-md border bg-white dark:bg-black dark:border-neutral-800 shadow-sm overflow-hidden">
