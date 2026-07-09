@@ -6,19 +6,39 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Mail, FileSignature, FilePlus2 } from "lucide-react";
 
+import { GenerateOfferDialog } from "./generate-offer-dialog";
+
 export default async function AdminOffersPage() {
-  const offers = await prisma.offer.findMany({
-    include: {
-      application: {
-        include: {
-          user: {
-            include: { profile: true }
+  const [offers, applications] = await Promise.all([
+    prisma.offer.findMany({
+      include: {
+        application: {
+          include: {
+            user: {
+              include: { profile: true }
+            }
           }
         }
-      }
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+      },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.application.findMany({
+      include: {
+        user: {
+          include: { profile: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    })
+  ]);
+
+  const applicationOptions = applications.map(app => ({
+    id: app.id,
+    appNumber: app.appNumber,
+    applicantName: app.user?.profile 
+      ? `${app.user.profile.firstName || ''} ${app.user.profile.lastName || ''}`.trim()
+      : app.user?.name || "Unknown"
+  }));
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -27,9 +47,7 @@ export default async function AdminOffersPage() {
           <h1 className="text-3xl font-bold tracking-tight">Offers</h1>
           <p className="text-neutral-500 mt-1 dark:text-neutral-400">Generate, issue, and track admission offers.</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-          <FilePlus2 size={16} /> Generate Offer
-        </Button>
+        <GenerateOfferDialog applications={applicationOptions} />
       </div>
 
       <div className="rounded-md border bg-white dark:bg-black dark:border-neutral-800 shadow-sm overflow-hidden">

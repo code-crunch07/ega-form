@@ -6,19 +6,53 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Video, ExternalLink, CalendarPlus } from "lucide-react";
 
+import { ScheduleInterviewDialog } from "./schedule-interview-dialog";
+
 export default async function AdminInterviewsPage() {
-  const interviews = await prisma.interview.findMany({
-    include: {
-      application: {
-        include: {
-          user: {
-            include: { profile: true }
+  const [interviews, applications, interviewers] = await Promise.all([
+    prisma.interview.findMany({
+      include: {
+        application: {
+          include: {
+            user: {
+              include: { profile: true }
+            }
           }
         }
-      }
-    },
-    orderBy: { date: 'asc' }
-  });
+      },
+      orderBy: { date: 'asc' }
+    }),
+    prisma.application.findMany({
+      include: {
+        user: {
+          include: { profile: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.user.findMany({
+      where: {
+        role: {
+          not: "APPLICANT"
+        }
+      },
+      orderBy: { name: 'asc' }
+    })
+  ]);
+
+  const applicationOptions = applications.map(app => ({
+    id: app.id,
+    appNumber: app.appNumber,
+    applicantName: app.user?.profile 
+      ? `${app.user.profile.firstName || ''} ${app.user.profile.lastName || ''}`.trim()
+      : app.user?.name || "Unknown"
+  }));
+
+  const interviewerOptions = interviewers.map(user => ({
+    id: user.id,
+    name: user.name,
+    email: user.email
+  }));
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -27,9 +61,7 @@ export default async function AdminInterviewsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Interviews</h1>
           <p className="text-neutral-500 mt-1 dark:text-neutral-400">Schedule and manage applicant interviews.</p>
         </div>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white gap-2">
-          <CalendarPlus size={16} /> Schedule Interview
-        </Button>
+        <ScheduleInterviewDialog applications={applicationOptions} interviewers={interviewerOptions} />
       </div>
 
       <div className="rounded-md border bg-white dark:bg-black dark:border-neutral-800 shadow-sm overflow-hidden">

@@ -19,19 +19,15 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-
-const CAMPUSES = [
-  { id: "c1", name: "Main Campus", country: "United States", city: "New York", capacity: 15000, status: "Active", address: "123 University Ave, NY 10012", phone: "+1 (555) 123-4567", email: "maincampus@university.edu" },
-  { id: "c2", name: "Downtown Annex", country: "United States", city: "New York", capacity: 3000, status: "Active", address: "45 Broadway St, NY 10004", phone: "+1 (555) 987-6543", email: "downtown@university.edu" },
-  { id: "c3", name: "Europe Hub", country: "United Kingdom", city: "London", capacity: 5000, status: "Active", address: "80 Strand, London WC2R 0RL", phone: "+44 20 7946 0958", email: "europe@university.edu" },
-  { id: "c4", name: "Asia Tech Center", country: "Singapore", city: "Singapore", capacity: 4500, status: "Under Construction", address: "10 Kent Ridge Crescent", phone: "+65 6516 6666", email: "asia@university.edu" },
-];
+import { prisma } from "@/lib/prisma";
 
 export default async function CampusDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const campusId = resolvedParams.id;
 
-  const campus = CAMPUSES.find(c => c.id === campusId);
+  const campus = await prisma.campus.findUnique({
+    where: { id: campusId }
+  });
 
   if (!campus) {
     notFound();

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, MapPin, Phone, ShieldCheck, Download, Plus, Filter, Search, Eye, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
+import { AddApplicantDialog } from "./add-applicant-dialog";
 
 const getInitials = (name: string) => {
   if (!name) return "??";
@@ -52,10 +53,7 @@ export default async function AdminApplicantsPage() {
             <Filter size={16} className="text-neutral-500" />
             <span>Filter</span>
           </Button>
-          <Button className="h-10 rounded-full px-5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <Plus size={18} />
-            <span>New Applicant</span>
-          </Button>
+          <AddApplicantDialog />
         </div>
       </div>
 

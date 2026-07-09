@@ -327,3 +327,28 @@ model SystemSetting {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+model Campus {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  country   String
+  city      String
+  capacity  Int
+  status    String   @default("Active") // Active, Under Construction, Inactive
+  address   String?
+  phone     String?
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Scholarship {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  amount      Float?
+  status      String   @default("Active") // Active, Inactive
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+

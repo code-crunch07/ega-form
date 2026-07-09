@@ -8,13 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, Filter, Edit, MoreHorizontal, BookOpen, Clock } from "lucide-react";
 import Link from "next/link";
 
+import { AddProgrammeDialog } from "../programmes/add-programme-dialog";
+
 export default async function AdminCoursesPage() {
-  const courses = await prisma.programme.findMany({
-    include: {
-      school: true,
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+  const [courses, schools] = await Promise.all([
+    prisma.programme.findMany({
+      include: {
+        school: true,
+      },
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.school.findMany({
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' }
+    })
+  ]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -35,10 +43,7 @@ export default async function AdminCoursesPage() {
             <Filter size={16} className="text-neutral-500" />
             <span>Filter</span>
           </Button>
-          <Button className="h-10 rounded-full px-5 bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm flex items-center gap-2 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <Plus size={18} />
-            <span>New Program</span>
-          </Button>
+          <AddProgrammeDialog schools={schools} />
         </div>
       </div>
 

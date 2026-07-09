@@ -7,15 +7,29 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, Edit, MoreHorizontal, MapPin } from "lucide-react";
 import Link from "next/link";
 
-// Mock data since we don't have a Campus model in Prisma yet
-const CAMPUSES = [
-  { id: "c1", name: "Main Campus", country: "United States", city: "New York", capacity: 15000, status: "Active" },
-  { id: "c2", name: "Downtown Annex", country: "United States", city: "New York", capacity: 3000, status: "Active" },
-  { id: "c3", name: "Europe Hub", country: "United Kingdom", city: "London", capacity: 5000, status: "Active" },
-  { id: "c4", name: "Asia Tech Center", country: "Singapore", city: "Singapore", capacity: 4500, status: "Under Construction" },
-];
+import { prisma } from "@/lib/prisma";
+import { AddCampusDialog } from "./add-campus-dialog";
 
-export default function AdminCampusesPage() {
+export default async function AdminCampusesPage() {
+  let campuses = await prisma.campus.findMany({
+    orderBy: { name: 'asc' }
+  });
+
+  if (campuses.length === 0) {
+    // Seed initial campuses
+    await prisma.campus.createMany({
+      data: [
+        { name: "Main Campus", country: "United States", city: "New York", capacity: 15000, status: "Active", address: "123 University Ave, NY 10012", phone: "+1 (555) 123-4567", email: "maincampus@university.edu" },
+        { name: "Downtown Annex", country: "United States", city: "New York", capacity: 3000, status: "Active", address: "45 Broadway St, NY 10004", phone: "+1 (555) 987-6543", email: "downtown@university.edu" },
+        { name: "Europe Hub", country: "United Kingdom", city: "London", capacity: 5000, status: "Active", address: "80 Strand, London WC2R 0RL", phone: "+44 20 7946 0958", email: "europe@university.edu" },
+        { name: "Asia Tech Center", country: "Singapore", city: "Singapore", capacity: 4500, status: "Under Construction", address: "10 Kent Ridge Crescent", phone: "+65 6516 6666", email: "asia@university.edu" }
+      ]
+    });
+    campuses = await prisma.campus.findMany({
+      orderBy: { name: 'asc' }
+    });
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -31,10 +45,7 @@ export default function AdminCampusesPage() {
               className="pl-10 h-10 w-full md:w-[280px] rounded-full border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm focus-visible:ring-1 focus-visible:ring-blue-500 transition-all" 
             />
           </div>
-          <Button className="h-10 rounded-full px-5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <Plus size={18} />
-            <span>New Campus</span>
-          </Button>
+          <AddCampusDialog />
         </div>
       </div>
 
@@ -50,7 +61,7 @@ export default function AdminCampusesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {CAMPUSES.map((campus) => (
+            {campuses.map((campus) => (
               <TableRow key={campus.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 transition-colors group">
                 <TableCell className="py-3 px-6">
                   <Link href={`/admin/campuses/${campus.id}`} className="font-bold text-sm text-blue-600 dark:text-blue-400 hover:underline">
