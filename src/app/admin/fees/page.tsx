@@ -4,17 +4,30 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Filter, Edit, MoreHorizontal } from "lucide-react";
+import { Search, Filter, Edit, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { AddFeeDialog } from "./add-fee-dialog";
 
-const FEES = [
-  { id: "fee_1", name: "Standard Application Fee", amount: 50.00, currency: "USD", type: "Mandatory", appliesTo: "All Programs", status: "Active" },
-  { id: "fee_2", name: "International Student Surcharge", amount: 250.00, currency: "USD", type: "Conditional", appliesTo: "International Applicants", status: "Active" },
-  { id: "fee_3", name: "Late Registration Fee", amount: 100.00, currency: "USD", type: "Penalty", appliesTo: "Late Enrollments", status: "Active" },
-  { id: "fee_4", name: "Medical School Application", amount: 150.00, currency: "USD", type: "Program Specific", appliesTo: "School of Medicine", status: "Draft" },
-];
+export default async function AdminFeesPage() {
+  let fees = await prisma.fee.findMany({
+    orderBy: { updatedAt: 'desc' }
+  });
 
-export default function AdminFeesPage() {
+  if (fees.length === 0) {
+    await prisma.fee.createMany({
+      data: [
+        { name: "Standard Application Fee", amount: 50.00, currency: "USD", type: "Mandatory", appliesTo: "All Programs", status: "Active" },
+        { name: "International Student Surcharge", amount: 250.00, currency: "USD", type: "Conditional", appliesTo: "International Applicants", status: "Active" },
+        { name: "Late Registration Fee", amount: 100.00, currency: "USD", type: "Penalty", appliesTo: "Late Enrollments", status: "Active" },
+        { name: "Medical School Application", amount: 150.00, currency: "USD", type: "Program Specific", appliesTo: "School of Medicine", status: "Draft" },
+      ]
+    });
+    fees = await prisma.fee.findMany({
+      orderBy: { updatedAt: 'desc' }
+    });
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -34,10 +47,7 @@ export default function AdminFeesPage() {
             <Filter size={16} className="text-neutral-500" />
             <span>Filter</span>
           </Button>
-          <Button className="h-10 rounded-full px-5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <Plus size={18} />
-            <span>New Fee Rule</span>
-          </Button>
+          <AddFeeDialog />
         </div>
       </div>
 
@@ -54,7 +64,7 @@ export default function AdminFeesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {FEES.map((fee) => (
+            {fees.map((fee) => (
               <TableRow key={fee.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 transition-colors group">
                 <TableCell className="py-3 px-6">
                   <Link href={`/admin/fees/${fee.id}`} className="font-bold text-sm text-blue-600 dark:text-blue-400 hover:underline">
@@ -76,7 +86,7 @@ export default function AdminFeesPage() {
                       Active
                     </Badge>
                   ) : (
-                    <Badge variant="outline" className="bg-neutral-50 text-neutral-700 hover:bg-neutral-50 border border-neutral-200 dark:bg-neutral-900/20 dark:text-neutral-400 dark:border-neutral-800 shadow-sm px-2.5 py-0.5">
+                    <Badge variant="outline" className="bg-neutral-50 text-neutral-700 hover:bg-neutral-50 border border-neutral-200 dark:bg-neutral-900/20 dark:text-emerald-400 dark:border-neutral-800 shadow-sm px-2.5 py-0.5">
                       {fee.status}
                     </Badge>
                   )}

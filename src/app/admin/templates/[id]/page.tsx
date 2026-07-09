@@ -13,27 +13,40 @@ import {
   MoreHorizontal
 } from "lucide-react";
 import { notFound } from "next/navigation";
-
-const TEMPLATES = [
-  { id: "tpl_1", name: "Application Received", trigger: "On Application Submission", channel: "Email", status: "Active", lastUpdated: "2026-06-15", subject: "We've received your application - {{application_id}}", content: "Dear {{first_name}},\n\nThank you for applying to {{program_name}}. We have successfully received your application.\n\nYou can track your application status by logging into your portal.\n\nBest,\nAdmissions Team" },
-  { id: "tpl_2", name: "Missing Documents Reminder", trigger: "Manual / Scheduled", channel: "Email", status: "Active", lastUpdated: "2026-06-10", subject: "Action Required: Missing Documents", content: "Hi {{first_name}},\n\nWe are reviewing your application for {{program_name}} but noticed some required documents are missing:\n\n{{missing_documents_list}}\n\nPlease upload these as soon as possible." },
-  { id: "tpl_3", name: "Offer Letter (Unconditional)", trigger: "On Status Change -> Offer", channel: "Email + PDF", status: "Active", lastUpdated: "2026-05-22", subject: "Offer of Admission", content: "Congratulations {{first_name}}!" },
-  { id: "tpl_4", name: "Interview Invitation", trigger: "Manual", channel: "Email", status: "Draft", lastUpdated: "2026-07-01", subject: "Interview Invitation", content: "Dear {{first_name}},\n\nWe would like to invite you for an interview." },
-];
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { prisma } from "@/lib/prisma";
+import { updateTemplate } from "@/app/actions/admin";
 
 export default async function TemplateDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const templateId = resolvedParams.id;
 
-  const template = TEMPLATES.find(t => t.id === templateId);
+  const template = await prisma.template.findUnique({
+    where: { id: templateId }
+  });
 
   if (!template) {
     notFound();
   }
 
+  const updateAction = async (formData: FormData) => {
+    "use server";
+    await updateTemplate(template.id, formData);
+  };
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-16">
-      
+    <form action={updateAction} className="space-y-8 animate-in fade-in duration-500 pb-16">
+      <input type="hidden" name="name" value={template.name} />
+      <input type="hidden" name="trigger" value={template.trigger} />
+      <input type="hidden" name="channel" value={template.channel} />
+      <input type="hidden" name="status" value={template.status} />
+
       {/* Detail Header Card */}
       <div className="bg-slate-50/50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/60 rounded-3xl p-6 sm:p-8 shadow-2xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -66,10 +79,10 @@ export default async function TemplateDetailView({ params }: { params: Promise<{
           
           {/* Action Row */}
           <div className="flex items-center gap-3 lg:self-center">
-            <Button variant="outline" className="gap-2 h-11 border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xs px-5">
+            <Button type="button" variant="outline" className="gap-2 h-11 border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xs px-5">
               <Send size={16} /> Send Test
             </Button>
-            <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
+            <Button type="submit" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
               <Save size={16} /> Save Changes
             </Button>
           </div>
@@ -88,26 +101,27 @@ export default async function TemplateDetailView({ params }: { params: Promise<{
             <Card className="lg:col-span-2 border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
               <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5 flex flex-row items-center justify-between">
                 <CardTitle className="text-base font-bold text-neutral-850">Email Template Builder</CardTitle>
-                <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40">
+                <Button type="button" variant="ghost" size="sm" className="h-8 gap-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40">
                   <Wand2 size={14} /> AI Assist
                 </Button>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Subject Line</label>
-                  <Input defaultValue={template.subject} className="font-medium bg-neutral-50 dark:bg-neutral-900/50" />
+                  <Input name="subject" defaultValue={template.subject || ""} className="font-medium bg-neutral-50 dark:bg-neutral-900/50" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Message Body</label>
                   <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-neutral-50 dark:bg-neutral-900/50">
                     <div className="flex items-center gap-1 p-2 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-                      <Button variant="ghost" size="icon" className="h-8 w-8"><span className="font-bold">B</span></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8"><span className="italic">I</span></Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8"><span className="underline">U</span></Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8"><span className="font-bold">B</span></Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8"><span className="italic">I</span></Button>
+                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8"><span className="underline">U</span></Button>
                       <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-700 mx-2"></div>
-                      <Button variant="outline" size="sm" className="h-8 text-xs">Insert Variable</Button>
+                      <Button type="button" variant="outline" size="sm" className="h-8 text-xs">Insert Variable</Button>
                     </div>
                     <textarea 
+                      name="content"
                       className="w-full h-64 p-4 bg-transparent outline-none resize-none font-mono text-sm leading-relaxed" 
                       defaultValue={template.content}
                     />
@@ -157,6 +171,6 @@ export default async function TemplateDetailView({ params }: { params: Promise<{
         </TabsContent>
 
       </Tabs>
-    </div>
+    </form>
   );
 }

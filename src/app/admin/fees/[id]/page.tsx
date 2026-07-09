@@ -19,18 +19,15 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 
-const FEES = [
-  { id: "fee_1", name: "Standard Application Fee", amount: 50.00, currency: "USD", type: "Mandatory", appliesTo: "All Programs", status: "Active" },
-  { id: "fee_2", name: "International Student Surcharge", amount: 250.00, currency: "USD", type: "Conditional", appliesTo: "International Applicants", status: "Active" },
-  { id: "fee_3", name: "Late Registration Fee", amount: 100.00, currency: "USD", type: "Penalty", appliesTo: "Late Enrollments", status: "Active" },
-  { id: "fee_4", name: "Medical School Application", amount: 150.00, currency: "USD", type: "Program Specific", appliesTo: "School of Medicine", status: "Draft" },
-];
+import { prisma } from "@/lib/prisma";
 
 export default async function FeeDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const feeId = resolvedParams.id;
 
-  const fee = FEES.find(f => f.id === feeId);
+  const fee = await prisma.fee.findUnique({
+    where: { id: feeId }
+  });
 
   if (!fee) {
     notFound();
@@ -45,7 +42,7 @@ export default async function FeeDetailView({ params }: { params: Promise<{ id: 
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-xs font-mono font-bold bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400 px-2.5 py-1 rounded-lg border border-neutral-200/40 dark:border-neutral-700/40">
-                FEE-{fee.id.split('_')[1].padStart(4, '0')}
+                FEE-{fee.id.slice(-4).toUpperCase()}
               </span>
               {fee.status === "Active" ? (
                 <Badge className="bg-emerald-50 text-emerald-700 border-none px-2.5 font-semibold shadow-2xs">Active</Badge>

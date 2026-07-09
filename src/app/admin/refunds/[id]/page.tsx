@@ -20,21 +20,36 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 
-const REFUNDS = [
-  { id: "ref_1", invoiceNumber: "INV-2026-042", applicant: "Sarah Connor", email: "sarah@example.com", amount: 1500.00, requestDate: "2026-06-18", status: "Pending", reason: "Application Withdrawn", details: "I have decided to enroll in a different institution." },
-  { id: "ref_2", invoiceNumber: "INV-2026-015", applicant: "James Logan", email: "james@example.com", amount: 50.00, requestDate: "2026-07-05", status: "Approved", reason: "Duplicate Payment", details: "Accidentally paid the application fee twice due to a browser glitch." },
-  { id: "ref_3", invoiceNumber: "INV-2026-088", applicant: "Natasha Romanoff", email: "natasha@example.com", amount: 3500.00, requestDate: "2026-05-22", status: "Rejected", reason: "Past Refund Deadline", details: "Requesting a refund for semester tuition." },
-];
+import { prisma } from "@/lib/prisma";
+import { updateRefundStatus } from "@/app/actions/admin";
 
 export default async function RefundDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const refundId = resolvedParams.id;
 
-  const refund = REFUNDS.find(r => r.id === refundId);
+  const refund = await prisma.refund.findUnique({
+    where: { id: refundId },
+    include: {
+      application: {
+        include: {
+          user: {
+            include: { profile: true }
+          }
+        }
+      }
+    }
+  });
 
   if (!refund) {
     notFound();
   }
+
+  const applicantName = refund.application?.user?.profile 
+    ? `${refund.application.user.profile.firstName || ''} ${refund.application.user.profile.lastName || ''}`.trim()
+    : refund.application?.user?.name || "Unknown Applicant";
+
+  const email = refund.application?.user?.email || "No email";
+  const requestDate = new Date(refund.createdAt).toLocaleDateString();
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-16">
@@ -60,7 +75,7 @@ export default async function RefundDetailView({ params }: { params: Promise<{ i
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-neutral-500 text-sm font-medium pt-1">
               <span className="flex items-center gap-1.5">
                 <User size={15} className="text-neutral-400" />
-                {refund.applicant}
+                {applicantName}
               </span>
               <span className="hidden sm:inline text-neutral-300">•</span>
               <span className="flex items-center gap-1.5 font-mono">
@@ -73,14 +88,24 @@ export default async function RefundDetailView({ params }: { params: Promise<{ i
           {/* Action Row */}
           <div className="flex items-center gap-3 lg:self-center">
             {refund.status === "Pending" && (
-              <>
-                <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
-                  <CheckCircle size={16} /> Approve
-                </Button>
-                <Button variant="outline" className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
-                  <XCircle size={16} /> Reject
-                </Button>
-              </>
+              <div className="flex items-center gap-2">
+                <form action={async () => {
+                  "use server";
+                  await updateRefundStatus(refund.id, "Approved");
+                }}>
+                  <Button type="submit" className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
+                    <CheckCircle size={16} /> Approve
+                  </Button>
+                </form>
+                <form action={async () => {
+                  "use server";
+                  await updateRefundStatus(refund.id, "Rejected");
+                }}>
+                  <Button type="submit" variant="outline" className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
+                    <XCircle size={16} /> Reject
+                  </Button>
+                </form>
+              </div>
             )}
             
             <DropdownMenu>
@@ -114,11 +139,11 @@ export default async function RefundDetailView({ params }: { params: Promise<{ i
               <div className="grid grid-cols-2 gap-6 mb-8">
                 <div>
                   <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Date Requested</p>
-                  <p className="font-semibold text-sm text-neutral-700 mt-1">{refund.requestDate}</p>
+                  <p className="font-semibold text-sm text-neutral-700 mt-1">{requestDate}</p>
                 </div>
                 <div>
                   <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Applicant Email</p>
-                  <p className="font-semibold text-sm text-blue-600 mt-1">{refund.email}</p>
+                  <p className="font-semibold text-sm text-blue-600 mt-1">{email}</p>
                 </div>
               </div>
               <div className="space-y-6">
@@ -150,7 +175,7 @@ export default async function RefundDetailView({ params }: { params: Promise<{ i
                   <div className="mt-1 bg-emerald-100 text-emerald-600 rounded-full p-1 border border-emerald-200"><CheckCircle size={16} /></div>
                   <div>
                     <p className="font-bold text-sm text-neutral-800 dark:text-neutral-200">Request Submitted</p>
-                    <p className="text-xs text-neutral-500 mt-0.5">{refund.requestDate} by Applicant</p>
+                    <p className="text-xs text-neutral-500 mt-0.5">{requestDate} by Applicant</p>
                   </div>
                 </div>
                 

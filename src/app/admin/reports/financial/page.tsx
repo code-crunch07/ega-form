@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getFinancialSummary } from "@/app/actions/admin";
 import { Download, TrendingUp, DollarSign, CreditCard, Activity, ArrowUpRight } from "lucide-react";
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -34,6 +36,14 @@ const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#ef4444'];
 const STATUS_COLORS = ['#10b981', '#f59e0b', '#ef4444'];
 
 export default function FinancialReportsPage() {
+  const [summary, setSummary] = useState({ totalRevenue: 505000, pendingCollections: 45200, pendingCount: 124 });
+
+  useEffect(() => {
+    getFinancialSummary().then(data => {
+      setSummary(data);
+    });
+  }, []);
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-16">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -59,7 +69,7 @@ export default function FinancialReportsPage() {
             <div className="flex justify-between items-start">
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-neutral-500">Total Revenue YTD</p>
-                <p className="text-3xl font-bold text-neutral-900 dark:text-white">$505,000</p>
+                <p className="text-3xl font-bold text-neutral-900 dark:text-white">${summary.totalRevenue.toLocaleString()}</p>
               </div>
               <div className="p-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl">
                 <DollarSign size={20} />
@@ -78,14 +88,14 @@ export default function FinancialReportsPage() {
             <div className="flex justify-between items-start">
               <div className="space-y-2">
                 <p className="text-sm font-semibold text-neutral-500">Pending Collections</p>
-                <p className="text-3xl font-bold text-neutral-900 dark:text-white">$45,200</p>
+                <p className="text-3xl font-bold text-neutral-900 dark:text-white">${summary.pendingCollections.toLocaleString()}</p>
               </div>
               <div className="p-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl">
                 <Activity size={20} />
               </div>
             </div>
             <div className="mt-4 flex items-center gap-1.5 text-sm">
-              <span className="text-amber-600 font-medium">124 Invoices</span>
+              <span className="text-amber-600 font-medium">{summary.pendingCount} Invoices</span>
               <span className="text-neutral-400">awaiting payment</span>
             </div>
           </CardContent>

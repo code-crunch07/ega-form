@@ -4,7 +4,7 @@ import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
-import { getAdminSession } from "@/app/actions/admin";
+import { getAdminSession, getSidebarBadgeCounts } from "@/app/actions/admin";
 import { signOut } from "next-auth/react";
 import {
   DropdownMenu,
@@ -122,6 +122,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [adminUser, setAdminUser] = useState<{ name?: string | null; email?: string | null; role?: string } | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [badgeCounts, setBadgeCounts] = useState({ notifications: 0, messages: 0 });
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -140,6 +141,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         });
         setIsAuthenticated(true);
       }
+    });
+
+    getSidebarBadgeCounts().then(counts => {
+      setBadgeCounts(counts);
     });
   }, [pathname]);
 
@@ -233,7 +238,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     )}
                     {link.badge !== undefined && !isCollapsed && (
                       <span className="h-5 px-1.5 rounded-full bg-[#e11d48] text-white text-[11px] font-bold flex items-center justify-center min-w-5">
-                        {link.badge}
+                        {link.href === "/admin/notifications" 
+                          ? badgeCounts.notifications 
+                          : link.href === "/admin/messages" 
+                            ? badgeCounts.messages 
+                            : link.badge}
                       </span>
                     )}
                   </Link>

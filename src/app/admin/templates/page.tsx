@@ -4,17 +4,30 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Filter, MoreHorizontal, Edit, Copy } from "lucide-react";
+import { Search, Filter, MoreHorizontal, Edit, Copy } from "lucide-react";
 import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { AddTemplateDialog } from "./add-template-dialog";
 
-const TEMPLATES = [
-  { id: "tpl_1", name: "Application Received", trigger: "On Application Submission", channel: "Email", status: "Active", lastUpdated: "2026-06-15" },
-  { id: "tpl_2", name: "Missing Documents Reminder", trigger: "Manual / Scheduled", channel: "Email", status: "Active", lastUpdated: "2026-06-10" },
-  { id: "tpl_3", name: "Offer Letter (Unconditional)", trigger: "On Status Change -> Offer", channel: "Email + PDF", status: "Active", lastUpdated: "2026-05-22" },
-  { id: "tpl_4", name: "Interview Invitation", trigger: "Manual", channel: "Email", status: "Draft", lastUpdated: "2026-07-01" },
-];
+export default async function AdminTemplatesPage() {
+  let templates = await prisma.template.findMany({
+    orderBy: { updatedAt: 'desc' }
+  });
 
-export default function AdminTemplatesPage() {
+  if (templates.length === 0) {
+    await prisma.template.createMany({
+      data: [
+        { name: "Application Received", trigger: "On Application Submission", channel: "Email", status: "Active", subject: "We've received your application - {{application_id}}", content: "Dear {{first_name}},\n\nThank you for applying to {{program_name}}. We have successfully received your application.\n\nYou can track your application status by logging into your portal.\n\nBest,\nAdmissions Team" },
+        { name: "Missing Documents Reminder", trigger: "Manual / Scheduled", channel: "Email", status: "Active", subject: "Action Required: Missing Documents", content: "Hi {{first_name}},\n\nWe are reviewing your application for {{program_name}} but noticed some required documents are missing:\n\n{{missing_documents_list}}\n\nPlease upload these as soon as possible." },
+        { name: "Offer Letter (Unconditional)", trigger: "On Status Change -> Offer", channel: "Email + PDF", status: "Active", subject: "Offer of Admission", content: "Congratulations {{first_name}}!" },
+        { name: "Interview Invitation", trigger: "Manual", channel: "Email", status: "Draft", subject: "Interview Invitation", content: "Dear {{first_name}},\n\nWe would like to invite you for an interview." }
+      ]
+    });
+    templates = await prisma.template.findMany({
+      orderBy: { updatedAt: 'desc' }
+    });
+  }
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -34,10 +47,7 @@ export default function AdminTemplatesPage() {
             <Filter size={16} className="text-neutral-500" />
             <span>Filter</span>
           </Button>
-          <Button className="h-10 rounded-full px-5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2 transition-all hover:shadow-md hover:-translate-y-0.5">
-            <Plus size={18} />
-            <span>Create Template</span>
-          </Button>
+          <AddTemplateDialog />
         </div>
       </div>
 
@@ -54,7 +64,7 @@ export default function AdminTemplatesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {TEMPLATES.map((tpl) => (
+            {templates.map((tpl) => (
               <TableRow key={tpl.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 transition-colors group">
                 <TableCell className="py-3 px-6">
                   <Link href={`/admin/templates/${tpl.id}`} className="font-bold text-sm text-blue-600 dark:text-blue-400 hover:underline">
@@ -70,7 +80,7 @@ export default function AdminTemplatesPage() {
                   <span className="text-sm text-neutral-600 dark:text-neutral-400">{tpl.channel}</span>
                 </TableCell>
                 <TableCell className="py-3">
-                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{tpl.lastUpdated}</span>
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">{new Date(tpl.updatedAt).toLocaleDateString()}</span>
                 </TableCell>
                 <TableCell className="py-3">
                   {tpl.status === "Active" ? (
