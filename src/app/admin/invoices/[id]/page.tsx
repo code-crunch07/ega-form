@@ -20,18 +20,49 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-
-const INVOICES = [
-  { id: "inv_1", number: "INV-2026-001", applicant: "John Smith", email: "john@example.com", amount: 1500.00, issueDate: "2026-06-15", dueDate: "2026-07-15", status: "Unpaid", type: "Tuition Deposit", notes: "First semester deposit for BSc Information Technology." },
-  { id: "inv_2", number: "INV-2026-002", applicant: "Emily Chen", email: "emily@example.com", amount: 50.00, issueDate: "2026-07-01", dueDate: "2026-07-15", status: "Paid", type: "Application Fee", notes: "Non-refundable application processing fee." },
-  { id: "inv_3", number: "INV-2026-003", applicant: "Michael Johnson", email: "michael@example.com", amount: 3500.00, issueDate: "2026-05-20", dueDate: "2026-06-20", status: "Overdue", type: "Semester Tuition", notes: "Fall 2026 full tuition." },
-];
+import { prisma } from "@/lib/prisma";
 
 export default async function InvoiceDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const invoiceId = resolvedParams.id;
 
-  const invoice = INVOICES.find(i => i.id === invoiceId);
+  const payment = await prisma.payment.findUnique({
+    where: { id: invoiceId },
+    include: {
+      application: {
+        include: {
+          user: {
+            include: { profile: true }
+          }
+        }
+      }
+    }
+  });
+
+  if (!payment) {
+    notFound();
+  }
+
+  const applicantName = payment.application?.user?.profile 
+    ? `${payment.application.user.profile.firstName || ''} ${payment.application.user.profile.lastName || ''}`.trim()
+    : payment.application?.user?.name || "Unknown Applicant";
+
+  const issueDate = new Date(payment.createdAt);
+  const dueDate = new Date(payment.createdAt);
+  dueDate.setDate(dueDate.getDate() + 30);
+
+  const invoice = {
+    id: payment.id,
+    number: payment.invoiceNumber,
+    applicant: applicantName,
+    email: payment.application?.user?.email || "No email",
+    amount: payment.amount,
+    issueDate: issueDate.toLocaleDateString(),
+    dueDate: dueDate.toLocaleDateString(),
+    status: payment.status === "Paid" ? "Paid" : (new Date() > dueDate ? "Overdue" : "Unpaid"),
+    type: "Application Fee",
+    notes: `Billing statement for application ${payment.application?.appNumber || ''}`
+  };
 
   if (!invoice) {
     notFound();
