@@ -3,37 +3,94 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Plus, Edit, MoreHorizontal, MapPin } from "lucide-react";
+import Link from "next/link";
 
-export default function AdminPlaceholderPage() {
+// Mock data since we don't have a Campus model in Prisma yet
+const CAMPUSES = [
+  { id: "c1", name: "Main Campus", country: "United States", city: "New York", capacity: 15000, status: "Active" },
+  { id: "c2", name: "Downtown Annex", country: "United States", city: "New York", capacity: 3000, status: "Active" },
+  { id: "c3", name: "Europe Hub", country: "United Kingdom", city: "London", capacity: 5000, status: "Active" },
+  { id: "c4", name: "Asia Tech Center", country: "Singapore", city: "Singapore", capacity: 4500, status: "Under Construction" },
+];
+
+export default function AdminCampusesPage() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Campuses</h1>
-          <p className="text-neutral-500 mt-1 dark:text-neutral-400">Manage campus locations and details.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">Campuses</h1>
+          <p className="text-neutral-500 mt-1.5 dark:text-neutral-400">Manage global campus locations, facilities, and physical capacity.</p>
         </div>
-        <div className="flex gap-2">
-          <Button>Add New</Button>
+        <div className="flex items-center gap-3">
+          <div className="relative group">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+            <Input 
+              placeholder="Search campuses..." 
+              className="pl-10 h-10 w-full md:w-[280px] rounded-full border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm focus-visible:ring-1 focus-visible:ring-blue-500 transition-all" 
+            />
+          </div>
+          <Button className="h-10 rounded-full px-5 bg-blue-600 hover:bg-blue-700 text-white shadow-sm flex items-center gap-2 transition-all hover:shadow-md hover:-translate-y-0.5">
+            <Plus size={18} />
+            <span>New Campus</span>
+          </Button>
         </div>
       </div>
 
-      <div className="rounded-md border bg-white dark:bg-black dark:border-neutral-800 shadow-sm overflow-hidden">
+      <div className="rounded-xl border border-neutral-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+            <TableRow className="bg-neutral-50/80 dark:bg-neutral-900 hover:bg-transparent">
+              <TableHead className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-neutral-500">Campus Name</TableHead>
+              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Location</TableHead>
+              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Capacity</TableHead>
+              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Status</TableHead>
+              <TableHead className="py-4 text-right px-6 text-xs font-semibold uppercase tracking-wider text-neutral-500">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center text-neutral-500">
-                No data available yet. This page is currently under construction.
-              </TableCell>
-            </TableRow>
+            {CAMPUSES.map((campus) => (
+              <TableRow key={campus.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 transition-colors group">
+                <TableCell className="py-3 px-6">
+                  <Link href={`/admin/campuses/${campus.id}`} className="font-bold text-sm text-blue-600 dark:text-blue-400 hover:underline">
+                    {campus.name}
+                  </Link>
+                </TableCell>
+                <TableCell className="py-3">
+                  <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400">
+                    <MapPin size={14} className="text-neutral-400" />
+                    {campus.city}, {campus.country}
+                  </div>
+                </TableCell>
+                <TableCell className="py-3 font-medium text-sm text-neutral-700 dark:text-neutral-300">
+                  {campus.capacity.toLocaleString()} Students
+                </TableCell>
+                <TableCell className="py-3">
+                  {campus.status === "Active" ? (
+                    <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/50 shadow-sm px-2.5 py-0.5">
+                      Active
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-amber-50 text-amber-700 hover:bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/50 shadow-sm px-2.5 py-0.5">
+                      {campus.status}
+                    </Badge>
+                  )}
+                </TableCell>
+                <TableCell className="py-3 px-6 text-right">
+                  <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
+                      <Link href={`/admin/campuses/${campus.id}`}>
+                        <Edit size={16} />
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-neutral-900 dark:hover:text-white rounded-lg">
+                      <MoreHorizontal size={16} />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>

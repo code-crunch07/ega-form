@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, MoreHorizontal, Edit, CalendarDays } from "lucide-react";
+import Link from "next/link";
 
 import { AddIntakeDialog } from "./add-intake-dialog";
 
@@ -63,8 +64,12 @@ export default async function AdminIntakesPage() {
                 </div>
                 
                 <div className="mt-5 pt-4 border-t dark:border-neutral-800 flex justify-end gap-2">
-                  <Button variant="ghost" size="sm" className="text-neutral-500">Edit</Button>
-                  <Button variant="ghost" size="sm" className="text-blue-600">View Applicants</Button>
+                  <Button asChild variant="ghost" size="sm" className="text-neutral-500">
+                    <Link href={`/admin/intakes/${intake.id}`}>Edit</Link>
+                  </Button>
+                  <Button asChild variant="ghost" size="sm" className="text-blue-600">
+                    <Link href={`/admin/intakes/${intake.id}`}>View Details</Link>
+                  </Button>
                 </div>
               </div>
             );

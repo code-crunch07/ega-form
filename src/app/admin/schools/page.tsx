@@ -5,6 +5,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, MoreHorizontal, Edit } from "lucide-react";
+import Link from "next/link";
 
 import { AddSchoolDialog } from "./add-school-dialog";
 
@@ -57,7 +58,11 @@ export default async function AdminSchoolsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500"><Edit size={16} /></Button>
+                      <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-neutral-500">
+                        <Link href={`/admin/schools/${school.id}`}>
+                          <Edit size={16} />
+                        </Link>
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal size={16} /></Button>
                     </div>
                   </TableCell>

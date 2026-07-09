@@ -52,7 +52,7 @@ export function ApplicationsFilters() {
         />
       </div>
       <div className="flex flex-wrap sm:flex-nowrap gap-2">
-        <Select onValueChange={(val) => createQueryString("status", val === "all" ? "" : val)}>
+        <Select onValueChange={(val: string | null) => createQueryString("status", val === "all" || !val ? "" : val)}>
           <SelectTrigger className="w-[140px] bg-white dark:bg-black">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
@@ -66,7 +66,7 @@ export function ApplicationsFilters() {
           </SelectContent>
         </Select>
 
-        <Select onValueChange={(val) => createQueryString("intake", val === "all" ? "" : val)}>
+        <Select onValueChange={(val: string | null) => createQueryString("intake", val === "all" || !val ? "" : val)}>
           <SelectTrigger className="w-[140px] bg-white dark:bg-black">
             <SelectValue placeholder="Intake" />
           </SelectTrigger>
@@ -77,7 +77,7 @@ export function ApplicationsFilters() {
           </SelectContent>
         </Select>
 
-        <Select onValueChange={(val) => createQueryString("programme", val === "all" ? "" : val)}>
+        <Select onValueChange={(val: string | null) => createQueryString("programme", val === "all" || !val ? "" : val)}>
           <SelectTrigger className="w-[160px] bg-white dark:bg-black">
             <SelectValue placeholder="Programme" />
           </SelectTrigger>
@@ -88,7 +88,7 @@ export function ApplicationsFilters() {
           </SelectContent>
         </Select>
         
-        <Select onValueChange={(val) => createQueryString("officer", val === "all" ? "" : val)}>
+        <Select onValueChange={(val: string | null) => createQueryString("officer", val === "all" || !val ? "" : val)}>
           <SelectTrigger className="w-[140px] bg-white dark:bg-black">
             <SelectValue placeholder="Officer" />
           </SelectTrigger>
