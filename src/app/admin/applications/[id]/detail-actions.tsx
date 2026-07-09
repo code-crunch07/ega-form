@@ -3,6 +3,22 @@
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle } from "lucide-react";
 import { updateApplicationStatus } from "@/app/actions/admin";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+  MoreHorizontal, 
+  Printer, 
+  Download, 
+  FileText, 
+  ArrowLeftCircle, 
+  FileSearch, 
+  RefreshCcw 
+} from "lucide-react";
 
 export function DetailActions({ appId }: { appId: string }) {
   const handleStatusUpdate = async (status: string) => {
@@ -27,6 +43,37 @@ export function DetailActions({ appId }: { appId: string }) {
       >
         <CheckCircle size={16} /> Approve & Issue Offer
       </Button>
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="h-11 w-11 p-0 rounded-xl border-neutral-200 dark:border-neutral-800">
+            <MoreHorizontal size={16} className="text-neutral-500" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-lg border-neutral-200 dark:border-neutral-800">
+          <DropdownMenuItem onClick={() => handleStatusUpdate("Returned")} className="gap-2 text-amber-600 font-medium">
+            <ArrowLeftCircle size={15} /> Return to Applicant
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleStatusUpdate("Pending Documents")} className="gap-2 text-indigo-600 font-medium">
+            <FileSearch size={15} /> Request More Documents
+          </DropdownMenuItem>
+          <DropdownMenuItem className="gap-2 text-neutral-600 dark:text-neutral-300 font-medium">
+            <RefreshCcw size={15} /> Change Status
+          </DropdownMenuItem>
+          
+          <DropdownMenuSeparator className="bg-neutral-100 dark:bg-neutral-800" />
+          
+          <DropdownMenuItem className="gap-2 text-neutral-600 dark:text-neutral-300 font-medium">
+            <FileText size={15} /> Generate PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem className="gap-2 text-neutral-600 dark:text-neutral-300 font-medium">
+            <Download size={15} /> Download Application
+          </DropdownMenuItem>
+          <DropdownMenuItem className="gap-2 text-neutral-600 dark:text-neutral-300 font-medium">
+            <Printer size={15} /> Print Record
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </>
   );
 }

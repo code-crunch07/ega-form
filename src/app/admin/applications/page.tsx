@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ActionsDropdown } from "./actions-dropdown";
+import { ApplicationsFilters } from "./applications-filters";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -29,21 +30,44 @@ const getStatusBadge = (status: string) => {
 export default async function AdminApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }>;
+  searchParams: Promise<{ search?: string, status?: string, intake?: string, programme?: string, officer?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
   const search = resolvedSearchParams?.search;
+  const status = resolvedSearchParams?.status;
+  const intake = resolvedSearchParams?.intake;
+  const programme = resolvedSearchParams?.programme;
+  const officer = resolvedSearchParams?.officer;
+
+  const whereClause: any = {};
+
+  if (search) {
+    whereClause.OR = [
+      { appNumber: { contains: search, mode: 'insensitive' } },
+      { user: { email: { contains: search, mode: 'insensitive' } } },
+      { user: { name: { contains: search, mode: 'insensitive' } } },
+      { user: { profile: { firstName: { contains: search, mode: 'insensitive' } } } },
+      { user: { profile: { lastName: { contains: search, mode: 'insensitive' } } } },
+    ];
+  }
+
+  if (status) {
+    whereClause.status = status;
+  }
+
+  if (intake) {
+    whereClause.intake = intake;
+  }
+
+  if (programme) {
+    whereClause.programmeId = programme; // Assuming we use exact match for ID
+  }
+
+  // Officer filtering can be added when AssignedOfficer is in the DB schema
+  // if (officer) { whereClause.assignedOfficer = officer; }
 
   const applications = await prisma.application.findMany({
-    where: search ? {
-      OR: [
-        { appNumber: { contains: search, mode: 'insensitive' } },
-        { user: { email: { contains: search, mode: 'insensitive' } } },
-        { user: { name: { contains: search, mode: 'insensitive' } } },
-        { user: { profile: { firstName: { contains: search, mode: 'insensitive' } } } },
-        { user: { profile: { lastName: { contains: search, mode: 'insensitive' } } } },
-      ]
-    } : undefined,
+    where: whereClause,
     include: {
       user: {
         include: { profile: true }
@@ -62,6 +86,8 @@ export default async function AdminApplicationsPage({
         </div>
       </div>
 
+      <ApplicationsFilters />
+
       <div className="rounded-md border bg-white dark:bg-black dark:border-neutral-800 shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
@@ -69,9 +95,10 @@ export default async function AdminApplicationsPage({
               <TableHead className="w-[150px]">App ID</TableHead>
               <TableHead>Applicant</TableHead>
               <TableHead>Programme</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Fee</TableHead>
+              <TableHead>Intake</TableHead>
+              <TableHead>Submitted</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Officer</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -95,15 +122,12 @@ export default async function AdminApplicationsPage({
                     <TableCell className="font-medium">{app.appNumber}</TableCell>
                     <TableCell>{applicantName}</TableCell>
                     <TableCell>{app.programmeId || "Not Selected"}</TableCell>
-                    <TableCell className="text-neutral-500">{app.createdAt.toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      {isPaid ? (
-                        <Badge variant="default" className="bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900/30 dark:text-green-400 border-none">Paid</Badge>
-                      ) : (
-                        <Badge variant="secondary" className="bg-neutral-100 text-neutral-800 hover:bg-neutral-100 dark:bg-neutral-800 dark:text-neutral-400 border-none">Unpaid</Badge>
-                      )}
+                    <TableCell>{app.intake || "N/A"}</TableCell>
+                    <TableCell className="text-neutral-500">
+                      {new Date(app.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                     </TableCell>
                     <TableCell>{getStatusBadge(app.status)}</TableCell>
+                    <TableCell className="text-neutral-500">Unassigned</TableCell>
                     <TableCell className="text-right">
                       <ActionsDropdown appId={app.id} />
                     </TableCell>

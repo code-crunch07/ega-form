@@ -22,7 +22,10 @@ import {
   ShieldAlert,
   CalendarDays,
   UserPlus,
-  FileCheck
+  FileCheck,
+  Briefcase,
+  Languages,
+  StickyNote
 } from "lucide-react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
@@ -135,13 +138,17 @@ export default async function ApplicationDetailView({ params }: { params: Promis
         {/* Sleek Horizontal Tab Bar */}
         <TabsList className="flex items-center gap-1 border-b border-neutral-200 dark:border-neutral-800 pb-px mb-6 overflow-x-auto w-full custom-scrollbar bg-transparent">
           <TabsTrigger value="overview" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><FileText size={16}/> Overview</TabsTrigger>
-          <TabsTrigger value="applicant" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><User size={16}/> Applicant</TabsTrigger>
+          <TabsTrigger value="personal" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><User size={16}/> Personal Details</TabsTrigger>
           <TabsTrigger value="education" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><GraduationCap size={16}/> Education</TabsTrigger>
+          <TabsTrigger value="employment" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Briefcase size={16}/> Employment</TabsTrigger>
+          <TabsTrigger value="englishTest" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Languages size={16}/> English Test</TabsTrigger>
           <TabsTrigger value="documents" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><FolderOpen size={16}/> Documents</TabsTrigger>
-          <TabsTrigger value="payments" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><CreditCard size={16}/> Payments</TabsTrigger>
+          <TabsTrigger value="payment" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><CreditCard size={16}/> Payment</TabsTrigger>
+          <TabsTrigger value="interview" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><CalendarDays size={16}/> Interview</TabsTrigger>
           <TabsTrigger value="messages" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><MessageSquare size={16}/> Messages</TabsTrigger>
           <TabsTrigger value="timeline" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Clock size={16}/> Timeline</TabsTrigger>
-          <TabsTrigger value="audit" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><ShieldAlert size={16}/> Audit Log</TabsTrigger>
+          <TabsTrigger value="notes" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><StickyNote size={16}/> Notes</TabsTrigger>
+          <TabsTrigger value="activity" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><ShieldAlert size={16}/> Activity Log</TabsTrigger>
         </TabsList>
 
         {/* TAB 1: Overview */}
@@ -208,11 +215,11 @@ export default async function ApplicationDetailView({ params }: { params: Promis
           </div>
         </TabsContent>
 
-        {/* TAB 2: Applicant */}
-        <TabsContent value="applicant" className="m-0 focus-visible:outline-none">
+        {/* TAB 2: Personal Details */}
+        <TabsContent value="personal" className="m-0 focus-visible:outline-none">
           <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
             <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-neutral-850">Applicant Details</CardTitle>
+              <CardTitle className="text-base font-bold text-neutral-850">Personal Details</CardTitle>
               <CardDescription className="text-xs font-semibold text-neutral-400">Personal and contact information synced from the user's profile.</CardDescription>
             </CardHeader>
             <CardContent className="p-6 sm:p-8">
@@ -307,7 +314,33 @@ export default async function ApplicationDetailView({ params }: { params: Promis
           </Card>
         </TabsContent>
 
-        {/* TAB 4: Documents */}
+        {/* TAB: Employment */}
+        <TabsContent value="employment" className="m-0 focus-visible:outline-none">
+          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
+            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
+              <CardTitle className="text-base font-bold text-neutral-850">Employment History</CardTitle>
+              <CardDescription className="text-xs font-semibold text-neutral-400">Professional experience related to this application.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p className="text-sm text-neutral-500">Applicant did not provide employment history.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB: English Test */}
+        <TabsContent value="englishTest" className="m-0 focus-visible:outline-none">
+          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
+            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
+              <CardTitle className="text-base font-bold text-neutral-850">English Test</CardTitle>
+              <CardDescription className="text-xs font-semibold text-neutral-400">Proof of English proficiency.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p className="text-sm text-neutral-500">Awaiting IELTS Results.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB: Documents */}
         <TabsContent value="documents" className="m-0 space-y-6 focus-visible:outline-none">
           <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
             <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
@@ -349,8 +382,8 @@ export default async function ApplicationDetailView({ params }: { params: Promis
           </Card>
         </TabsContent>
 
-        {/* TAB 5: Payments */}
-        <TabsContent value="payments" className="m-0 focus-visible:outline-none">
+        {/* TAB: Payment */}
+        <TabsContent value="payment" className="m-0 focus-visible:outline-none">
           <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
             <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
               <CardTitle className="text-base font-bold text-neutral-850">Payment History</CardTitle>
@@ -389,8 +422,20 @@ export default async function ApplicationDetailView({ params }: { params: Promis
           </Card>
         </TabsContent>
 
-        {/* TAB 6: Messages */}
-        <TabsContent value="payments" className="m-0 focus-visible:outline-none" />
+        {/* TAB: Interview */}
+        <TabsContent value="interview" className="m-0 focus-visible:outline-none">
+          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
+            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
+              <CardTitle className="text-base font-bold text-neutral-850">Interview Record</CardTitle>
+              <CardDescription className="text-xs font-semibold text-neutral-400">Schedule and record applicant interviews.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <p className="text-sm text-neutral-500">No interview scheduled yet.</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB: Messages */}
         <TabsContent value="messages" className="m-0 focus-visible:outline-none">
           <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
             <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
@@ -414,7 +459,7 @@ export default async function ApplicationDetailView({ params }: { params: Promis
           </Card>
         </TabsContent>
 
-        {/* TAB 7: Timeline */}
+        {/* TAB: Timeline */}
         <TabsContent value="timeline" className="m-0 focus-visible:outline-none">
           <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
             <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
@@ -453,11 +498,31 @@ export default async function ApplicationDetailView({ params }: { params: Promis
           </Card>
         </TabsContent>
 
-        {/* TAB 8: Audit Log */}
-        <TabsContent value="audit" className="m-0 focus-visible:outline-none">
+        {/* TAB: Notes */}
+        <TabsContent value="notes" className="m-0 focus-visible:outline-none">
           <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
             <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-neutral-850">Audit Logs</CardTitle>
+              <CardTitle className="text-base font-bold text-neutral-850">Internal Notes</CardTitle>
+              <CardDescription className="text-xs font-semibold text-neutral-400">Only visible to staff members.</CardDescription>
+            </CardHeader>
+            <CardContent className="p-6">
+              <textarea 
+                className="w-full p-4 text-sm rounded-xl border border-neutral-200 dark:border-neutral-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none resize-none bg-slate-50/50 dark:bg-neutral-900/50 font-medium transition-all" 
+                placeholder="Add a new internal note..."
+                rows={4}
+              />
+              <div className="flex justify-end mt-3">
+                <Button size="sm" className="bg-[#2C315E] hover:bg-slate-800 text-white font-semibold rounded-lg">Save Note</Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB: Activity Log */}
+        <TabsContent value="activity" className="m-0 focus-visible:outline-none">
+          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
+            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
+              <CardTitle className="text-base font-bold text-neutral-850">Activity Log</CardTitle>
               <CardDescription className="text-xs font-semibold text-neutral-400">Chronological history of system-level actions.</CardDescription>
             </CardHeader>
             <CardContent className="p-6">
