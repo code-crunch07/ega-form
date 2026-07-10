@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import bcrypt from "bcryptjs";
+import { sendEmail } from "@/lib/email";
 
 
 export async function createSchool(formData: FormData) {
@@ -217,6 +218,48 @@ export async function scheduleInterview(formData: FormData) {
       data: { status: "Interview" }
     });
 
+    // Send email notification to applicant
+    const app = await prisma.application.findUnique({
+      where: { id: applicationId },
+      include: { user: { include: { profile: true } } }
+    });
+
+    if (app && app.user && app.user.email) {
+      const applicantName = app.user.profile 
+        ? `${app.user.profile.firstName || ""} ${app.user.profile.lastName || ""}`.trim()
+        : app.user.name || "Applicant";
+
+      const interviewDate = new Date(dateStr).toLocaleDateString();
+      const template = await prisma.template.findFirst({
+        where: { trigger: { contains: "Interview" } }
+      });
+
+      let subject = "Admissions Interview Scheduled - EGA University";
+      let content = `<p>Dear ${applicantName},</p>
+        <p>We are pleased to inform you that your admissions interview has been scheduled.</p>
+        <p><strong>Date:</strong> ${interviewDate}<br/>
+        <strong>Time:</strong> ${time}<br/>
+        <strong>Meeting Link:</strong> <a href="${meetingLink || '#'}">${meetingLink || 'Not provided'}</a></p>
+        <p>Please log in to your portal for any updates.</p>
+        <p>Best regards,<br/>Admissions Office</p>`;
+
+      if (template) {
+        if (template.subject) subject = template.subject;
+        content = template.content
+          .replace(/\{\{name\}\}/g, applicantName)
+          .replace(/\{\{date\}\}/g, interviewDate)
+          .replace(/\{\{time\}\}/g, time)
+          .replace(/\{\{meetingLink\}\}/g, meetingLink || "TBD");
+      }
+
+      await sendEmail({
+        to: app.user.email,
+        subject,
+        html: content,
+        actionName: "Interview Schedule Notification"
+      });
+    }
+
     revalidatePath("/admin/interviews");
     revalidatePath("/admin/applications");
     revalidatePath(`/admin/applications/${applicationId}`);
@@ -251,6 +294,54 @@ export async function generateOffer(formData: FormData) {
       where: { id: applicationId },
       data: { status: newStatus }
     });
+
+    // Send email notification to applicant
+    const app = await prisma.application.findUnique({
+      where: { id: applicationId },
+      include: { user: { include: { profile: true } } }
+    });
+
+    if (app && app.user && app.user.email) {
+      const applicantName = app.user.profile 
+        ? `${app.user.profile.firstName || ""} ${app.user.profile.lastName || ""}`.trim()
+        : app.user.name || "Applicant";
+
+      const isRejection = type === "Rejection";
+      const templateTriggerKeyword = isRejection ? "Rejection" : "Offer";
+
+      const template = await prisma.template.findFirst({
+        where: { trigger: { contains: templateTriggerKeyword } }
+      });
+
+      let subject = isRejection 
+        ? "Application Update - EGA University" 
+        : "Official Offer of Admission - EGA University";
+
+      let content = isRejection
+        ? `<p>Dear ${applicantName},</p>
+           <p>Thank you for your interest in EGA University. After reviewing your application, we regret to inform you that we are unable to offer you admission at this time.</p>
+           <p>We wish you all the best in your future endeavors.</p>
+           <p>Best regards,<br/>Admissions Office</p>`
+        : `<p>Dear ${applicantName},</p>
+           <p>Congratulations! We are delighted to offer you admission to EGA University as a student.</p>
+           <p>Your official <strong>${type} Offer</strong> has been generated and is ready for your signature. Please log in to your portal to review and accept the offer.</p>
+           <p>Best regards,<br/>Admissions Team</p>`;
+
+      if (template) {
+        if (template.subject) subject = template.subject;
+        content = template.content
+          .replace(/\{\{name\}\}/g, applicantName)
+          .replace(/\{\{type\}\}/g, type)
+          .replace(/\{\{offerType\}\}/g, type);
+      }
+
+      await sendEmail({
+        to: app.user.email,
+        subject,
+        html: content,
+        actionName: isRejection ? "Application Rejection Notification" : "Admission Offer Notification"
+      });
+    }
 
     revalidatePath("/admin/offers");
     revalidatePath("/admin/applications");
@@ -353,6 +444,36 @@ export async function inviteStaff(formData: FormData) {
         role: role as any,
         emailVerified: new Date(),
       }
+    });
+
+    // Send invitation email
+    const template = await prisma.template.findFirst({
+      where: { trigger: { contains: "Invite" } }
+    });
+
+    let subject = "Admissions Portal Invitation - EGA University";
+    let content = `<p>Dear ${name},</p>
+      <p>You have been invited to join the EGA University Admissions Portal staff.</p>
+      <p><strong>Role:</strong> ${role.replace("_", " ")}<br/>
+      <strong>Portal Login URL:</strong> <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin/login">Login Here</a><br/>
+      <strong>Temporary Password:</strong> ${password}</p>
+      <p>Please change your password immediately upon logging in.</p>
+      <p>Best regards,<br/>System Administrator</p>`;
+
+    if (template) {
+      if (template.subject) subject = template.subject;
+      content = template.content
+        .replace(/\{\{name\}\}/g, name)
+        .replace(/\{\{email\}\}/g, email)
+        .replace(/\{\{password\}\}/g, password)
+        .replace(/\{\{role\}\}/g, role);
+    }
+
+    await sendEmail({
+      to: email,
+      subject,
+      html: content,
+      actionName: "Staff Portal Invitation Notification"
     });
 
     revalidatePath("/admin/users");
