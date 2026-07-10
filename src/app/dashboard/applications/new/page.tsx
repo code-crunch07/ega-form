@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { getMockSessionUser } from "@/lib/auth";
 import ApplicationWizard from "./application-wizard";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewApplicationPage() {
   const user = await getMockSessionUser();
 

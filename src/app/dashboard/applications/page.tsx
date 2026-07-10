@@ -2,6 +2,8 @@ import Link from "next/link";
 import { FileText, PlusCircle } from "lucide-react";
 import { getMockSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Button } from "@/components/ui/button";
 import { ApplicationsList } from "./applications-list";

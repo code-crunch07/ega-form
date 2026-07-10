@@ -27,6 +27,8 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardOverview() {
   const user = await getMockSessionUser();
   const displayName = getUserDisplayName(user);

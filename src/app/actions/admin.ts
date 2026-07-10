@@ -58,6 +58,9 @@ export async function createProgramme(formData: FormData) {
     });
     
     revalidatePath("/admin/programmes");
+    revalidatePath("/admin/courses");
+    revalidatePath("/dashboard/applications/new");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (error: any) {
     return { error: error.message || "Failed to create programme." };
@@ -86,6 +89,7 @@ export async function createIntake(formData: FormData) {
     });
     
     revalidatePath("/admin/intakes");
+    revalidatePath("/dashboard/applications/new");
     return { success: true };
   } catch (error: any) {
     return { error: error.message || "Failed to create intake." };
