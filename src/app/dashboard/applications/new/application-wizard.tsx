@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { Check, ChevronRight, Upload, Plus, FileText, Globe, MapPin, Building2, UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, ScrollText, CreditCard, Phone, Mail, Clock } from "lucide-react";
@@ -27,10 +27,15 @@ const STEPS = [
   { id: 12, name: "Payment", icon: CreditCard },
 ];
 
-export default function ApplicationWizard({ user, programmes, intakes }: { user: any, programmes: any[], intakes: any[] }) {
+export default function ApplicationWizard({ user, programmes, intakes, schools = [] }: { user: any, programmes: any[], intakes: any[], schools?: any[] }) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successAppNumber, setSuccessAppNumber] = useState<string | null>(null);
+  const [educationList, setEducationList] = useState<any[]>([
+    { id: 1, qualification: "Bachelor's Degree", institution: "National University of Singapore", major: "Business Administration", year: "2020" },
+    { id: 2, qualification: "Higher Secondary", institution: "Singapore Polytechnic", major: "Business", year: "2016" },
+    { id: 3, qualification: "Secondary School", institution: "St. Andrew's School", major: "General", year: "2014" }
+  ]);
   const router = useRouter();
 
   const { register, handleSubmit, control, watch, setValue, getValues } = useForm<any>({
@@ -70,8 +75,18 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
   const watchEnglishTest = watch("englishTest.testName");
   const watchEmployed = watch("isEmployed");
   const watchIntake = watch("intake");
+  const watchSchool = watch("school");
+
+  const filteredProgrammes = programmes.filter(p => {
+    if (!watchSchool) return true;
+    return p.schoolId === watchSchool || p.school?.name === watchSchool;
+  });
 
   const selectedProgramme = programmes.find(p => p.id === watchProgrammeId);
+
+  useEffect(() => {
+    setValue("education", educationList);
+  }, [educationList, setValue]);
 
   const nextStep = () => {
     if (step < 12) {
@@ -291,29 +306,37 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                         </div>
                       </div>
                     </div>
-                  )}
-
-            {/* STEP 2: Programme Selection */}
+                  )}            {/* STEP 2: Programme Selection */}
             {step === 2 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-2xl">
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">Programme Selection</h2>
-                  <p className="text-neutral-500 mt-1">Choose the campus and programme you wish to apply for.</p>
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">2. Programme Selection</h2>
+                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Choose the programme you want to apply for.</p>
                 </div>
                 
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Campus</Label>
+                    <Label className="text-slate-700 font-semibold text-[13px]">School / Faculty *</Label>
                     <Controller
-                      name="campus"
+                      name="school"
                       control={control}
-                      defaultValue="Singapore Main Campus"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Campus" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
+                            <SelectValue placeholder="Select School / Faculty" />
+                          </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Singapore Main Campus">Singapore Main Campus</SelectItem>
-                            <SelectItem value="Malaysia Branch">Malaysia Branch</SelectItem>
+                            {schools && schools.length > 0 ? (
+                              schools.map(s => (
+                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                              ))
+                            ) : (
+                              <>
+                                <SelectItem value="School of Business">School of Business</SelectItem>
+                                <SelectItem value="School of Computing">School of Computing</SelectItem>
+                                <SelectItem value="School of Engineering">School of Engineering</SelectItem>
+                              </>
+                            )}
                           </SelectContent>
                         </Select>
                       )}
@@ -321,34 +344,17 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Programme Level</Label>
-                    <Controller
-                      name="programmeLevel"
-                      control={control}
-                      defaultValue="Undergraduate"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Level" /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Undergraduate">Undergraduate (Bachelor's)</SelectItem>
-                            <SelectItem value="Postgraduate">Postgraduate (Master's/PhD)</SelectItem>
-                            <SelectItem value="Diploma">Diploma</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Programme</Label>
+                    <Label className="text-slate-700 font-semibold text-[13px]">Programme *</Label>
                     <Controller
                       name="programmeId"
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Programme" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
+                            <SelectValue placeholder="Select Programme" />
+                          </SelectTrigger>
                           <SelectContent>
-                            {programmes.map(p => (
+                            {filteredProgrammes.map(p => (
                               <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
                             ))}
                           </SelectContent>
@@ -358,13 +364,15 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Intake</Label>
+                    <Label className="text-slate-700 font-semibold text-[13px]">Intake / Entry Term *</Label>
                     <Controller
                       name="intake"
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Intake" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
+                            <SelectValue placeholder="Select Intake" />
+                          </SelectTrigger>
                           <SelectContent>
                             {intakes.map(i => (
                               <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
@@ -375,72 +383,24 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                     />
                   </div>
                   
-                  <div className="space-y-3 pt-4 border-t border-neutral-100">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Study Mode</Label>
-                    <Controller
-                      name="studyMode"
-                      control={control}
-                      defaultValue="Full-Time"
-                      render={({ field }) => (
-                        <div className="grid grid-cols-2 gap-4">
-                          {[
-                            { value: "Full-Time", label: "Full-Time Study", desc: "Regular class schedule on campus" },
-                            { value: "Part-Time", label: "Part-Time Study", desc: "Flexible pacing for working professionals" }
-                          ].map(item => {
-                            const isSelected = (field.value || "Full-Time") === item.value;
-                            return (
-                              <div 
-                                key={item.value}
-                                onClick={() => field.onChange(item.value)}
-                                className={cn(
-                                  "p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 flex flex-col text-left group",
-                                  isSelected 
-                                    ? "border-[#27295B] bg-[#27295B]/[0.03] shadow-xs" 
-                                    : "border-neutral-200 hover:border-[#27295B]/40 hover:bg-neutral-50/50"
-                                )}
-                              >
-                                <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#27295B]" : "text-neutral-800")}>{item.label}</span>
-                                <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-3 pt-4 border-t border-neutral-100">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Scholarship Application</Label>
-                    <Controller
-                      name="scholarshipApply"
-                      control={control}
-                      defaultValue="no"
-                      render={({ field }) => (
-                        <div className="grid grid-cols-2 gap-4">
-                          {[
-                            { value: "yes", label: "Yes, I wish to apply", desc: "Submit application for academic scholarship support" },
-                            { value: "no", label: "No, self-funded", desc: "Continue with regular self-funding path" }
-                          ].map(item => {
-                            const isSelected = (field.value || "no") === item.value;
-                            return (
-                              <div 
-                                key={item.value}
-                                onClick={() => field.onChange(item.value)}
-                                className={cn(
-                                  "p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 flex flex-col text-left group",
-                                  isSelected 
-                                    ? "border-[#27295B] bg-[#27295B]/[0.03] shadow-xs" 
-                                    : "border-neutral-200 hover:border-[#27295B]/40 hover:bg-neutral-50/50"
-                                )}
-                              >
-                                <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#27295B]" : "text-neutral-800")}>{item.label}</span>
-                                <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    />
+                  <div className="mt-6 p-5 rounded-2xl border border-neutral-200 bg-neutral-50/30 text-left space-y-3">
+                    <h4 className="font-heading font-bold text-sm text-neutral-800">Programme Details</h4>
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <p className="text-neutral-400 font-medium">Duration</p>
+                        <p className="text-neutral-800 font-bold mt-0.5">12 Months (Full-time)</p>
+                      </div>
+                      <div>
+                        <p className="text-neutral-400 font-medium">Location</p>
+                        <p className="text-neutral-800 font-bold mt-0.5">Singapore Campus</p>
+                      </div>
+                      <div className="col-span-2 pt-2 border-t border-neutral-100">
+                        <p className="text-neutral-400 font-medium">Application Fee</p>
+                        <p className="text-sm font-extrabold text-[#27295B] mt-0.5">
+                          SGD {selectedProgramme?.applicationFee || "50.00"}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -448,358 +408,681 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
 
             {/* STEP 3: Personal Information */}
             {step === 3 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">Personal Information</h2>
-                  <p className="text-neutral-500 mt-1">Review and update your personal details (Pre-filled from Profile).</p>
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">3. Personal Information</h2>
+                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Provide your basic personal details.</p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Title</Label>
-                    <Input {...register("personal.title")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Gender</Label>
-                    <Input {...register("personal.gender")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">First Name</Label>
-                    <Input {...register("personal.firstName")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Last Name</Label>
-                    <Input {...register("personal.lastName")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Date of Birth</Label>
-                    <Input type="date" {...register("personal.dob")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Nationality</Label>
-                    <Input {...register("personal.nationality")} className="h-11 bg-neutral-50 text-slate-900" />
+                    <Label className="text-slate-700 font-semibold text-[13px]">Full Name (as in Passport) *</Label>
+                    <Input {...register("personal.firstName")} placeholder="John Michael Doe" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
                   </div>
                   
-                  {watchApplicantType === "International Student" && (
-                    <div className="space-y-2 md:col-span-2 p-4 bg-orange-50 border border-orange-100 rounded-lg mt-4">
-                      <Label className="text-slate-900 text-orange-900">Passport Number (Required for International Students)</Label>
-                      <Input {...register("personal.passportNumber")} required className="h-11 bg-white mt-2 text-slate-900" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Date of Birth *</Label>
+                      <div className="relative">
+                        <Input type="date" {...register("personal.dob")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                      </div>
                     </div>
-                  )}
+                    
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Gender *</Label>
+                      <Controller
+                        name="personal.gender"
+                        control={control}
+                        defaultValue="male"
+                        render={({ field }) => (
+                          <div className="flex h-12 items-center gap-6 bg-white border border-neutral-200 rounded-xl px-4">
+                            {["male", "female", "other"].map(genderVal => (
+                              <label key={genderVal} className="flex items-center gap-2 text-sm text-neutral-700 capitalize cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="gender"
+                                  value={genderVal}
+                                  checked={field.value === genderVal}
+                                  onChange={() => field.onChange(genderVal)}
+                                  className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]"
+                                />
+                                <span>{genderVal}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Nationality *</Label>
+                      <Controller
+                        name="personal.nationality"
+                        control={control}
+                        defaultValue="Singaporean"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
+                              <SelectValue placeholder="Select Nationality" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Singaporean">Singaporean</SelectItem>
+                              <SelectItem value="Malaysian">Malaysian</SelectItem>
+                              <SelectItem value="Indonesian">Indonesian</SelectItem>
+                              <SelectItem value="Indian">Indian</SelectItem>
+                              <SelectItem value="Chinese">Chinese</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">NRIC / Passport Number *</Label>
+                      <Input {...register("personal.passportNumber")} placeholder="e.g. S1234567A / E1234567" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Country of Birth *</Label>
+                      <Controller
+                        name="personal.countryOfBirth"
+                        control={control}
+                        defaultValue="Singapore"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
+                              <SelectValue placeholder="Select Country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Singapore">Singapore</SelectItem>
+                              <SelectItem value="Malaysia">Malaysia</SelectItem>
+                              <SelectItem value="Indonesia">Indonesia</SelectItem>
+                              <SelectItem value="India">India</SelectItem>
+                              <SelectItem value="China">China</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
             {/* STEP 4: Contact Information */}
             {step === 4 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">Contact Information</h2>
-                  <p className="text-neutral-500 mt-1">How can we reach you?</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2 md:col-span-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Email</Label>
-                    <Input {...register("contact.email")} type="email" disabled className="h-11 bg-neutral-100 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Phone</Label>
-                    <Input {...register("contact.phone")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Address Line 1</Label>
-                    <Input {...register("contact.addressLine1")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">City</Label>
-                    <Input {...register("contact.city")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">State/Province</Label>
-                    <Input {...register("contact.state")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Postal Code</Label>
-                    <Input {...register("contact.postalCode")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Country</Label>
-                    <Input {...register("contact.country")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 5: Family / Emergency Contact */}
-            {step === 5 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">Family / Emergency Contact</h2>
-                  <p className="text-neutral-500 mt-1">Who should we contact in case of emergency?</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
-                  <div className="space-y-2 md:col-span-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Emergency Contact Name</Label>
-                    <Input {...register("family.fatherName")} placeholder="e.g. John Doe Sr." className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Relationship</Label>
-                    <Input defaultValue="Parent" className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Emergency Contact Number</Label>
-                    <Input {...register("family.emergencyPhone")} className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Emergency Contact Email</Label>
-                    <Input type="email" className="h-11 bg-neutral-50 text-slate-900" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 6: Education */}
-            {step === 6 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">Academic Qualifications</h2>
-                  <p className="text-neutral-500 mt-1">Please list your educational history, starting from the most recent.</p>
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">4. Contact Information</h2>
+                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">How can we reach you?</p>
                 </div>
                 
-                <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl space-y-6">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-semibold text-lg text-slate-800">Qualification 1</h3>
-                  </div>
-                  
+                <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Qualification / Degree Level</Label>
-                      <Input {...register(`education.0.qualification`)} placeholder="e.g. High School Diploma, Bachelor's" className="h-11 bg-white text-slate-900" />
+                      <Label className="text-slate-700 font-semibold text-[13px]">Email Address *</Label>
+                      <Input {...register("contact.email")} type="email" disabled className="h-12 bg-neutral-100 border border-neutral-200 rounded-xl text-neutral-500 font-medium" />
                     </div>
+
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Institution Name</Label>
-                      <Input {...register(`education.0.institution`)} placeholder="e.g. Harvard University" className="h-11 bg-white text-slate-900" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Country of Institution</Label>
-                      <Input {...register(`education.0.country`)} placeholder="e.g. USA" className="h-11 bg-white text-slate-900" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Major / Field of Study</Label>
-                      <Input {...register(`education.0.major`)} placeholder="e.g. Computer Science" className="h-11 bg-white text-slate-900" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Start Date</Label>
-                      <Input type="date" {...register(`education.0.startDate`)} className="h-11 bg-white text-slate-900" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Completion Date</Label>
-                      <Input type="date" {...register(`education.0.endDate`)} className="h-11 bg-white text-slate-900" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">CGPA / Grade</Label>
-                      <Input {...register(`education.0.cgpa`)} placeholder="e.g. 3.8/4.0 or 85%" className="h-11 bg-white text-slate-900" />
+                      <Label className="text-slate-700 font-semibold text-[13px]">Phone Number *</Label>
+                      <div className="flex gap-2">
+                        <Controller
+                          name="contact.phonePrefix"
+                          control={control}
+                          defaultValue="+65"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium shrink-0">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                                <SelectItem value="+60">🇲🇾 +60</SelectItem>
+                                <SelectItem value="+62">🇮🇩 +62</SelectItem>
+                                <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        <Input {...register("contact.phone")} placeholder="9123 4567" className="flex-1 h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="pt-4 mt-4 border-t border-slate-200">
-                    <Button type="button" variant="outline" className="gap-2 text-[#27295B]">
-                      <Plus size={16} /> Add Another Qualification
-                    </Button>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Alternate Phone Number</Label>
+                      <div className="flex gap-2">
+                        <Controller
+                          name="contact.altPhonePrefix"
+                          control={control}
+                          defaultValue="+65"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium shrink-0">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                                <SelectItem value="+60">🇲🇾 +60</SelectItem>
+                                <SelectItem value="+62">🇮🇩 +62</SelectItem>
+                                <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        <Input {...register("contact.altPhone")} placeholder="9876 5432" className="flex-1 h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-[13px]">Current Address *</Label>
+                    <Input {...register("contact.addressLine1")} placeholder="123 Orchard Road, #05-01 Singapore 238845" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Country *</Label>
+                      <Controller
+                        name="contact.country"
+                        control={control}
+                        defaultValue="Singapore"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
+                              <SelectValue placeholder="Select Country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Singapore">Singapore</SelectItem>
+                              <SelectItem value="Malaysia">Malaysia</SelectItem>
+                              <SelectItem value="Indonesia">Indonesia</SelectItem>
+                              <SelectItem value="India">India</SelectItem>
+                              <SelectItem value="China">China</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">City *</Label>
+                      <Input {...register("contact.city")} placeholder="Singapore" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Postal Code *</Label>
+                      <Input {...register("contact.postalCode")} placeholder="238845" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                    </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* STEP 7: Employment */}
-            {step === 7 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-2xl">
+            {/* STEP 5: Family / Emergency */}
+            {step === 5 && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">Employment History</h2>
-                  <p className="text-neutral-500 mt-1">Optional for undergraduate applicants.</p>
-                </div>
-
-                <div className="space-y-4">
-                  <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Are you currently or previously employed?</Label>
-                  <Controller
-                    name="isEmployed"
-                    control={control}
-                    defaultValue="no"
-                    render={({ field }) => (
-                      <div className="grid grid-cols-2 gap-4 max-w-sm">
-                        {[
-                          { value: "yes", label: "Yes", desc: "I have work experience" },
-                          { value: "no", label: "No", desc: "No formal work history" }
-                        ].map(item => {
-                          const isSelected = (field.value || "no") === item.value;
-                          return (
-                            <div 
-                              key={item.value}
-                              onClick={() => field.onChange(item.value)}
-                              className={cn(
-                                "p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 flex flex-col text-left group",
-                                isSelected 
-                                  ? "border-[#27295B] bg-[#27295B]/[0.03] shadow-xs" 
-                                  : "border-neutral-200 hover:border-[#27295B]/40 hover:bg-neutral-50/50"
-                              )}
-                            >
-                              <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#27295B]" : "text-neutral-800")}>{item.label}</span>
-                              <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  />
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">5. Family / Emergency</h2>
+                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Provide your family and emergency contact details.</p>
                 </div>
                 
-                {watchEmployed === "yes" && (
-                  <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl space-y-6 mt-6 animate-in fade-in duration-300">
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Employer / Company Name</Label>
-                      <Input {...register("employment.0.employer")} className="h-11 bg-white text-slate-900" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Position / Job Title</Label>
-                      <Input {...register("employment.0.position")} className="h-11 bg-white text-slate-900" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-6">
+                  {/* Parent / Guardian Info */}
+                  <div className="space-y-4">
+                    <h3 className="font-heading font-semibold text-neutral-800 text-[15px] border-b border-neutral-100 pb-2">Parent / Guardian Information</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Industry</Label>
-                        <Input {...register("employment.0.industry")} className="h-11 bg-white text-slate-900" />
+                        <Label className="text-slate-700 font-semibold text-[13px]">Full Name *</Label>
+                        <Input {...register("family.fatherName")} placeholder="Robert Doe" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
                       </div>
+
                       <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Years of Experience</Label>
-                        <Input type="number" {...register("employment.0.yearsExperience")} className="h-11 bg-white text-slate-900" />
+                        <Label className="text-slate-700 font-semibold text-[13px]">Relationship *</Label>
+                        <Controller
+                          name="family.fatherRelationship"
+                          control={control}
+                          defaultValue="Father"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Father">Father</SelectItem>
+                                <SelectItem value="Mother">Mother</SelectItem>
+                                <SelectItem value="Guardian">Guardian</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-[13px]">Email *</Label>
+                        <Input type="email" {...register("family.fatherEmail")} placeholder="robert.doe@email.com" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-[13px]">Phone Number *</Label>
+                        <div className="flex gap-2">
+                          <Controller
+                            name="family.fatherPhonePrefix"
+                            control={control}
+                            defaultValue="+65"
+                            render={({ field }) => (
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium shrink-0">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                                  <SelectItem value="+60">🇲🇾 +60</SelectItem>
+                                  <SelectItem value="+62">🇮🇩 +62</SelectItem>
+                                  <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                  <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          <Input {...register("family.fatherPhone")} placeholder="9224 5678" className="flex-1 h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                        </div>
                       </div>
                     </div>
                   </div>
-                )}
+
+                  {/* Emergency Contact */}
+                  <div className="space-y-4 pt-4 border-t border-neutral-100">
+                    <h3 className="font-heading font-semibold text-neutral-800 text-[15px] border-b border-neutral-100 pb-2">Emergency Contact (if different from above)</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-[13px]">Full Name</Label>
+                        <Input {...register("family.emergencyName")} placeholder="Jane Doe" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-[13px]">Relationship</Label>
+                        <Controller
+                          name="family.emergencyRelationship"
+                          control={control}
+                          defaultValue="Sister"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Sister">Sister</SelectItem>
+                                <SelectItem value="Brother">Brother</SelectItem>
+                                <SelectItem value="Spouse">Spouse</SelectItem>
+                                <SelectItem value="Friend">Friend</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-[13px]">Phone Number</Label>
+                        <div className="flex gap-2">
+                          <Controller
+                            name="family.emergencyPhonePrefix"
+                            control={control}
+                            defaultValue="+65"
+                            render={({ field }) => (
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium shrink-0">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                                  <SelectItem value="+60">🇲🇾 +60</SelectItem>
+                                  <SelectItem value="+62">🇮🇩 +62</SelectItem>
+                                  <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                  <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                          <Input {...register("family.emergencyPhone")} placeholder="9355 8877" className="flex-1 h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* STEP 8: English */}
-            {step === 8 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-2xl">
-                <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">English Language Proficiency</h2>
-                  <p className="text-neutral-500 mt-1">International students may require an English proficiency test.</p>
+            {/* STEP 6: Academic Qualifications */}
+            {step === 6 && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-tight text-neutral-800">6. Academic Qualifications</h2>
+                    <p className="text-neutral-400 mt-1.5 text-sm font-medium">List your previous academic qualifications.</p>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      const qual = prompt("Enter Qualification Level (e.g. Diploma):");
+                      const inst = prompt("Enter Institution Name:");
+                      const major = prompt("Enter Field of Study:");
+                      const year = prompt("Enter Completion Year:");
+                      if (qual && inst && major && year) {
+                        setEducationList([...educationList, { id: Date.now(), qualification: qual, institution: inst, major, year }]);
+                      }
+                    }}
+                    className="h-10 px-4 border-[#27295B] text-[#27295B] hover:bg-[#27295B]/5 rounded-xl font-bold transition-all text-xs"
+                  >
+                    + Add Qualification
+                  </Button>
                 </div>
+                
+                <div className="border border-neutral-200/80 rounded-2xl overflow-hidden bg-white shadow-3xs">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-neutral-50/70 border-b border-neutral-200 text-neutral-500 font-bold uppercase tracking-wider">
+                        <th className="px-5 py-4 font-bold">Qualification</th>
+                        <th className="px-5 py-4 font-bold">Institution</th>
+                        <th className="px-5 py-4 font-bold">Field of Study</th>
+                        <th className="px-5 py-4 font-bold">Year</th>
+                        <th className="px-5 py-4 font-bold text-center">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-100">
+                      {educationList.map((item) => (
+                        <tr key={item.id} className="hover:bg-neutral-50/50 transition-colors text-neutral-700 font-medium">
+                          <td className="px-5 py-4">{item.qualification}</td>
+                          <td className="px-5 py-4">{item.institution}</td>
+                          <td className="px-5 py-4">{item.major}</td>
+                          <td className="px-5 py-4">{item.year}</td>
+                          <td className="px-5 py-4">
+                            <div className="flex items-center justify-center gap-2">
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const qual = prompt("Edit Qualification Level:", item.qualification);
+                                  const inst = prompt("Edit Institution Name:", item.institution);
+                                  const major = prompt("Edit Field of Study:", item.major);
+                                  const year = prompt("Edit Completion Year:", item.year);
+                                  if (qual && inst && major && year) {
+                                    setEducationList(educationList.map(el => el.id === item.id ? { ...el, qualification: qual, institution: inst, major, year } : el));
+                                  }
+                                }}
+                                className="p-1.5 hover:bg-neutral-100 rounded-lg text-neutral-500 hover:text-neutral-800 transition-colors"
+                              >
+                                ✏️
+                              </button>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  if (confirm("Are you sure you want to delete this qualification?")) {
+                                    setEducationList(educationList.filter(el => el.id !== item.id));
+                                  }
+                                }}
+                                className="p-1.5 hover:bg-rose-50 rounded-lg text-neutral-400 hover:text-rose-600 transition-colors"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
+            {/* STEP 7: Employment History */}
+            {step === 7 && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">7. Employment History</h2>
+                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Provide your employment details (if applicable).</p>
+                </div>
+                
                 <div className="space-y-4">
-                  <Label className="text-slate-900 text-base">Have you taken an English proficiency test?</Label>
-                  <Controller
-                    name="englishTest.testName"
-                    control={control}
-                    defaultValue="None"
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Test" /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="None">No / Not Required (Native Speaker)</SelectItem>
-                          <SelectItem value="IELTS">IELTS</SelectItem>
-                          <SelectItem value="TOEFL">TOEFL</SelectItem>
-                          <SelectItem value="PTE">PTE Academic</SelectItem>
-                          <SelectItem value="Duolingo">Duolingo English Test</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
+                  <div className="flex items-center space-x-3 bg-neutral-50 border border-neutral-200/50 p-4 rounded-xl">
+                    <input 
+                      type="checkbox" 
+                      id="notEmployed" 
+                      {...register("notEmployed")} 
+                      className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]" 
+                    />
+                    <Label htmlFor="notEmployed" className="text-neutral-700 font-semibold cursor-pointer">I am currently not employed</Label>
+                  </div>
 
-                {watchEnglishTest !== "None" && (
-                  <div className="grid grid-cols-2 gap-6 p-6 bg-slate-50 border border-slate-200 rounded-xl mt-6 animate-in fade-in duration-300">
+                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-300", watch("notEmployed") && "opacity-40 pointer-events-none")}>
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Overall Score</Label>
-                      <Input {...register("englishTest.overallScore")} placeholder="e.g. 7.5" className="h-11 bg-white text-slate-900" />
+                      <Label className="text-slate-700 font-semibold text-[13px]">Current Employment Status *</Label>
+                      <Controller
+                        name="employmentStatus"
+                        control={control}
+                        defaultValue="Employed Full-time"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={watch("notEmployed")}>
+                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium">
+                              <SelectValue placeholder="Select Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Employed Full-time">Employed Full-time</SelectItem>
+                              <SelectItem value="Employed Part-time">Employed Part-time</SelectItem>
+                              <SelectItem value="Self-employed">Self-employed</SelectItem>
+                              <SelectItem value="Unemployed">Unemployed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
                     </div>
+
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Test Date</Label>
-                      <Input type="date" {...register("englishTest.testDate")} className="h-11 bg-white text-slate-900" />
-                    </div>
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Test Reference Number / TRF</Label>
-                      <Input {...register("englishTest.trf")} className="h-11 bg-white text-slate-900" />
+                      <Label className="text-slate-700 font-semibold text-[13px]">Company / Organization *</Label>
+                      <Input {...register("employment.0.employer")} placeholder="ABC Pte Ltd" disabled={watch("notEmployed")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
                     </div>
                   </div>
-                )}
+
+                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-300", watch("notEmployed") && "opacity-40 pointer-events-none")}>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Job Title *</Label>
+                      <Input {...register("employment.0.position")} placeholder="Business Analyst" disabled={watch("notEmployed")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Employment Start Date *</Label>
+                      <Input type="date" {...register("employment.0.startDate")} disabled={watch("notEmployed")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                    </div>
+                  </div>
+
+                  <div className={cn("space-y-2 transition-opacity duration-300", watch("notEmployed") && "opacity-40 pointer-events-none")}>
+                    <Label className="text-slate-700 font-semibold text-[13px]">Brief Description of Duties</Label>
+                    <textarea 
+                      {...register("employment.0.description")} 
+                      placeholder="Analyze business processes and prepare reports." 
+                      disabled={watch("notEmployed")}
+                      rows={3}
+                      className="w-full p-4 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:border-[#27295B] focus:ring-1 focus:ring-[#27295B] text-slate-800 text-[15px] font-normal"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* STEP 9: Documents */}
-            {step === 9 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
+            {/* STEP 8: English Proficiency */}
+            {step === 8 && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">Supporting Documents</h2>
-                  <p className="text-neutral-500 mt-1">Upload clear, scanned copies of your original documents.</p>
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">8. English Proficiency</h2>
+                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Provide your English language test details.</p>
                 </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 bg-neutral-50 border border-neutral-200/50 p-4 rounded-xl">
+                    <input 
+                      type="checkbox" 
+                      id="englishExempt" 
+                      {...register("englishTest.exempt")} 
+                      className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]" 
+                    />
+                    <Label htmlFor="englishExempt" className="text-neutral-700 font-semibold cursor-pointer">I am exempt from English proficiency requirement</Label>
+                  </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Mock Upload Boxes */}
-                  {[
-                    "Passport / National ID", 
-                    "Passport Size Photo", 
-                    "Academic Transcripts", 
-                    "Degree/Diploma Certificate",
-                    "Resume / CV"
-                  ].map((docName, i) => (
-                    <div key={i} className="border border-dashed border-neutral-300 rounded-xl p-6 bg-slate-50 flex flex-col items-center justify-center text-center hover:bg-slate-100 transition-colors cursor-pointer group">
-                      <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform">
-                        <Upload size={20} className="text-[#27295B]" />
+                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-300", watch("englishTest.exempt") && "opacity-40 pointer-events-none")}>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Test Type *</Label>
+                      <Controller
+                        name="englishTest.testName"
+                        control={control}
+                        defaultValue="IELTS Academic"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={watch("englishTest.exempt")}>
+                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium">
+                              <SelectValue placeholder="Select Test Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="IELTS Academic">IELTS Academic</SelectItem>
+                              <SelectItem value="TOEFL iBT">TOEFL iBT</SelectItem>
+                              <SelectItem value="PTE Academic">PTE Academic</SelectItem>
+                              <SelectItem value="Duolingo English Test">Duolingo English Test</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Overall Score *</Label>
+                      <Input {...register("englishTest.overallScore")} placeholder="7.0" disabled={watch("englishTest.exempt")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                    </div>
+                  </div>
+
+                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-300", watch("englishTest.exempt") && "opacity-40 pointer-events-none")}>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Exam Date *</Label>
+                      <Input type="date" {...register("englishTest.testDate")} disabled={watch("englishTest.exempt")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-[13px]">Test Centre / Location *</Label>
+                      <Input {...register("englishTest.location")} placeholder="British Council Singapore" disabled={watch("englishTest.exempt")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                    </div>
+                  </div>
+
+                  <div className={cn("space-y-2 pt-4 border-t border-neutral-100 transition-opacity duration-300", watch("englishTest.exempt") && "opacity-40 pointer-events-none")}>
+                    <Label className="text-slate-700 font-semibold text-[13px]">Upload Test Report *</Label>
+                    <div className="flex items-center justify-between border border-neutral-200 bg-white p-4.5 rounded-xl">
+                      <div className="flex items-center gap-2.5">
+                        <FileText size={18} className="text-red-500" />
+                        <span className="text-xs font-bold text-neutral-700">ielts_report.pdf</span>
                       </div>
-                      <h4 className="font-semibold text-neutral-900">{docName}</h4>
-                      <p className="text-xs text-neutral-500 mt-1">PDF, JPG or PNG (Max 5MB)</p>
+                      <Button type="button" variant="outline" className="h-9 px-4 border-neutral-200 hover:bg-neutral-50 rounded-lg text-xs font-bold">
+                        Browse
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 9: Supporting Documents */}
+            {step === 9 && (
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">9. Supporting Documents</h2>
+                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Upload the required documents.</p>
+                </div>
+                
+                <div className="space-y-3.5">
+                  {[
+                    { label: "Passport / NRIC Copy *", filename: "passport.pdf" },
+                    { label: "Academic Transcript(s) *", filename: "transcript.pdf" },
+                    { label: "Degree / Certificate *", filename: "degree.pdf" },
+                    { label: "CV / Resume *", filename: "resume.pdf" },
+                    { label: "English Test Report *", filename: "ielts_report.pdf" },
+                    { label: "Passport-size Photo *", filename: "photo.jpg" }
+                  ].map((doc, idx) => (
+                    <div key={idx} className="flex items-center justify-between border border-neutral-200/80 bg-white p-4.5 rounded-xl hover:shadow-3xs transition-shadow">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-xl bg-slate-50 border border-neutral-100 flex items-center justify-center text-[#27295B]">
+                          <FileText size={16} />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-neutral-800">{doc.label}</p>
+                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">{doc.filename}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-4">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-600 border border-emerald-100/50">
+                          <span className="h-1 w-1 rounded-full bg-emerald-500" />
+                          Uploaded
+                        </span>
+                        <button type="button" className="p-1 text-slate-400 hover:text-rose-600 transition-colors">
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* STEP 10: Review */}
+            {/* STEP 10: Review Application */}
             {step === 10 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">Review Application</h2>
-                  <p className="text-neutral-500 mt-1">Please check all details carefully before proceeding to declaration and payment.</p>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
-                    <h3 className="font-semibold text-lg text-slate-900 border-b border-slate-200 pb-3 mb-4">Programme Details</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-slate-500">Programme</p>
-                        <p className="font-medium text-slate-900">{selectedProgramme?.name || "Not Selected"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Intake</p>
-                        <p className="font-medium text-slate-900">{getValues("intake") || "Not Selected"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Applicant Type</p>
-                        <p className="font-medium text-slate-900">{watchApplicantType}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Study Mode</p>
-                        <p className="font-medium text-slate-900">{getValues("studyMode")}</p>
-                      </div>
-                    </div>
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-2xl font-bold tracking-tight text-neutral-800">10. Review Application</h2>
+                    <p className="text-neutral-400 mt-1.5 text-sm font-medium">Please review your information before proceeding.</p>
                   </div>
-
-                  <div className="bg-slate-50 rounded-xl p-6 border border-slate-200">
-                    <h3 className="font-semibold text-lg text-slate-900 border-b border-slate-200 pb-3 mb-4">Personal & Contact</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-slate-500">Full Name</p>
-                        <p className="font-medium text-slate-900">{getValues("personal.firstName")} {getValues("personal.lastName")}</p>
+                  <Button type="button" variant="outline" onClick={() => setStep(3)} className="h-9 px-4 border-neutral-200 text-neutral-600 hover:bg-neutral-50 rounded-lg text-xs font-bold">
+                    Edit
+                  </Button>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-white rounded-2xl border border-neutral-200/80 p-6 shadow-3xs">
+                    <h3 className="font-heading font-bold text-[15px] text-neutral-800 border-b border-neutral-100 pb-3 mb-4">Applicant Information</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
+                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
+                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Applicant Type</span>
+                        <span className="text-xs text-neutral-700 font-bold col-span-2">{watchApplicantType}</span>
                       </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Email</p>
-                        <p className="font-medium text-slate-900">{getValues("contact.email")}</p>
+                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
+                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Full Name</span>
+                        <span className="text-xs text-neutral-700 font-bold col-span-2">{getValues("personal.firstName")} {getValues("personal.lastName") || ""}</span>
                       </div>
-                      <div>
-                        <p className="text-xs text-slate-500">Phone</p>
-                        <p className="font-medium text-slate-900">{getValues("contact.phone") || "-"}</p>
+                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
+                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Email</span>
+                        <span className="text-xs text-neutral-700 font-bold col-span-2">{getValues("contact.email")}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
+                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Phone Number</span>
+                        <span className="text-xs text-neutral-700 font-bold col-span-2">{getValues("contact.phonePrefix")} {getValues("contact.phone")}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
+                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Programme</span>
+                        <span className="text-xs text-neutral-700 font-bold col-span-2">{selectedProgramme?.name || "Not Selected"}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
+                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Intake</span>
+                        <span className="text-xs text-neutral-700 font-bold col-span-2">{getValues("intake") || "Not Selected"}</span>
                       </div>
                     </div>
                   </div>
@@ -809,35 +1092,25 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
 
             {/* STEP 11: Declaration */}
             {step === 11 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-3xl">
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
                 <div>
-                  <h2 className="text-2xl font-bold text-neutral-900">Declaration</h2>
-                  <p className="text-neutral-500 mt-1">Read and accept the terms to complete your application.</p>
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">11. Declaration</h2>
+                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Please read and accept the declaration.</p>
                 </div>
+                
+                <div className="space-y-4">
+                  <div className="p-5.5 bg-[#F8FAFC] border border-neutral-200/65 rounded-2xl text-xs leading-relaxed text-neutral-600 font-medium">
+                    I hereby declare that all the information provided in this application is true, complete and accurate to the best of my knowledge. I understand that providing false or misleading information may result in the rejection of my application or cancellation of admission at any time.
+                  </div>
 
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-6">
-                  <div className="flex items-start space-x-3">
-                    <input type="checkbox" id="terms1" required className="mt-1 w-4 h-4 accent-[#27295B]" />
-                    <Label htmlFor="terms1" className="text-slate-900 text-sm font-normal leading-snug">
-                      I declare that all information provided in this application form and the accompanying documents is true and complete to the best of my knowledge. I understand that any false information may lead to rejection or dismissal.
-                    </Label>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <input type="checkbox" id="terms2" required className="mt-1 w-4 h-4 accent-[#27295B]" />
-                    <Label htmlFor="terms2" className="text-slate-900 text-sm font-normal leading-snug">
-                      I agree to the University's Privacy Policy and consent to the collection, use, and disclosure of my personal data for the purposes of evaluating my application.
-                    </Label>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <input type="checkbox" id="terms3" required className="mt-1 w-4 h-4 accent-[#27295B]" />
-                    <Label htmlFor="terms3" className="text-slate-900 text-sm font-normal leading-snug">
-                      I understand that I am required to pay a non-refundable application fee.
-                    </Label>
-                  </div>
-                  
-                  <div className="pt-4 border-t border-slate-200 space-y-3">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Digital Signature (Type your full name)</Label>
-                    <Input {...register("digitalSignature")} required placeholder="John Doe" className="h-11 max-w-sm bg-white text-slate-900" />
+                  <div className="flex items-center space-x-3 bg-neutral-50 border border-neutral-200/50 p-4 rounded-xl mt-4">
+                    <input 
+                      type="checkbox" 
+                      id="declareCheck" 
+                      required
+                      className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]" 
+                    />
+                    <Label htmlFor="declareCheck" className="text-neutral-700 font-semibold cursor-pointer">I have read, understood and agree to the above declaration.</Label>
                   </div>
                 </div>
               </div>
@@ -845,50 +1118,63 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
 
             {/* STEP 12: Payment */}
             {step === 12 && (
-              <div className="space-y-8 animate-in slide-in-from-right-4 duration-300 max-w-xl mx-auto text-center py-10">
-                <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CreditCard size={32} />
-                </div>
+              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
                 <div>
-                  <h2 className="text-3xl font-bold text-neutral-900">Application Fee Payment</h2>
-                  <p className="text-neutral-500 mt-2">To complete your submission, please pay the application processing fee.</p>
+                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">12. Payment</h2>
+                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Complete your application by paying the application fee.</p>
                 </div>
-
-                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 mt-8 shadow-sm text-left">
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-4 mb-4">
-                    <span className="text-slate-600 font-semibold">Total Amount Due</span>
-                    <span className="text-2xl font-bold text-[#27295B]">
-                      ${selectedProgramme?.applicationFee || "50.00"}
+                
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center border-b border-neutral-100 pb-4 mb-4">
+                    <span className="text-slate-600 font-semibold text-sm">Application Fee</span>
+                    <span className="text-xl font-extrabold text-[#27295B]">
+                      SGD {selectedProgramme?.applicationFee || "50.00"}
                     </span>
                   </div>
-                  
-                  <div className="space-y-3 mb-6">
+
+                  <div className="space-y-3">
                     <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Payment Method</Label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="border-2 border-[#27295B] bg-[#27295B]/5 p-4 rounded-xl flex flex-col gap-1 font-bold text-sm cursor-pointer shadow-2xs">
-                        <div className="flex items-center gap-2 text-[#27295B]">
-                          <CreditCard size={18} />
-                          <span>Credit Card</span>
+                    <Controller
+                      name="paymentMethod"
+                      control={control}
+                      defaultValue="card"
+                      render={({ field }) => (
+                        <div className="flex flex-col gap-2.5 bg-white border border-neutral-200 p-4 rounded-xl">
+                          {[
+                            { value: "card", label: "Credit / Debit Card" },
+                            { value: "paypal", label: "PayPal" },
+                            { value: "bank", label: "Bank Transfer" }
+                          ].map(method => (
+                            <label key={method.value} className="flex items-center gap-3 text-sm text-slate-700 font-semibold cursor-pointer">
+                              <input
+                                type="radio"
+                                name="paymentMethod"
+                                value={method.value}
+                                checked={(field.value || "card") === method.value}
+                                onChange={() => field.onChange(method.value)}
+                                className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]"
+                              />
+                              <span>{method.label}</span>
+                            </label>
+                          ))}
                         </div>
-                        <span className="text-[10px] text-slate-500 font-medium">Stripe checkout secure</span>
-                      </div>
-                      <div className="border border-slate-200 bg-white p-4 rounded-xl flex flex-col gap-1 font-bold text-sm text-slate-400 cursor-not-allowed opacity-60">
-                        <div className="flex items-center gap-2">
-                          <CreditCard size={18} />
-                          <span>PayPal</span>
-                        </div>
-                        <span className="text-[10px] text-slate-400 font-medium">Unavailable</span>
-                      </div>
-                    </div>
+                      )}
+                    />
                   </div>
 
-                  <p className="text-xs text-slate-500 text-center mb-6">
-                    By clicking "Pay & Submit", a mock payment will be processed and your application will be finalized.
-                  </p>
+                  <div className="flex gap-3 bg-[#eef2f6]/70 border border-neutral-100 rounded-xl p-4.5 text-left">
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#3b82f6] text-white text-[10px] font-bold font-mono">
+                      i
+                    </div>
+                    <div>
+                      <p className="text-xs text-neutral-500 font-medium leading-relaxed">
+                        Your application will be submitted after the payment is successful.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
-
           </div>
 
           {/* Bottom Action Bar */}

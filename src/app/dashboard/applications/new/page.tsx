@@ -8,14 +8,18 @@ export default async function NewApplicationPage() {
   const user = await getMockSessionUser();
 
   // Fetch data needed for the wizard
-  const [programmes, intakes] = await Promise.all([
+  const [programmes, intakes, schools] = await Promise.all([
     prisma.programme.findMany({
       where: { status: "Active" },
+      include: { school: true },
       orderBy: { name: 'asc' }
     }),
     prisma.intake.findMany({
       where: { status: "Open" },
       orderBy: { openDate: 'asc' }
+    }),
+    prisma.school.findMany({
+      orderBy: { name: 'asc' }
     })
   ]);
 
@@ -25,6 +29,7 @@ export default async function NewApplicationPage() {
         user={user} 
         programmes={programmes} 
         intakes={intakes} 
+        schools={schools}
       />
     </div>
   );
