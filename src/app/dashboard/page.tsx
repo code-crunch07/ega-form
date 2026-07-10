@@ -97,27 +97,27 @@ export default async function DashboardOverview() {
   return (
     <div className="animate-in fade-in space-y-8 pb-10 duration-500">
       {/* Welcome hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C315E] via-[#2C315E] to-[#E21C22] p-6 text-white shadow-xl shadow-indigo-950/15 sm:p-8 border border-white/5">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-red-500/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl bg-[#3C3D6B] p-6 text-white shadow-xl shadow-indigo-950/15 sm:p-8 border border-white/5">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-white/5 blur-3xl" />
 
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-4">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-red-200">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-neutral-200">
               <Sparkles size={12} className="animate-pulse" />
               Applicant Portal
             </span>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
               Welcome back,{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-200 via-indigo-100 to-white">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-white">
                 {user.profile?.firstName || displayName.split(" ")[0]}
               </span>
             </h1>
-            <p className="max-w-xl text-sm leading-relaxed text-neutral-300">
+            <p className="max-w-xl text-sm leading-relaxed text-neutral-200">
               Track applications, upload documents, and stay on top of deadlines — all in one place.
             </p>
             <div className="flex flex-wrap gap-3 pt-1">
-              <Button asChild className="h-11 rounded-xl bg-white px-5 text-[#2C315E] hover:bg-neutral-100 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-sm border border-transparent font-bold">
+              <Button asChild className="h-11 rounded-xl bg-white px-5 text-[#3C3D6B] hover:bg-neutral-100 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-sm border border-transparent font-bold">
                 <Link href="/dashboard/applications/new">
                   <PlusCircle size={18} />
                   Start New Application
@@ -132,11 +132,11 @@ export default async function DashboardOverview() {
           <div className="w-full max-w-xs shrink-0 rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md p-5 shadow-inner">
             <div className="mb-3 flex items-center justify-between text-sm font-bold">
               <span className="text-neutral-200">Profile completion</span>
-              <span className="text-white bg-[#E21C22] px-2 py-0.5 rounded-md text-xs">{profileScore}%</span>
+              <span className="text-white bg-white/20 px-2 py-0.5 rounded-md text-xs">{profileScore}%</span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-white/25">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-red-400 to-[#E21C22] transition-all duration-1000"
+                className="h-full rounded-full bg-white transition-all duration-1000"
                 style={{ width: `${profileScore}%` }}
               />
             </div>
@@ -157,12 +157,12 @@ export default async function DashboardOverview() {
           <Link
             key={link.href}
             href={link.href}
-            className="group flex flex-col items-center rounded-2xl border border-neutral-200/60 bg-white p-5 text-center shadow-2xs transition-all duration-300 hover:border-red-500/20 hover:shadow-md hover:shadow-red-500/5 hover:-translate-y-1"
+            className="group flex flex-col items-center rounded-2xl border border-neutral-200/60 bg-white p-5 text-center shadow-2xs transition-all duration-300 hover:border-[#3C3D6B]/20 hover:shadow-md hover:shadow-[#3C3D6B]/5 hover:-translate-y-1"
           >
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#2C315E]/6 text-[#2C315E] transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-[#2C315E] group-hover:to-[#E21C22] group-hover:text-white group-hover:scale-105 group-hover:shadow-md group-hover:shadow-red-500/15">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#3C3D6B]/6 text-[#3C3D6B] transition-all duration-300 group-hover:bg-[#3C3D6B] group-hover:text-white group-hover:scale-105 group-hover:shadow-md group-hover:shadow-[#3C3D6B]/15">
               <link.icon size={20} />
             </div>
-            <span className="text-sm font-bold text-neutral-800 transition-colors group-hover:text-[#2C315E]">{link.label}</span>
+            <span className="text-sm font-bold text-neutral-800 transition-colors group-hover:text-[#3C3D6B]">{link.label}</span>
             <span className="mt-1 text-xs font-medium text-neutral-400">{link.desc}</span>
           </Link>
         ))}
@@ -176,7 +176,7 @@ export default async function DashboardOverview() {
           icon={FileText}
           href="/dashboard/applications"
           linkText="Continue draft"
-          iconClassName="bg-slate-50 text-[#2C315E] group-hover:bg-[#2C315E]/10 group-hover:text-[#2C315E]"
+          iconClassName="bg-slate-50 text-[#3C3D6B] group-hover:bg-[#3C3D6B]/10 group-hover:text-[#3C3D6B]"
           className="border-neutral-200/60"
         />
         <StatCard
@@ -204,12 +204,12 @@ export default async function DashboardOverview() {
         <div className="flex flex-col overflow-hidden rounded-2xl border border-neutral-200/60 bg-white shadow-xs lg:col-span-3">
           <div className="flex items-center justify-between border-b border-neutral-100 bg-[#f8fafc]/50 px-6 py-4">
             <h3 className="flex items-center gap-2 text-base font-bold text-neutral-800">
-              <FileText size={18} className="text-[#2C315E]" />
+              <FileText size={18} className="text-[#3C3D6B]" />
               Recent Applications
             </h3>
             <Link
               href="/dashboard/applications"
-              className="text-xs font-bold text-[#2C315E] hover:underline"
+              className="text-xs font-bold text-[#3C3D6B] hover:underline"
             >
               View all
             </Link>
@@ -231,12 +231,12 @@ export default async function DashboardOverview() {
                     href={`/dashboard/applications`}
                     className="group flex items-center gap-4 rounded-xl border border-neutral-100 bg-white p-4 transition-all duration-300 hover:border-indigo-500/20 hover:bg-slate-50/50 hover:shadow-2xs"
                   >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-[#2C315E] group-hover:bg-[#2C315E] group-hover:text-white transition-all duration-300">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-50 text-[#3C3D6B] group-hover:bg-[#3C3D6B] group-hover:text-white transition-all duration-300">
                       <GraduationCap size={20} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate font-bold text-neutral-800 group-hover:text-[#2C315E] transition-colors">
+                        <p className="truncate font-bold text-neutral-800 group-hover:text-[#3C3D6B] transition-colors">
                           {app.programmeId
                             ? programmeMap[app.programmeId] ?? "Programme"
                             : "Untitled Application"}
@@ -249,7 +249,7 @@ export default async function DashboardOverview() {
                     </div>
                     <ChevronRight
                       size={18}
-                      className="shrink-0 text-neutral-300 transition-all duration-300 group-hover:text-[#2C315E] group-hover:translate-x-0.5"
+                      className="shrink-0 text-neutral-300 transition-all duration-300 group-hover:text-[#3C3D6B] group-hover:translate-x-0.5"
                     />
                   </Link>
                 ))}
@@ -292,7 +292,7 @@ export default async function DashboardOverview() {
                       className={`mt-4 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition-all hover:scale-[1.02] ${
                         action.urgent
                           ? "bg-amber-500 text-white hover:bg-amber-600 shadow-xs shadow-amber-500/10"
-                          : "bg-[#2C315E] text-white hover:bg-[#232752] shadow-xs shadow-indigo-500/10"
+                          : "bg-[#3C3D6B] text-white hover:bg-[#232752] shadow-xs shadow-indigo-500/10"
                       }`}
                     >
                       {action.cta} <ArrowRight size={12} />
@@ -306,7 +306,7 @@ export default async function DashboardOverview() {
           <div className="overflow-hidden rounded-2xl border border-neutral-200/60 bg-white shadow-xs">
             <div className="border-b border-neutral-100 bg-[#f8fafc]/50 px-5 py-4">
               <h3 className="flex items-center gap-2 text-base font-bold text-neutral-800">
-                <Clock size={18} className="text-[#2C315E]" />
+                <Clock size={18} className="text-[#3C3D6B]" />
                 Recent Activity
               </h3>
             </div>
@@ -315,7 +315,7 @@ export default async function DashboardOverview() {
                 {applications.slice(0, 3).map((app) => (
                   <div key={app.id} className="relative pl-6">
                     <div className="absolute -left-[25px] top-0.5 rounded-full bg-white p-0.5">
-                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2C315E]/8 text-[#2C315E] shadow-2xs">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[#3C3D6B]/8 text-[#3C3D6B] shadow-2xs">
                         <FileCheck2 size={11} />
                       </div>
                     </div>

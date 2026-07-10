@@ -67,9 +67,9 @@ export default function NotificationsPage() {
       />
 
       {unread > 0 && (
-        <div className="flex items-center gap-3 rounded-xl border border-[#2C315E]/20 bg-[#2C315E]/5 px-4 py-3">
-          <span className="flex h-2 w-2 rounded-full bg-[#2C315E]" />
-          <p className="text-sm font-medium text-[#2C315E]">
+        <div className="flex items-center gap-3 rounded-xl border border-[#3C3D6B]/20 bg-[#3C3D6B]/5 px-4 py-3">
+          <span className="flex h-2 w-2 rounded-full bg-[#3C3D6B]" />
+          <p className="text-sm font-medium text-[#3C3D6B]">
             You have {unread} unread notification{unread > 1 ? "s" : ""}
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function NotificationsPage() {
                 key={notification.id}
                 href={notification.href}
                 className={`group flex gap-4 px-5 py-5 transition-colors hover:bg-neutral-50/80 sm:px-6 ${
-                  !notification.read ? "bg-[#2C315E]/[0.02]" : ""
+                  !notification.read ? "bg-[#3C3D6B]/[0.02]" : ""
                 }`}
               >
                 <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.bg}`}>
@@ -106,7 +106,7 @@ export default function NotificationsPage() {
                     </div>
                     <ArrowRight
                       size={16}
-                      className="mt-1 shrink-0 text-neutral-300 transition-colors group-hover:text-[#2C315E]"
+                      className="mt-1 shrink-0 text-neutral-300 transition-colors group-hover:text-[#3C3D6B]"
                     />
                   </div>
                 </div>

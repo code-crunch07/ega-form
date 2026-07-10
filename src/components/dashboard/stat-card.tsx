@@ -49,7 +49,7 @@ export function StatCard({
       {href && linkText && (
         <Link
           href={href}
-          className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#2C315E] hover:text-[#4F46E5] transition-colors"
+          className="mt-4 inline-flex items-center gap-1 text-xs font-bold text-[#3C3D6B] hover:text-[#2C2D54] transition-colors"
         >
           {linkText} <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
         </Link>

@@ -102,7 +102,7 @@ export function ApplicationsList({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by application number or programme..."
-            className="h-10 w-full rounded-xl border border-neutral-200 bg-neutral-50/80 pl-10 pr-4 text-sm focus:border-[#2C315E]/40 focus:outline-none focus:ring-2 focus:ring-[#2C315E]/10"
+            className="h-10 w-full rounded-xl border border-neutral-200 bg-neutral-50/80 pl-10 pr-4 text-sm focus:border-[#3C3D6B]/40 focus:outline-none focus:ring-2 focus:ring-[#3C3D6B]/10"
           />
         </div>
         <div className="flex gap-2 overflow-x-auto no-scrollbar">
@@ -114,7 +114,7 @@ export function ApplicationsList({
               className={cn(
                 "inline-flex shrink-0 items-center gap-1.5 rounded-xl border px-3 py-2 text-sm font-semibold transition-all",
                 filter === option.id
-                  ? "border-[#2C315E] bg-[#2C315E] text-white shadow-sm"
+                  ? "border-[#3C3D6B] bg-[#3C3D6B] text-white shadow-sm"
                   : "border-neutral-200 bg-white text-neutral-600 hover:border-neutral-300"
               )}
             >
@@ -195,7 +195,7 @@ function ApplicationCard({
     : 100;
 
   return (
-    <div className="group rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-all hover:border-[#2C315E]/20 hover:shadow-md sm:p-6">
+    <div className="group rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-all hover:border-[#3C3D6B]/20 hover:shadow-md sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -217,7 +217,7 @@ function ApplicationCard({
 
         <div className="flex shrink-0 gap-2">
           {isDraft ? (
-            <Button asChild className="rounded-xl bg-[#2C315E] hover:bg-[#232752]">
+            <Button asChild className="rounded-xl bg-[#3C3D6B] hover:bg-[#2C2D54]">
               <Link href="/dashboard/applications/new">
                 <PlusCircle size={16} />
                 Continue
@@ -235,13 +235,13 @@ function ApplicationCard({
         <div className="mt-5 border-t border-neutral-100 pt-4">
           <div className="mb-2 flex justify-between text-xs font-semibold">
             <span className="text-neutral-600">Progress</span>
-            <span className="text-[#2C315E]">
+            <span className="text-[#3C3D6B]">
               {progress}% · Step {app.currentStep} of 12
             </span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-neutral-100">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-[#2C315E] to-[#5a6199] transition-all"
+              className="h-full rounded-full bg-[#3C3D6B] transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>

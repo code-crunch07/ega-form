@@ -127,7 +127,7 @@ function NavLinks({
                 className={cn(
                   "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 relative overflow-hidden",
                   isActive
-                    ? "bg-gradient-to-r from-[#2C315E] to-[#E21C22] text-white shadow-lg shadow-indigo-900/15"
+                    ? "bg-[#3C3D6B] text-white shadow-lg shadow-indigo-900/15"
                     : "text-neutral-600 hover:bg-neutral-100/80 hover:text-neutral-900"
                 )}
               >
@@ -135,7 +135,7 @@ function NavLinks({
                   size={18}
                   className={cn(
                     "shrink-0 transition-all duration-300 group-hover:scale-110",
-                    isActive ? "text-white" : "text-neutral-400 group-hover:text-[#2C315E]"
+                    isActive ? "text-white" : "text-neutral-400 group-hover:text-[#3C3D6B]"
                   )}
                 />
                 <span className={cn("flex-1 transition-colors duration-300", isActive && "font-semibold")}>
@@ -182,7 +182,7 @@ export function DashboardShell({
   }, [mobileOpen]);
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-sans selection:bg-[#2C315E]/20">
+    <div className="flex min-h-screen bg-[#f8fafc] font-sans selection:bg-[#3C3D6B]/20">
       {/* Desktop Sidebar */}
       <aside className="z-20 hidden w-[272px] shrink-0 flex-col border-r border-neutral-200/50 bg-white/70 backdrop-blur-xl md:flex">
         <div className="flex h-16 items-center border-b border-neutral-100 px-6">
@@ -195,9 +195,9 @@ export function DashboardShell({
           </div>
 
           <div className="relative mx-1 mt-10 overflow-hidden rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs">
-            <div className="absolute -right-6 -bottom-6 h-20 w-20 rounded-full bg-[#2c315e]/10 blur-xl pointer-events-none" />
+            <div className="absolute -right-6 -bottom-6 h-20 w-20 rounded-full bg-[#3C3D6B]/10 blur-xl pointer-events-none" />
             <div className="relative z-10">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#2C315E]/8 text-[#2C315E]">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#3C3D6B]/8 text-[#3C3D6B]">
                 <HelpCircle size={18} />
               </div>
               <h4 className="text-sm font-bold text-neutral-800">Need help?</h4>
@@ -206,7 +206,7 @@ export function DashboardShell({
               </p>
               <Link
                 href="/dashboard/messages"
-                className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-bold text-[#2C315E] shadow-2xs transition-all hover:bg-[#2C315E] hover:text-white hover:border-[#2C315E]"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-bold text-[#3C3D6B] shadow-2xs transition-all hover:bg-[#3C3D6B] hover:text-white hover:border-[#3C3D6B]"
               >
                 Contact Support
               </Link>
@@ -245,7 +245,7 @@ export function DashboardShell({
       )}
 
       <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-[#2C315E]/[0.03] via-[#4F46E5]/[0.01] to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-[#3C3D6B]/[0.03] to-transparent" />
 
         <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-neutral-200/50 bg-white/75 px-4 backdrop-blur-xl sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
@@ -265,7 +265,7 @@ export function DashboardShell({
               <input
                 type="search"
                 placeholder="Search applications, documents..."
-                className="h-10 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 pl-10 pr-4 text-sm text-neutral-700 placeholder:text-neutral-400 transition-all duration-300 focus:border-[#2C315E]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#2C315E]/8"
+                className="h-10 w-full rounded-xl border border-neutral-200 bg-neutral-50/50 pl-10 pr-4 text-sm text-neutral-700 placeholder:text-neutral-400 transition-all duration-300 focus:border-[#3C3D6B]/50 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#3C3D6B]/8"
               />
             </div>
           </div>
@@ -274,7 +274,7 @@ export function DashboardShell({
             {!isWizard && (
               <Link
                 href="/dashboard/applications/new"
-                className="hidden items-center gap-2 rounded-xl bg-gradient-to-r from-[#2C315E] to-[#E21C22] px-4 py-2 text-sm font-bold text-white shadow-xs transition-all hover:opacity-95 hover:shadow-md hover:shadow-red-500/10 hover:-translate-y-0.5 sm:inline-flex"
+                className="hidden items-center gap-2 rounded-xl bg-[#3C3D6B] hover:bg-[#2C2D54] px-4 py-2 text-sm font-bold text-white shadow-xs transition-all hover:opacity-95 hover:shadow-md hover:-translate-y-0.5 sm:inline-flex"
               >
                 <PlusCircle size={15} />
                 New Application
@@ -283,7 +283,7 @@ export function DashboardShell({
 
             <Link
               href="/dashboard/notifications"
-              className="relative rounded-xl border border-neutral-200 bg-white p-2.5 text-neutral-500 transition-all hover:bg-neutral-50 hover:text-[#2C315E]"
+              className="relative rounded-xl border border-neutral-200 bg-white p-2.5 text-neutral-500 transition-all hover:bg-neutral-50 hover:text-[#3C3D6B]"
             >
               <Bell size={18} />
               <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full border-2 border-white bg-rose-500 animate-pulse" />
@@ -294,11 +294,11 @@ export function DashboardShell({
             <DropdownMenu>
               <DropdownMenuTrigger className="group outline-none">
                 <div className="flex items-center gap-2.5 rounded-xl border border-neutral-200 bg-white/90 p-1.5 pr-3 transition-all duration-300 hover:bg-neutral-50 hover:shadow-2xs group-data-open:bg-neutral-50 sm:pr-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#2C315E] to-[#E21C22] text-xs font-bold text-white shadow-xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#3C3D6B] text-xs font-bold text-white shadow-xs">
                     {initials}
                   </div>
                   <div className="hidden flex-col items-start sm:flex text-left">
-                    <span className="max-w-[120px] truncate text-sm font-bold leading-none text-neutral-800 group-hover:text-[#2C315E]">
+                    <span className="max-w-[120px] truncate text-sm font-bold leading-none text-neutral-800 group-hover:text-[#3C3D6B]">
                       {displayName}
                     </span>
                     <span className="mt-1.5 text-[9px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
@@ -318,13 +318,13 @@ export function DashboardShell({
                 <DropdownMenuSeparator className="mb-2 bg-neutral-100" />
                 <DropdownMenuGroup className="space-y-1">
                   <Link href="/dashboard/profile" className="w-full">
-                    <DropdownMenuItem className="cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors focus:bg-[#2C315E]/5 focus:text-[#2C315E]">
+                    <DropdownMenuItem className="cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors focus:bg-[#3C3D6B]/5 focus:text-[#3C3D6B]">
                       <User className="mr-3 h-4 w-4" />
                       My Profile
                     </DropdownMenuItem>
                   </Link>
                   <Link href="/dashboard/settings" className="w-full">
-                    <DropdownMenuItem className="cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors focus:bg-[#2C315E]/5 focus:text-[#2C315E]">
+                    <DropdownMenuItem className="cursor-pointer rounded-lg px-3 py-2.5 text-sm font-medium text-neutral-700 transition-colors focus:bg-[#3C3D6B]/5 focus:text-[#3C3D6B]">
                       <Settings className="mr-3 h-4 w-4" />
                       Settings
                     </DropdownMenuItem>
@@ -355,7 +355,7 @@ export function DashboardShell({
         {!isWizard && (
           <Link
             href="/dashboard/applications/new"
-            className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#2C315E] text-white shadow-lg shadow-[#2C315E]/30 transition-transform hover:scale-105 hover:bg-[#232752] sm:hidden"
+            className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#3C3D6B] text-white shadow-lg shadow-[#3C3D6B]/30 transition-transform hover:scale-105 hover:bg-[#232752] sm:hidden"
             aria-label="Start new application"
           >
             <PlusCircle size={24} />

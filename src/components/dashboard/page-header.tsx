@@ -20,13 +20,13 @@ export function PageHeader({
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="space-y-2">
         {badge && (
-          <span className="inline-flex items-center rounded-full bg-[#2C315E]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#2C315E]">
+          <span className="inline-flex items-center rounded-full bg-[#3C3D6B]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#3C3D6B]">
             {badge}
           </span>
         )}
         <div className="flex items-center gap-3">
           {Icon && (
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#2C315E]/10 text-[#2C315E]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#3C3D6B]/10 text-[#3C3D6B]">
               <Icon size={22} />
             </div>
           )}

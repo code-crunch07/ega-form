@@ -115,7 +115,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
         
         <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm max-w-sm w-full mb-8">
           <p className="text-sm text-neutral-500 mb-1">Application Number</p>
-          <p className="text-2xl font-mono font-bold text-[#2C315E]">{successAppNumber}</p>
+          <p className="text-2xl font-mono font-bold text-[#3C3D6B]">{successAppNumber}</p>
           <div className="h-px bg-neutral-100 my-4 w-full"></div>
           <div className="flex justify-between items-center">
             <span className="text-sm text-neutral-500">Status</span>
@@ -127,7 +127,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
           <Button onClick={() => router.push("/dashboard")} variant="outline" className="h-12 px-6">
             Return to Dashboard
           </Button>
-          <Button onClick={() => router.push("/dashboard/applications")} className="h-12 px-6 bg-[#2C315E] hover:bg-slate-800 text-white">
+          <Button onClick={() => router.push("/dashboard/applications")} className="h-12 px-6 bg-[#3C3D6B] hover:bg-slate-800 text-white">
             View Application
           </Button>
         </div>
@@ -158,7 +158,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
             </h3>
             <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-[#2C315E] to-[#E21C22] transition-all duration-300 rounded-full"
+                className="h-full bg-[#3C3D6B] transition-all duration-300 rounded-full"
                 style={{ width: `${(step / 12) * 100}%` }}
               />
             </div>
@@ -170,7 +170,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
               {/* Stepper Timeline Connection Line */}
               <div className="absolute left-6 top-3 bottom-3 w-0.5 bg-slate-100 pointer-events-none" />
               <div 
-                className="absolute left-6 top-3 w-0.5 bg-gradient-to-b from-[#2C315E] to-[#E21C22] transition-all duration-300 pointer-events-none" 
+                className="absolute left-6 top-3 w-0.5 bg-[#3C3D6B] transition-all duration-300 pointer-events-none" 
                 style={{ height: `${((step - 1) / 11) * 94}%`, minHeight: '0%' }}
               />
 
@@ -183,7 +183,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                     <div className={cn(
                       "z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 font-semibold text-sm",
                       isActive
-                        ? "border-[#2C315E] bg-gradient-to-br from-[#2C315E] to-[#E21C22] text-white shadow-md shadow-red-900/15 scale-105"
+                        ? "border-[#3C3D6B] bg-[#3C3D6B] text-white shadow-md shadow-[#3C3D6B]/15 scale-105"
                         : isCompleted
                         ? "border-emerald-500 bg-emerald-500 text-white shadow-sm"
                         : "border-neutral-200 bg-white text-neutral-400 group-hover:border-neutral-300"
@@ -197,7 +197,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                     <div className="min-w-0 flex-1 text-left">
                       <p className={cn(
                         "text-xs font-bold leading-none tracking-wide transition-colors",
-                        isActive ? "text-[#2C315E]" : isCompleted ? "text-neutral-700 font-semibold" : "text-neutral-400 font-medium"
+                        isActive ? "text-[#3C3D6B]" : isCompleted ? "text-neutral-700 font-semibold" : "text-neutral-400 font-medium"
                       )}>
                         {s.name}
                       </p>
@@ -218,16 +218,16 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
         <div className="flex-1 bg-white rounded-3xl border border-neutral-200/60 shadow-2xs overflow-hidden min-h-[600px] flex flex-col">
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full flex-1">
             {/* Step Header Indicator */}
-            <div className="bg-[#2C315E]/[0.02] border-b border-neutral-100 px-6 py-5 sm:px-8 flex items-center justify-between">
+            <div className="bg-[#3C3D6B]/[0.02] border-b border-neutral-100 px-6 py-5 sm:px-8 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-[#2C315E]/10 text-[#2C315E] flex items-center justify-center">
+                <div className="h-9 w-9 rounded-xl bg-[#3C3D6B]/10 text-[#3C3D6B] flex items-center justify-center">
                   {(() => {
                     const CurrentIcon = STEPS[step - 1]?.icon;
                     return CurrentIcon ? <CurrentIcon size={18} /> : null;
                   })()}
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#2C315E]/70 font-mono">Step {step} of 12</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#3C3D6B]/70 font-mono">Step {step} of 12</span>
                   <h3 className="text-sm font-bold text-neutral-800 leading-none mt-1">{STEPS[step - 1]?.name}</h3>
                 </div>
               </div>
@@ -260,19 +260,19 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                           className={cn(
                             "relative p-8 rounded-2xl border-2 cursor-pointer transition-all duration-300 flex flex-col items-center text-center group",
                             isSelected 
-                              ? "border-[#2C315E] bg-gradient-to-br from-indigo-50/20 via-indigo-50/10 to-transparent shadow-md shadow-indigo-950/5" 
-                              : "border-neutral-200 hover:border-indigo-500/25 hover:bg-slate-50/30"
+                              ? "border-[#3C3D6B] bg-[#3C3D6B]/5 shadow-md shadow-[#3C3D6B]/5" 
+                              : "border-neutral-200 hover:border-[#3C3D6B]/30 hover:bg-slate-50/30"
                           )}
                         >
                           <div className={cn(
                             "w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
                             isSelected 
-                              ? "bg-[#2C315E] text-white shadow-xs" 
+                              ? "bg-[#3C3D6B] text-white shadow-xs" 
                               : "bg-slate-50 text-neutral-400 group-hover:bg-slate-100 group-hover:text-neutral-600 group-hover:scale-105"
                           )}>
                             {type === "International Student" ? <Globe size={24} /> : <MapPin size={24} />}
                           </div>
-                          <h3 className="font-bold text-base text-neutral-800 transition-colors group-hover:text-[#2C315E]">{type}</h3>
+                          <h3 className="font-bold text-base text-neutral-800 transition-colors group-hover:text-[#3C3D6B]">{type}</h3>
                           <p className="mt-1.5 text-xs text-neutral-400 font-medium leading-relaxed max-w-[180px]">{desc}</p>
                         </div>
                       );
@@ -298,7 +298,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       defaultValue="Singapore Main Campus"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Campus" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#3C3D6B] focus:border-[#3C3D6B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Campus" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Singapore Main Campus">Singapore Main Campus</SelectItem>
                             <SelectItem value="Malaysia Branch">Malaysia Branch</SelectItem>
@@ -316,7 +316,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       defaultValue="Undergraduate"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Level" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#3C3D6B] focus:border-[#3C3D6B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Level" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Undergraduate">Undergraduate (Bachelor's)</SelectItem>
                             <SelectItem value="Postgraduate">Postgraduate (Master's/PhD)</SelectItem>
@@ -334,7 +334,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Programme" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#3C3D6B] focus:border-[#3C3D6B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Programme" /></SelectTrigger>
                           <SelectContent>
                             {programmes.map(p => (
                               <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
@@ -352,7 +352,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Intake" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#3C3D6B] focus:border-[#3C3D6B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Intake" /></SelectTrigger>
                           <SelectContent>
                             {intakes.map(i => (
                               <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
@@ -383,11 +383,11 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                                 className={cn(
                                   "p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 flex flex-col text-left group",
                                   isSelected 
-                                    ? "border-[#2C315E] bg-[#2C315E]/[0.03] shadow-xs" 
-                                    : "border-neutral-200 hover:border-[#2C315E]/40 hover:bg-neutral-50/50"
+                                    ? "border-[#3C3D6B] bg-[#3C3D6B]/[0.03] shadow-xs" 
+                                    : "border-neutral-200 hover:border-[#3C3D6B]/40 hover:bg-neutral-50/50"
                                 )}
                               >
-                                <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#2C315E]" : "text-neutral-800")}>{item.label}</span>
+                                <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#3C3D6B]" : "text-neutral-800")}>{item.label}</span>
                                 <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
                               </div>
                             );
@@ -417,11 +417,11 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                                 className={cn(
                                   "p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 flex flex-col text-left group",
                                   isSelected 
-                                    ? "border-[#2C315E] bg-[#2C315E]/[0.03] shadow-xs" 
-                                    : "border-neutral-200 hover:border-[#2C315E]/40 hover:bg-neutral-50/50"
+                                    ? "border-[#3C3D6B] bg-[#3C3D6B]/[0.03] shadow-xs" 
+                                    : "border-neutral-200 hover:border-[#3C3D6B]/40 hover:bg-neutral-50/50"
                                 )}
                               >
-                                <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#2C315E]" : "text-neutral-800")}>{item.label}</span>
+                                <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#3C3D6B]" : "text-neutral-800")}>{item.label}</span>
                                 <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
                               </div>
                             );
@@ -591,7 +591,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
                   
                   <div className="pt-4 mt-4 border-t border-slate-200">
-                    <Button type="button" variant="outline" className="gap-2 text-[#2C315E]">
+                    <Button type="button" variant="outline" className="gap-2 text-[#3C3D6B]">
                       <Plus size={16} /> Add Another Qualification
                     </Button>
                   </div>
@@ -627,11 +627,11 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                               className={cn(
                                 "p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 flex flex-col text-left group",
                                 isSelected 
-                                  ? "border-[#2C315E] bg-[#2C315E]/[0.03] shadow-xs" 
-                                  : "border-neutral-200 hover:border-[#2C315E]/40 hover:bg-neutral-50/50"
+                                  ? "border-[#3C3D6B] bg-[#3C3D6B]/[0.03] shadow-xs" 
+                                  : "border-neutral-200 hover:border-[#3C3D6B]/40 hover:bg-neutral-50/50"
                               )}
                             >
-                              <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#2C315E]" : "text-neutral-800")}>{item.label}</span>
+                              <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#3C3D6B]" : "text-neutral-800")}>{item.label}</span>
                               <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
                             </div>
                           );
@@ -682,7 +682,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                     defaultValue="None"
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Test" /></SelectTrigger>
+                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#3C3D6B] focus:border-[#3C3D6B] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Test" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="None">No / Not Required (Native Speaker)</SelectItem>
                           <SelectItem value="IELTS">IELTS</SelectItem>
@@ -733,7 +733,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   ].map((docName, i) => (
                     <div key={i} className="border border-dashed border-neutral-300 rounded-xl p-6 bg-slate-50 flex flex-col items-center justify-center text-center hover:bg-slate-100 transition-colors cursor-pointer group">
                       <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm group-hover:scale-110 transition-transform">
-                        <Upload size={20} className="text-[#2C315E]" />
+                        <Upload size={20} className="text-[#3C3D6B]" />
                       </div>
                       <h4 className="font-semibold text-neutral-900">{docName}</h4>
                       <p className="text-xs text-neutral-500 mt-1">PDF, JPG or PNG (Max 5MB)</p>
@@ -805,19 +805,19 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
 
                 <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-6">
                   <div className="flex items-start space-x-3">
-                    <input type="checkbox" id="terms1" required className="mt-1 w-4 h-4 accent-[#2C315E]" />
+                    <input type="checkbox" id="terms1" required className="mt-1 w-4 h-4 accent-[#3C3D6B]" />
                     <Label htmlFor="terms1" className="text-slate-900 text-sm font-normal leading-snug">
                       I declare that all information provided in this application form and the accompanying documents is true and complete to the best of my knowledge. I understand that any false information may lead to rejection or dismissal.
                     </Label>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <input type="checkbox" id="terms2" required className="mt-1 w-4 h-4 accent-[#2C315E]" />
+                    <input type="checkbox" id="terms2" required className="mt-1 w-4 h-4 accent-[#3C3D6B]" />
                     <Label htmlFor="terms2" className="text-slate-900 text-sm font-normal leading-snug">
                       I agree to the University's Privacy Policy and consent to the collection, use, and disclosure of my personal data for the purposes of evaluating my application.
                     </Label>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <input type="checkbox" id="terms3" required className="mt-1 w-4 h-4 accent-[#2C315E]" />
+                    <input type="checkbox" id="terms3" required className="mt-1 w-4 h-4 accent-[#3C3D6B]" />
                     <Label htmlFor="terms3" className="text-slate-900 text-sm font-normal leading-snug">
                       I understand that I am required to pay a non-refundable application fee.
                     </Label>
@@ -845,7 +845,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                 <div className="bg-slate-50 border border-slate-200 rounded-2xl p-8 mt-8 shadow-sm text-left">
                   <div className="flex justify-between items-center border-b border-slate-200 pb-4 mb-4">
                     <span className="text-slate-600 font-semibold">Total Amount Due</span>
-                    <span className="text-2xl font-bold text-[#2C315E]">
+                    <span className="text-2xl font-bold text-[#3C3D6B]">
                       ${selectedProgramme?.applicationFee || "50.00"}
                     </span>
                   </div>
@@ -853,8 +853,8 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   <div className="space-y-3 mb-6">
                     <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Payment Method</Label>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="border-2 border-[#2C315E] bg-[#2C315E]/5 p-4 rounded-xl flex flex-col gap-1 font-bold text-sm cursor-pointer shadow-2xs">
-                        <div className="flex items-center gap-2 text-[#2C315E]">
+                      <div className="border-2 border-[#3C3D6B] bg-[#3C3D6B]/5 p-4 rounded-xl flex flex-col gap-1 font-bold text-sm cursor-pointer shadow-2xs">
+                        <div className="flex items-center gap-2 text-[#3C3D6B]">
                           <CreditCard size={18} />
                           <span>Credit Card</span>
                         </div>
@@ -894,7 +894,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="h-11 px-8 bg-gradient-to-r from-[#2C315E] to-[#E21C22] hover:opacity-95 text-white font-bold gap-2 shadow-xs rounded-xl transition-all duration-300 hover:shadow-md hover:shadow-red-500/10 hover:-translate-y-0.5"
+              className="h-11 px-8 bg-[#3C3D6B] hover:bg-[#2C2D54] text-white font-bold gap-2 shadow-xs rounded-xl transition-all duration-300 hover:shadow-md hover:shadow-[#3C3D6B]/10 hover:-translate-y-0.5"
             >
               {isSubmitting ? "Processing..." : step === 12 ? "Pay & Submit Application" : "Save & Continue"}
               {!isSubmitting && step !== 12 && <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
