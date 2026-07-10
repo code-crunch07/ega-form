@@ -127,7 +127,7 @@ function NavLinks({
                 className={cn(
                   "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 relative overflow-hidden",
                   isActive
-                    ? "bg-gradient-to-r from-[#2C315E] to-[#4F46E5] text-white shadow-lg shadow-indigo-900/15"
+                    ? "bg-gradient-to-r from-[#2C315E] to-[#E21C22] text-white shadow-lg shadow-indigo-900/15"
                     : "text-neutral-600 hover:bg-neutral-100/80 hover:text-neutral-900"
                 )}
               >
@@ -274,7 +274,7 @@ export function DashboardShell({
             {!isWizard && (
               <Link
                 href="/dashboard/applications/new"
-                className="hidden items-center gap-2 rounded-xl bg-gradient-to-r from-[#2C315E] to-[#4F46E5] px-4 py-2 text-sm font-bold text-white shadow-xs transition-all hover:opacity-95 hover:shadow-md hover:shadow-indigo-500/10 hover:-translate-y-0.5 sm:inline-flex"
+                className="hidden items-center gap-2 rounded-xl bg-gradient-to-r from-[#2C315E] to-[#E21C22] px-4 py-2 text-sm font-bold text-white shadow-xs transition-all hover:opacity-95 hover:shadow-md hover:shadow-red-500/10 hover:-translate-y-0.5 sm:inline-flex"
               >
                 <PlusCircle size={15} />
                 New Application
@@ -294,7 +294,7 @@ export function DashboardShell({
             <DropdownMenu>
               <DropdownMenuTrigger className="group outline-none">
                 <div className="flex items-center gap-2.5 rounded-xl border border-neutral-200 bg-white/90 p-1.5 pr-3 transition-all duration-300 hover:bg-neutral-50 hover:shadow-2xs group-data-open:bg-neutral-50 sm:pr-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#2C315E] to-[#4F46E5] text-xs font-bold text-white shadow-xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#2C315E] to-[#E21C22] text-xs font-bold text-white shadow-xs">
                     {initials}
                   </div>
                   <div className="hidden flex-col items-start sm:flex text-left">

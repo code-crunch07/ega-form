@@ -97,19 +97,19 @@ export default async function DashboardOverview() {
   return (
     <div className="animate-in fade-in space-y-8 pb-10 duration-500">
       {/* Welcome hero */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E2248] via-[#2C315E] to-[#4F46E5] p-6 text-white shadow-xl shadow-indigo-950/15 sm:p-8 border border-white/5">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-violet-500/20 blur-3xl" />
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C315E] via-[#2C315E] to-[#E21C22] p-6 text-white shadow-xl shadow-indigo-950/15 sm:p-8 border border-white/5">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-red-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-indigo-500/20 blur-3xl" />
 
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-4">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-violet-200">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 border border-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-red-200">
               <Sparkles size={12} className="animate-pulse" />
               Applicant Portal
             </span>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
               Welcome back,{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-indigo-200 to-white">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-200 via-indigo-100 to-white">
                 {user.profile?.firstName || displayName.split(" ")[0]}
               </span>
             </h1>
@@ -132,18 +132,18 @@ export default async function DashboardOverview() {
           <div className="w-full max-w-xs shrink-0 rounded-2xl border border-white/10 bg-white/10 backdrop-blur-md p-5 shadow-inner">
             <div className="mb-3 flex items-center justify-between text-sm font-bold">
               <span className="text-neutral-200">Profile completion</span>
-              <span className="text-white bg-[#4F46E5] px-2 py-0.5 rounded-md text-xs">{profileScore}%</span>
+              <span className="text-white bg-[#E21C22] px-2 py-0.5 rounded-md text-xs">{profileScore}%</span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-white/25">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-violet-400 to-indigo-300 transition-all duration-1000"
+                className="h-full rounded-full bg-gradient-to-r from-red-400 to-[#E21C22] transition-all duration-1000"
                 style={{ width: `${profileScore}%` }}
               />
             </div>
             {profileScore < 100 && (
               <Link
                 href="/dashboard/profile"
-                className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-violet-300 hover:text-white transition-colors hover:underline"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-red-200 hover:text-white transition-colors hover:underline"
               >
                 Complete profile <ArrowRight size={12} />
               </Link>
@@ -157,9 +157,9 @@ export default async function DashboardOverview() {
           <Link
             key={link.href}
             href={link.href}
-            className="group flex flex-col items-center rounded-2xl border border-neutral-200/60 bg-white p-5 text-center shadow-2xs transition-all duration-300 hover:border-indigo-500/20 hover:shadow-md hover:shadow-indigo-500/5 hover:-translate-y-1"
+            className="group flex flex-col items-center rounded-2xl border border-neutral-200/60 bg-white p-5 text-center shadow-2xs transition-all duration-300 hover:border-red-500/20 hover:shadow-md hover:shadow-red-500/5 hover:-translate-y-1"
           >
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#2C315E]/6 text-[#2C315E] transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-[#2C315E] group-hover:to-[#4F46E5] group-hover:text-white group-hover:scale-105 group-hover:shadow-md group-hover:shadow-indigo-500/15">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#2C315E]/6 text-[#2C315E] transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-[#2C315E] group-hover:to-[#E21C22] group-hover:text-white group-hover:scale-105 group-hover:shadow-md group-hover:shadow-red-500/15">
               <link.icon size={20} />
             </div>
             <span className="text-sm font-bold text-neutral-800 transition-colors group-hover:text-[#2C315E]">{link.label}</span>

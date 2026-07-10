@@ -158,7 +158,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
             </h3>
             <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-[#2C315E] to-[#4F46E5] transition-all duration-300 rounded-full"
+                className="h-full bg-gradient-to-r from-[#2C315E] to-[#E21C22] transition-all duration-300 rounded-full"
                 style={{ width: `${(step / 12) * 100}%` }}
               />
             </div>
@@ -170,7 +170,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
               {/* Stepper Timeline Connection Line */}
               <div className="absolute left-6 top-3 bottom-3 w-0.5 bg-slate-100 pointer-events-none" />
               <div 
-                className="absolute left-6 top-3 w-0.5 bg-[#2C315E] transition-all duration-300 pointer-events-none" 
+                className="absolute left-6 top-3 w-0.5 bg-gradient-to-b from-[#2C315E] to-[#E21C22] transition-all duration-300 pointer-events-none" 
                 style={{ height: `${((step - 1) / 11) * 94}%`, minHeight: '0%' }}
               />
 
@@ -183,7 +183,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                     <div className={cn(
                       "z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 font-semibold text-sm",
                       isActive
-                        ? "border-[#2C315E] bg-gradient-to-br from-[#2C315E] to-[#4F46E5] text-white shadow-md shadow-indigo-900/15 scale-105"
+                        ? "border-[#2C315E] bg-gradient-to-br from-[#2C315E] to-[#E21C22] text-white shadow-md shadow-red-900/15 scale-105"
                         : isCompleted
                         ? "border-emerald-500 bg-emerald-500 text-white shadow-sm"
                         : "border-neutral-200 bg-white text-neutral-400 group-hover:border-neutral-300"
@@ -298,7 +298,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       defaultValue="Singapore Main Campus"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-neutral-50 text-slate-900"><SelectValue placeholder="Select Campus" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Campus" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Singapore Main Campus">Singapore Main Campus</SelectItem>
                             <SelectItem value="Malaysia Branch">Malaysia Branch</SelectItem>
@@ -316,7 +316,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       defaultValue="Undergraduate"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-neutral-50 text-slate-900"><SelectValue placeholder="Select Level" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Level" /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Undergraduate">Undergraduate (Bachelor's)</SelectItem>
                             <SelectItem value="Postgraduate">Postgraduate (Master's/PhD)</SelectItem>
@@ -334,7 +334,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-neutral-50 text-slate-900"><SelectValue placeholder="Select Programme" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Programme" /></SelectTrigger>
                           <SelectContent>
                             {programmes.map(p => (
                               <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
@@ -352,7 +352,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-neutral-50 text-slate-900"><SelectValue placeholder="Select Intake" /></SelectTrigger>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Intake" /></SelectTrigger>
                           <SelectContent>
                             {intakes.map(i => (
                               <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
@@ -370,15 +370,28 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       control={control}
                       defaultValue="Full-Time"
                       render={({ field }) => (
-                        <div className="flex gap-6">
-                          <div className="flex items-center space-x-2">
-                            <input type="radio" value="Full-Time" id="ft" name="studyMode" onChange={field.onChange} checked={field.value === "Full-Time"} className="w-4 h-4 accent-[#2C315E]" />
-                            <Label className="text-slate-900" htmlFor="ft">Full-Time</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="radio" value="Part-Time" id="pt" name="studyMode" onChange={field.onChange} checked={field.value === "Part-Time"} className="w-4 h-4 accent-[#2C315E]" />
-                            <Label className="text-slate-900" htmlFor="pt">Part-Time</Label>
-                          </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          {[
+                            { value: "Full-Time", label: "Full-Time Study", desc: "Regular class schedule on campus" },
+                            { value: "Part-Time", label: "Part-Time Study", desc: "Flexible pacing for working professionals" }
+                          ].map(item => {
+                            const isSelected = (field.value || "Full-Time") === item.value;
+                            return (
+                              <div 
+                                key={item.value}
+                                onClick={() => field.onChange(item.value)}
+                                className={cn(
+                                  "p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 flex flex-col text-left group",
+                                  isSelected 
+                                    ? "border-[#2C315E] bg-[#2C315E]/[0.03] shadow-xs" 
+                                    : "border-neutral-200 hover:border-[#2C315E]/40 hover:bg-neutral-50/50"
+                                )}
+                              >
+                                <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#2C315E]" : "text-neutral-800")}>{item.label}</span>
+                                <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     />
@@ -391,15 +404,28 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                       control={control}
                       defaultValue="no"
                       render={({ field }) => (
-                        <div className="flex gap-6">
-                          <div className="flex items-center space-x-2">
-                            <input type="radio" value="yes" id="schol-yes" name="scholarshipApply" onChange={field.onChange} checked={field.value === "yes"} className="w-4 h-4 accent-[#2C315E]" />
-                            <Label className="text-slate-900" htmlFor="schol-yes">Yes, I wish to apply for a scholarship</Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <input type="radio" value="no" id="schol-no" name="scholarshipApply" onChange={field.onChange} checked={field.value === "no"} className="w-4 h-4 accent-[#2C315E]" />
-                            <Label className="text-slate-900" htmlFor="schol-no">No</Label>
-                          </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          {[
+                            { value: "yes", label: "Yes, I wish to apply", desc: "Submit application for academic scholarship support" },
+                            { value: "no", label: "No, self-funded", desc: "Continue with regular self-funding path" }
+                          ].map(item => {
+                            const isSelected = (field.value || "no") === item.value;
+                            return (
+                              <div 
+                                key={item.value}
+                                onClick={() => field.onChange(item.value)}
+                                className={cn(
+                                  "p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 flex flex-col text-left group",
+                                  isSelected 
+                                    ? "border-[#2C315E] bg-[#2C315E]/[0.03] shadow-xs" 
+                                    : "border-neutral-200 hover:border-[#2C315E]/40 hover:bg-neutral-50/50"
+                                )}
+                              >
+                                <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#2C315E]" : "text-neutral-800")}>{item.label}</span>
+                                <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                     />
@@ -582,21 +608,34 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                 </div>
 
                 <div className="space-y-4">
-                  <Label className="text-slate-900 text-base">Are you currently or previously employed?</Label>
+                  <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Are you currently or previously employed?</Label>
                   <Controller
                     name="isEmployed"
                     control={control}
                     defaultValue="no"
                     render={({ field }) => (
-                      <div className="flex gap-6">
-                        <div className="flex items-center space-x-2">
-                          <input type="radio" value="yes" id="emp-yes" name="isEmployed" onChange={field.onChange} checked={field.value === "yes"} className="w-4 h-4 accent-[#2C315E]" />
-                          <Label className="text-slate-900" htmlFor="emp-yes">Yes</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input type="radio" value="no" id="emp-no" name="isEmployed" onChange={field.onChange} checked={field.value === "no"} className="w-4 h-4 accent-[#2C315E]" />
-                          <Label className="text-slate-900" htmlFor="emp-no">No</Label>
-                        </div>
+                      <div className="grid grid-cols-2 gap-4 max-w-sm">
+                        {[
+                          { value: "yes", label: "Yes", desc: "I have work experience" },
+                          { value: "no", label: "No", desc: "No formal work history" }
+                        ].map(item => {
+                          const isSelected = (field.value || "no") === item.value;
+                          return (
+                            <div 
+                              key={item.value}
+                              onClick={() => field.onChange(item.value)}
+                              className={cn(
+                                "p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 flex flex-col text-left group",
+                                isSelected 
+                                  ? "border-[#2C315E] bg-[#2C315E]/[0.03] shadow-xs" 
+                                  : "border-neutral-200 hover:border-[#2C315E]/40 hover:bg-neutral-50/50"
+                              )}
+                            >
+                              <span className={cn("font-bold text-sm transition-colors", isSelected ? "text-[#2C315E]" : "text-neutral-800")}>{item.label}</span>
+                              <span className="text-[11px] text-neutral-400 mt-1">{item.desc}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   />
@@ -643,7 +682,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                     defaultValue="None"
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger className="h-12 bg-white text-slate-900"><SelectValue placeholder="Select Test" /></SelectTrigger>
+                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#2C315E] focus:border-[#2C315E] hover:bg-neutral-50/50 transition-all font-medium"><SelectValue placeholder="Select Test" /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="None">No / Not Required (Native Speaker)</SelectItem>
                           <SelectItem value="IELTS">IELTS</SelectItem>
@@ -855,7 +894,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="h-11 px-8 bg-gradient-to-r from-[#2C315E] to-[#4F46E5] hover:opacity-95 text-white font-bold gap-2 shadow-xs rounded-xl transition-all duration-300 hover:shadow-md hover:shadow-indigo-500/10 hover:-translate-y-0.5"
+              className="h-11 px-8 bg-gradient-to-r from-[#2C315E] to-[#E21C22] hover:opacity-95 text-white font-bold gap-2 shadow-xs rounded-xl transition-all duration-300 hover:shadow-md hover:shadow-red-500/10 hover:-translate-y-0.5"
             >
               {isSubmitting ? "Processing..." : step === 12 ? "Pay & Submit Application" : "Save & Continue"}
               {!isSubmitting && step !== 12 && <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
