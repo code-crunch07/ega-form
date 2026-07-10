@@ -30,7 +30,7 @@ export default function MessagesPage() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="flex flex-col overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm lg:col-span-2">
           <div className="flex items-center gap-3 border-b border-neutral-100 bg-neutral-50/50 px-6 py-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#3C3D6B]/10 text-[#3C3D6B]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#27295B]/10 text-[#27295B]">
               <Headphones size={18} />
             </div>
             <div>
@@ -54,9 +54,9 @@ export default function MessagesPage() {
               <input
                 type="text"
                 placeholder="Type your message..."
-                className="h-11 flex-1 rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 text-sm focus:border-[#3C3D6B]/40 focus:outline-none focus:ring-2 focus:ring-[#3C3D6B]/10"
+                className="h-11 flex-1 rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 text-sm focus:border-[#27295B]/40 focus:outline-none focus:ring-2 focus:ring-[#27295B]/10"
               />
-              <Button className="h-11 rounded-xl bg-[#3C3D6B] px-5 hover:bg-[#2C2D54]">
+              <Button className="h-11 rounded-xl bg-[#27295B] px-5 hover:bg-[#1E2045]">
                 <Send size={18} />
                 Send
               </Button>

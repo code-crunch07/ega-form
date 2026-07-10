@@ -40,7 +40,7 @@ export default function SettingsPage() {
         {/* Notifications */}
         <section className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm">
           <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50/50 px-6 py-4">
-            <Bell size={18} className="text-[#3C3D6B]" />
+            <Bell size={18} className="text-[#27295B]" />
             <h2 className="font-semibold text-neutral-900">Email Notifications</h2>
           </div>
           <div className="divide-y divide-neutral-100">
@@ -55,7 +55,7 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     setPrefs((prev) => ({ ...prev, [pref.id]: e.target.checked }))
                   }
-                  className="mt-1 h-4 w-4 rounded accent-[#3C3D6B]"
+                  className="mt-1 h-4 w-4 rounded accent-[#27295B]"
                 />
                 <div>
                   <p className="font-medium text-neutral-900">{pref.label}</p>
@@ -69,7 +69,7 @@ export default function SettingsPage() {
         {/* Appearance */}
         <section className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm">
           <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50/50 px-6 py-4">
-            <Globe size={18} className="text-[#3C3D6B]" />
+            <Globe size={18} className="text-[#27295B]" />
             <h2 className="font-semibold text-neutral-900">Appearance</h2>
           </div>
           <div className="p-6 space-y-6">
@@ -88,7 +88,7 @@ export default function SettingsPage() {
                     className={cn(
                       "flex flex-col items-center gap-2 rounded-xl border p-4 text-sm font-medium transition-all",
                       theme === option.id
-                        ? "border-[#3C3D6B] bg-[#3C3D6B]/5 text-[#3C3D6B]"
+                        ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]"
                         : "border-neutral-200 text-neutral-600 hover:border-neutral-300"
                     )}
                   >
@@ -101,7 +101,7 @@ export default function SettingsPage() {
 
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-neutral-700">Language</Label>
-              <select className="h-11 w-full rounded-xl border border-neutral-200 bg-neutral-50/80 px-3 text-sm focus:border-[#3C3D6B]/40 focus:outline-none focus:ring-2 focus:ring-[#3C3D6B]/10">
+              <select className="h-11 w-full rounded-xl border border-neutral-200 bg-neutral-50/80 px-3 text-sm focus:border-[#27295B]/40 focus:outline-none focus:ring-2 focus:ring-[#27295B]/10">
                 <option>English</option>
                 <option>中文</option>
                 <option>Bahasa Melayu</option>
@@ -113,7 +113,7 @@ export default function SettingsPage() {
         {/* Security */}
         <section className="overflow-hidden rounded-2xl border border-neutral-200/80 bg-white shadow-sm lg:col-span-2">
           <div className="flex items-center gap-2 border-b border-neutral-100 bg-neutral-50/50 px-6 py-4">
-            <Shield size={18} className="text-[#3C3D6B]" />
+            <Shield size={18} className="text-[#27295B]" />
             <h2 className="font-semibold text-neutral-900">Security</h2>
           </div>
           <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
@@ -135,7 +135,7 @@ export default function SettingsPage() {
         )}
         <Button
           onClick={handleSave}
-          className="h-11 rounded-xl bg-[#3C3D6B] px-8 hover:bg-[#2C2D54]"
+          className="h-11 rounded-xl bg-[#27295B] px-8 hover:bg-[#1E2045]"
         >
           Save Changes
         </Button>

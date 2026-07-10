@@ -86,7 +86,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
           label="Transactions"
           value={payments.length}
           icon={Receipt}
-          iconClassName="bg-[#3C3D6B]/10 text-[#3C3D6B]"
+          iconClassName="bg-[#27295B]/10 text-[#27295B]"
         />
         <StatCard
           label="Pending"
@@ -137,7 +137,7 @@ export default async function PaymentsPage({ searchParams }: PageProps) {
                     </td>
                     <td className="px-6 py-4">
                       {(payment.status === "Completed" || payment.status === "Paid") && (
-                        <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#3C3D6B] hover:underline">
+                        <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#27295B] hover:underline">
                           <Download size={14} />
                           Download
                         </button>

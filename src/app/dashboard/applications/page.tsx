@@ -47,7 +47,7 @@ export default async function ApplicationsPage() {
         title="My Applications"
         description="View, continue, or track the status of all your programme applications."
         actions={
-          <Button asChild className="h-11 rounded-xl bg-[#3C3D6B] hover:bg-[#2C2D54]">
+          <Button asChild className="h-11 rounded-xl bg-[#27295B] hover:bg-[#1E2045]">
             <Link href="/dashboard/applications/new">
               <PlusCircle size={18} />
               New Application

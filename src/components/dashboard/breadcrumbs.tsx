@@ -23,7 +23,7 @@ export function Breadcrumbs({
     >
       <Link
         href="/dashboard"
-        className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-neutral-500 transition-colors hover:text-[#3C3D6B]"
+        className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-neutral-500 transition-colors hover:text-[#27295B]"
       >
         <Home size={14} />
         <span className="hidden sm:inline">Home</span>
@@ -36,7 +36,7 @@ export function Breadcrumbs({
             {item.href && !isLast ? (
               <Link
                 href={item.href}
-                className="rounded-md px-1.5 py-0.5 font-medium text-neutral-500 transition-colors hover:text-[#3C3D6B]"
+                className="rounded-md px-1.5 py-0.5 font-medium text-neutral-500 transition-colors hover:text-[#27295B]"
               >
                 {item.label}
               </Link>

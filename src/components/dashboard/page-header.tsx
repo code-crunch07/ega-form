@@ -20,18 +20,18 @@ export function PageHeader({
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
       <div className="space-y-2">
         {badge && (
-          <span className="inline-flex items-center rounded-full bg-[#3C3D6B]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#3C3D6B]">
+          <span className="inline-flex items-center rounded-full bg-[#27295B]/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#27295B]">
             {badge}
           </span>
         )}
         <div className="flex items-center gap-3">
           {Icon && (
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#3C3D6B]/10 text-[#3C3D6B]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#27295B]/10 text-[#27295B]">
               <Icon size={22} />
             </div>
           )}
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
+            <h1 className="text-2xl font-heading font-bold tracking-tight text-neutral-900 sm:text-[32px] sm:leading-tight">
               {title}
             </h1>
             {description && (

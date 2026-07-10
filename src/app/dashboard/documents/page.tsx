@@ -35,7 +35,7 @@ export default async function DocumentsPage() {
         title="My Documents"
         description="Upload and manage supporting documents for your applications."
         actions={
-          <Button className="h-11 rounded-xl bg-[#3C3D6B] hover:bg-[#2C2D54]">
+          <Button className="h-11 rounded-xl bg-[#27295B] hover:bg-[#1E2045]">
             <Upload size={18} />
             Upload Document
           </Button>
@@ -59,7 +59,7 @@ export default async function DocumentsPage() {
           label="Total Types"
           value={REQUIRED_DOCS.length}
           icon={FileText}
-          iconClassName="bg-[#3C3D6B]/10 text-[#3C3D6B]"
+          iconClassName="bg-[#27295B]/10 text-[#27295B]"
         />
       </div>
 
@@ -119,7 +119,7 @@ export default async function DocumentsPage() {
             <div className="divide-y divide-neutral-100">
               {documents.map((doc) => (
                 <div key={doc.id} className="flex items-center gap-4 px-6 py-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#3C3D6B]/10 text-[#3C3D6B]">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#27295B]/10 text-[#27295B]">
                     <FileText size={18} />
                   </div>
                   <div className="min-w-0 flex-1">

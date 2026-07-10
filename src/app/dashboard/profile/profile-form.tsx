@@ -98,7 +98,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
       />
 
       <div className="relative overflow-hidden rounded-3xl border border-neutral-200/60 bg-white p-6 shadow-xs sm:p-8">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#3C3D6B]/6 blur-3xl pointer-events-none" />
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#27295B]/6 blur-3xl pointer-events-none" />
         <div className="pointer-events-none absolute -bottom-10 -left-10 h-40 w-40 rounded-full bg-[#4F46E5]/4 blur-3xl pointer-events-none" />
 
         <div className="relative flex flex-col items-center gap-6 md:flex-row md:items-start">
@@ -110,7 +110,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
                 <span className="text-[10px] font-bold text-white uppercase tracking-wider">Upload</span>
               </div>
             </div>
-            <div className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#3C3D6B] text-[10px] font-bold text-white shadow-md">
+            <div className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-[#27295B] text-[10px] font-bold text-white shadow-md">
               {profileScore}%
             </div>
           </div>
@@ -122,11 +122,11 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
             <p className="mt-1.5 text-sm font-medium text-neutral-400">{user.email}</p>
             <div className="mt-4 flex flex-wrap items-center justify-center gap-2 md:justify-start">
               <span className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-neutral-600 transition-colors hover:bg-slate-100">
-                <MapPin size={13} className="text-[#3C3D6B]" />
+                <MapPin size={13} className="text-[#27295B]" />
                 {profile.country || "Country not set"}
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-xl border border-neutral-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-neutral-600 transition-colors hover:bg-slate-100">
-                <Phone size={13} className="text-[#3C3D6B]" />
+                <Phone size={13} className="text-[#27295B]" />
                 {profile.phone || "Phone not set"}
               </span>
             </div>
@@ -135,11 +135,11 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
           <div className="w-full max-w-[220px] shrink-0 rounded-2xl border border-neutral-200/60 bg-[#f8fafc]/80 p-4.5 shadow-2xs">
             <div className="mb-2 flex items-center justify-between text-xs font-bold">
               <span className="text-neutral-500 uppercase tracking-wider">Completion</span>
-              <span className="text-[#3C3D6B] font-mono">{profileScore}%</span>
+              <span className="text-[#27295B] font-mono">{profileScore}%</span>
             </div>
             <div className="h-2 overflow-hidden rounded-full bg-slate-200/80">
               <div
-                className="h-full rounded-full bg-[#3C3D6B] transition-all duration-700"
+                className="h-full rounded-full bg-[#27295B] transition-all duration-700"
                 style={{ width: `${profileScore}%` }}
               />
             </div>
@@ -162,8 +162,8 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
                 className={cn(
                   "flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-bold transition-all duration-300 lg:w-full hover:scale-[1.01] active:scale-[0.99]",
                   isActive
-                    ? "bg-[#3C3D6B] text-white shadow-md shadow-[#3C3D6B]/10"
-                    : "border border-neutral-200 bg-white text-neutral-500 hover:border-[#3C3D6B]/20 hover:bg-slate-50/50 hover:text-neutral-800"
+                    ? "bg-[#27295B] text-white shadow-md shadow-[#27295B]/10"
+                    : "border border-neutral-200 bg-white text-neutral-500 hover:border-[#27295B]/20 hover:bg-slate-50/50 hover:text-neutral-800"
                 )}
               >
                 <tab.icon
@@ -440,7 +440,7 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
             <Button
               type="submit"
               disabled={isSaving}
-              className="flex h-11 items-center gap-2 rounded-xl bg-[#3C3D6B] hover:bg-[#2C2D54] px-8 hover:opacity-95 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 font-bold disabled:opacity-50 disabled:pointer-events-none"
+              className="flex h-11 items-center gap-2 rounded-xl bg-[#27295B] hover:bg-[#1E2045] px-8 hover:opacity-95 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 font-bold disabled:opacity-50 disabled:pointer-events-none"
             >
               {isSaving ? (
                 <>
