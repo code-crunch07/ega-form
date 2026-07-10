@@ -6,7 +6,50 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 
-export default async function PaymentsPage() {
+interface PageProps {
+  searchParams: Promise<{
+    status?: string;
+    session_id?: string;
+    application_id?: string;
+  }>;
+}
+
+export default async function PaymentsPage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+  const { status, session_id, application_id } = resolvedSearchParams;
+
+  if (status === "success" && session_id && application_id) {
+    const existingPayment = await prisma.payment.findFirst({
+      where: { applicationId: application_id }
+    });
+
+    if (!existingPayment) {
+      await prisma.payment.create({
+        data: {
+          invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+          applicationId: application_id,
+          amount: 50.00,
+          gateway: session_id.startsWith("mock_") ? "Mock" : "Stripe",
+          status: "Paid"
+        }
+      });
+
+      await prisma.application.update({
+        where: { id: application_id },
+        data: { status: "Submitted" }
+      });
+    } else {
+      await prisma.payment.update({
+        where: { id: existingPayment.id },
+        data: { status: "Paid" }
+      });
+      await prisma.application.update({
+        where: { id: application_id },
+        data: { status: "Submitted" }
+      });
+    }
+  }
+
   const user = await getMockSessionUser();
 
   const payments = await prisma.payment.findMany({
@@ -18,10 +61,10 @@ export default async function PaymentsPage() {
   });
 
   const totalPaid = payments
-    .filter((p) => p.status === "Completed")
+    .filter((p) => p.status === "Completed" || p.status === "Paid")
     .reduce((sum, p) => sum + (p.amount ?? 0), 0);
 
-  const pending = payments.filter((p) => p.status !== "Completed").length;
+  const pending = payments.filter((p) => p.status !== "Completed" && p.status !== "Paid").length;
 
   return (
     <div className="animate-in fade-in space-y-8 pb-10 duration-500">
@@ -93,7 +136,7 @@ export default async function PaymentsPage() {
                       {payment.createdAt.toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
-                      {payment.status === "Completed" && (
+                      {(payment.status === "Completed" || payment.status === "Paid") && (
                         <button className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#2C315E] hover:underline">
                           <Download size={14} />
                           Download
