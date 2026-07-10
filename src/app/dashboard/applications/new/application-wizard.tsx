@@ -183,12 +183,16 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                     <div className={cn(
                       "z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 font-semibold text-sm",
                       isActive
-                        ? "border-[#2C315E] bg-[#2C315E] text-white shadow-md shadow-indigo-900/10 scale-105"
+                        ? "border-[#2C315E] bg-gradient-to-br from-[#2C315E] to-[#4F46E5] text-white shadow-md shadow-indigo-900/15 scale-105"
                         : isCompleted
-                        ? "border-[#2C315E] bg-[#2C315E]/5 text-[#2C315E]"
-                        : "border-neutral-200 bg-white text-neutral-400"
+                        ? "border-emerald-500 bg-emerald-500 text-white shadow-sm"
+                        : "border-neutral-200 bg-white text-neutral-400 group-hover:border-neutral-300"
                     )}>
-                      {isCompleted ? <Check size={16} className="text-[#2C315E]" /> : <span>{s.id}</span>}
+                      {isCompleted ? (
+                        <Check size={16} className="text-white" />
+                      ) : (
+                        <s.icon size={16} className={cn("transition-transform group-hover:scale-110", isActive ? "text-white" : "text-neutral-400")} />
+                      )}
                     </div>
                     <div className="min-w-0 flex-1 text-left">
                       <p className={cn(
@@ -213,6 +217,25 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
         {/* Right Column: Form Panel */}
         <div className="flex-1 bg-white rounded-3xl border border-neutral-200/60 shadow-2xs overflow-hidden min-h-[600px] flex flex-col">
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full flex-1">
+            {/* Step Header Indicator */}
+            <div className="bg-[#2C315E]/[0.02] border-b border-neutral-100 px-6 py-5 sm:px-8 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-[#2C315E]/10 text-[#2C315E] flex items-center justify-center">
+                  {(() => {
+                    const CurrentIcon = STEPS[step - 1]?.icon;
+                    return CurrentIcon ? <CurrentIcon size={18} /> : null;
+                  })()}
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#2C315E]/70 font-mono">Step {step} of 12</span>
+                  <h3 className="text-sm font-bold text-neutral-800 leading-none mt-1">{STEPS[step - 1]?.name}</h3>
+                </div>
+              </div>
+              <div className="text-xs font-bold text-neutral-400 bg-neutral-100 px-2 py-1 rounded-md font-mono">
+                {Math.round((step / 12) * 100)}% Done
+              </div>
+            </div>
+
             <div className="p-6 sm:p-8 flex-1">
               
               {/* STEP 1: Applicant Type */}
@@ -268,7 +291,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                 
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Campus</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Campus</Label>
                     <Controller
                       name="campus"
                       control={control}
@@ -286,7 +309,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Programme Level</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Programme Level</Label>
                     <Controller
                       name="programmeLevel"
                       control={control}
@@ -305,7 +328,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Programme</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Programme</Label>
                     <Controller
                       name="programmeId"
                       control={control}
@@ -323,7 +346,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Intake</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Intake</Label>
                     <Controller
                       name="intake"
                       control={control}
@@ -341,7 +364,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
                   
                   <div className="space-y-3 pt-4 border-t border-neutral-100">
-                    <Label className="text-slate-900 text-slate-900">Study Mode</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Study Mode</Label>
                     <Controller
                       name="studyMode"
                       control={control}
@@ -362,7 +385,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
 
                   <div className="space-y-3 pt-4 border-t border-neutral-100">
-                    <Label className="text-slate-900 text-slate-900">Scholarship Application</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Scholarship Application</Label>
                     <Controller
                       name="scholarshipApply"
                       control={control}
@@ -395,27 +418,27 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Title</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Title</Label>
                     <Input {...register("personal.title")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Gender</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Gender</Label>
                     <Input {...register("personal.gender")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">First Name</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">First Name</Label>
                     <Input {...register("personal.firstName")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Last Name</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Last Name</Label>
                     <Input {...register("personal.lastName")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Date of Birth</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Date of Birth</Label>
                     <Input type="date" {...register("personal.dob")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Nationality</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Nationality</Label>
                     <Input {...register("personal.nationality")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   
@@ -438,31 +461,31 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-slate-900 text-slate-900">Email</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Email</Label>
                     <Input {...register("contact.email")} type="email" disabled className="h-11 bg-neutral-100 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Phone</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Phone</Label>
                     <Input {...register("contact.phone")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-slate-900 text-slate-900">Address Line 1</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Address Line 1</Label>
                     <Input {...register("contact.addressLine1")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">City</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">City</Label>
                     <Input {...register("contact.city")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">State/Province</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">State/Province</Label>
                     <Input {...register("contact.state")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Postal Code</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Postal Code</Label>
                     <Input {...register("contact.postalCode")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Country</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Country</Label>
                     <Input {...register("contact.country")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                 </div>
@@ -478,19 +501,19 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-slate-900 text-slate-900">Emergency Contact Name</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Emergency Contact Name</Label>
                     <Input {...register("family.fatherName")} placeholder="e.g. John Doe Sr." className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Relationship</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Relationship</Label>
                     <Input defaultValue="Parent" className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-slate-900 text-slate-900">Emergency Contact Number</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Emergency Contact Number</Label>
                     <Input {...register("family.emergencyPhone")} className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label className="text-slate-900 text-slate-900">Emergency Contact Email</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Emergency Contact Email</Label>
                     <Input type="email" className="h-11 bg-neutral-50 text-slate-900" />
                   </div>
                 </div>
@@ -512,31 +535,31 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Qualification / Degree Level</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Qualification / Degree Level</Label>
                       <Input {...register(`education.0.qualification`)} placeholder="e.g. High School Diploma, Bachelor's" className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Institution Name</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Institution Name</Label>
                       <Input {...register(`education.0.institution`)} placeholder="e.g. Harvard University" className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Country of Institution</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Country of Institution</Label>
                       <Input {...register(`education.0.country`)} placeholder="e.g. USA" className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Major / Field of Study</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Major / Field of Study</Label>
                       <Input {...register(`education.0.major`)} placeholder="e.g. Computer Science" className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Start Date</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Start Date</Label>
                       <Input type="date" {...register(`education.0.startDate`)} className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Completion Date</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Completion Date</Label>
                       <Input type="date" {...register(`education.0.endDate`)} className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">CGPA / Grade</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">CGPA / Grade</Label>
                       <Input {...register(`education.0.cgpa`)} placeholder="e.g. 3.8/4.0 or 85%" className="h-11 bg-white text-slate-900" />
                     </div>
                   </div>
@@ -582,20 +605,20 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                 {watchEmployed === "yes" && (
                   <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl space-y-6 mt-6 animate-in fade-in duration-300">
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Employer / Company Name</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Employer / Company Name</Label>
                       <Input {...register("employment.0.employer")} className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Position / Job Title</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Position / Job Title</Label>
                       <Input {...register("employment.0.position")} className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-slate-900 text-slate-900">Industry</Label>
+                        <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Industry</Label>
                         <Input {...register("employment.0.industry")} className="h-11 bg-white text-slate-900" />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-slate-900 text-slate-900">Years of Experience</Label>
+                        <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Years of Experience</Label>
                         <Input type="number" {...register("employment.0.yearsExperience")} className="h-11 bg-white text-slate-900" />
                       </div>
                     </div>
@@ -636,15 +659,15 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                 {watchEnglishTest !== "None" && (
                   <div className="grid grid-cols-2 gap-6 p-6 bg-slate-50 border border-slate-200 rounded-xl mt-6 animate-in fade-in duration-300">
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Overall Score</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Overall Score</Label>
                       <Input {...register("englishTest.overallScore")} placeholder="e.g. 7.5" className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-900 text-slate-900">Test Date</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Test Date</Label>
                       <Input type="date" {...register("englishTest.testDate")} className="h-11 bg-white text-slate-900" />
                     </div>
                     <div className="space-y-2 md:col-span-2">
-                      <Label className="text-slate-900 text-slate-900">Test Reference Number / TRF</Label>
+                      <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Test Reference Number / TRF</Label>
                       <Input {...register("englishTest.trf")} className="h-11 bg-white text-slate-900" />
                     </div>
                   </div>
@@ -762,7 +785,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
                   
                   <div className="pt-4 border-t border-slate-200 space-y-3">
-                    <Label className="text-slate-900 text-slate-900">Digital Signature (Type your full name)</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Digital Signature (Type your full name)</Label>
                     <Input {...register("digitalSignature")} required placeholder="John Doe" className="h-11 max-w-sm bg-white text-slate-900" />
                   </div>
                 </div>
@@ -789,13 +812,21 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                   </div>
                   
                   <div className="space-y-3 mb-6">
-                    <Label className="text-slate-900 text-slate-900">Payment Method</Label>
+                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Payment Method</Label>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="border-2 border-[#2C315E] bg-white p-3 rounded-lg flex items-center gap-3 font-semibold text-sm cursor-pointer">
-                        <CreditCard size={18} className="text-[#2C315E]" /> Credit Card
+                      <div className="border-2 border-[#2C315E] bg-[#2C315E]/5 p-4 rounded-xl flex flex-col gap-1 font-bold text-sm cursor-pointer shadow-2xs">
+                        <div className="flex items-center gap-2 text-[#2C315E]">
+                          <CreditCard size={18} />
+                          <span>Credit Card</span>
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-medium">Stripe checkout secure</span>
                       </div>
-                      <div className="border border-slate-200 bg-white p-3 rounded-lg flex items-center gap-3 font-semibold text-sm text-slate-500 cursor-pointer">
-                        PayPal
+                      <div className="border border-slate-200 bg-white p-4 rounded-xl flex flex-col gap-1 font-bold text-sm text-slate-400 cursor-not-allowed opacity-60">
+                        <div className="flex items-center gap-2">
+                          <CreditCard size={18} />
+                          <span>PayPal</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-medium">Unavailable</span>
                       </div>
                     </div>
                   </div>
