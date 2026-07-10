@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight, Upload, Plus, FileText, Globe, MapPin, Building2, UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, ScrollText, CreditCard } from "lucide-react";
+import { Check, ChevronRight, Upload, Plus, FileText, Globe, MapPin, Building2, UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, ScrollText, CreditCard, Phone, Mail, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -69,6 +69,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
   const watchProgrammeId = watch("programmeId");
   const watchEnglishTest = watch("englishTest.testName");
   const watchEmployed = watch("isEmployed");
+  const watchIntake = watch("intake");
 
   const selectedProgramme = programmes.find(p => p.id === watchProgrammeId);
 
@@ -136,19 +137,13 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Page Title */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight text-neutral-800">New Application</h1>
-        <p className="mt-1 text-sm text-neutral-400 font-medium">Complete your admission details step-by-step</p>
-      </div>
-
-      <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
+    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left Column: Sidebar Stepper */}
-        <aside className="w-full lg:w-72 lg:shrink-0">
+        <aside className="w-full lg:col-span-3 space-y-4">
           {/* Mobile Stepper Header */}
-          <div className="lg:hidden bg-white p-5 rounded-2xl border border-neutral-200/60 shadow-2xs mb-2">
+          <div className="lg:hidden bg-white p-5 rounded-2xl border border-neutral-200/60 shadow-2xs mb-2 text-left">
             <div className="flex justify-between items-center text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2 font-mono">
               <span>Progress</span>
               <span>Step {step} of 12</span>
@@ -158,20 +153,21 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
             </h3>
             <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-[#27295B] transition-all duration-300 rounded-full"
+                className="h-full bg-[#ED1C24] transition-all duration-300 rounded-full"
                 style={{ width: `${(step / 12) * 100}%` }}
               />
             </div>
           </div>
 
           {/* Desktop Stepper Track */}
-          <div className="hidden lg:block bg-white p-6 rounded-3xl border border-neutral-200/60 shadow-2xs space-y-6">
-            <div className="relative pl-1 space-y-4">
+          <div className="hidden lg:block bg-white p-6 rounded-3xl border border-neutral-200/60 shadow-2xs text-left">
+            <h3 className="font-heading font-bold text-[15px] text-neutral-800 mb-5">Application Steps</h3>
+            <div className="relative pl-1 space-y-3">
               {/* Stepper Timeline Connection Line */}
-              <div className="absolute left-6 top-3 bottom-3 w-0.5 bg-slate-100 pointer-events-none" />
+              <div className="absolute left-5 top-3 bottom-3 w-0.5 bg-slate-100 pointer-events-none" />
               <div 
-                className="absolute left-6 top-3 w-0.5 bg-[#27295B] transition-all duration-300 pointer-events-none" 
-                style={{ height: `${((step - 1) / 11) * 94}%`, minHeight: '0%' }}
+                className="absolute left-5 top-3 w-0.5 bg-[#27295B] transition-all duration-300 pointer-events-none" 
+                style={{ height: `${((step - 1) / 11) * 92}%`, minHeight: '0%' }}
               />
 
               {STEPS.map((s) => {
@@ -179,33 +175,24 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
                 const isCompleted = step > s.id;
 
                 return (
-                  <div key={s.id} className="relative flex items-center gap-4 group">
+                  <div key={s.id} className={cn("relative flex items-center gap-3.5 px-3 py-2 rounded-xl transition-all duration-300", isActive && "bg-[#F8FAFC] border border-neutral-100/50")}>
                     <div className={cn(
-                      "z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 font-semibold text-sm",
+                      "z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 font-bold text-xs font-heading",
                       isActive
-                        ? "border-[#27295B] bg-[#27295B] text-white shadow-md shadow-[#27295B]/15 scale-105"
+                        ? "border-[#27295B] bg-[#27295B] text-white shadow-xs"
                         : isCompleted
-                        ? "border-emerald-500 bg-emerald-500 text-white shadow-sm"
-                        : "border-neutral-200 bg-white text-neutral-400 group-hover:border-neutral-300"
+                        ? "border-neutral-300 bg-neutral-100 text-neutral-600"
+                        : "border-neutral-200 bg-neutral-100 text-neutral-400"
                     )}>
-                      {isCompleted ? (
-                        <Check size={16} className="text-white" />
-                      ) : (
-                        <s.icon size={16} className={cn("transition-transform group-hover:scale-110", isActive ? "text-white" : "text-neutral-400")} />
-                      )}
+                      {s.id}
                     </div>
-                    <div className="min-w-0 flex-1 text-left">
+                    <div className="min-w-0 flex-1">
                       <p className={cn(
-                        "text-xs font-bold leading-none tracking-wide transition-colors",
-                        isActive ? "text-[#27295B]" : isCompleted ? "text-neutral-700 font-semibold" : "text-neutral-400 font-medium"
+                        "text-[13px] font-heading font-semibold leading-none tracking-wide transition-colors",
+                        isActive ? "text-[#27295B]" : isCompleted ? "text-neutral-700" : "text-neutral-400 font-medium"
                       )}>
                         {s.name}
                       </p>
-                      {isActive && (
-                        <span className="inline-block mt-1 text-[10px] font-bold uppercase tracking-wider text-indigo-500 font-mono">
-                          In Progress
-                        </span>
-                      )}
                     </div>
                   </div>
                 );
@@ -214,72 +201,97 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
           </div>
         </aside>
 
-        {/* Right Column: Form Panel */}
-        <div className="flex-1 bg-white rounded-3xl border border-neutral-200/60 shadow-2xs overflow-hidden min-h-[600px] flex flex-col">
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full flex-1">
-            {/* Step Header Indicator */}
-            <div className="bg-[#27295B]/[0.02] border-b border-neutral-100 px-6 py-5 sm:px-8 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-[#27295B]/10 text-[#27295B] flex items-center justify-center">
-                  {(() => {
-                    const CurrentIcon = STEPS[step - 1]?.icon;
-                    return CurrentIcon ? <CurrentIcon size={18} /> : null;
-                  })()}
-                </div>
+        {/* Middle Column: Form Panel */}
+        <div className="lg:col-span-6 space-y-6">
+          <div className="bg-white rounded-3xl border border-neutral-200/60 shadow-2xs overflow-hidden min-h-[620px] flex flex-col">
+            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full flex-1">
+              <div className="p-6 sm:p-8 flex-1 flex flex-col justify-between">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#27295B]/70 font-mono">Step {step} of 12</span>
-                  <h3 className="text-sm font-bold text-neutral-800 leading-none mt-1">{STEPS[step - 1]?.name}</h3>
-                </div>
-              </div>
-              <div className="text-xs font-bold text-neutral-400 bg-neutral-100 px-2 py-1 rounded-md font-mono">
-                {Math.round((step / 12) * 100)}% Done
-              </div>
-            </div>
+                  {/* STEP 1: Applicant Type */}
+                  {step === 1 && (
+                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
+                      <div>
+                        <h2 className="text-2xl font-bold tracking-tight text-neutral-800">1. Applicant Type</h2>
+                        <p className="text-neutral-400 mt-1.5 text-sm font-medium">Select the option that best describes you.</p>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                        {[
+                          { type: "Local Student", desc: "I am a citizen or resident of the country where the institution is located." },
+                          { type: "Permanent Resident", desc: "I am a permanent resident of the country where the institution is located." },
+                          { type: "International Student", desc: "I am not a citizen or resident of the country where the institution is located." }
+                        ].map(({ type, desc }) => {
+                          const isSelected = watchApplicantType === type;
+                          return (
+                            <div 
+                              key={type}
+                              onClick={() => setValue("applicantType", type)}
+                              className={cn(
+                                "relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 flex flex-col items-center text-center group min-h-[200px] justify-center",
+                                isSelected 
+                                  ? "border-[#27295B] bg-[#27295B]/5 shadow-xs" 
+                                  : "border-neutral-200 hover:border-[#27295B]/30 hover:bg-slate-50/30"
+                              )}
+                            >
+                              {isSelected && (
+                                <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-[#27295B] border-2 border-white flex items-center justify-center">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                                </div>
+                              )}
+                              <div className={cn(
+                                "w-11 h-11 rounded-2xl flex items-center justify-center mb-3 transition-all duration-300",
+                                isSelected 
+                                  ? "bg-[#27295B]/10 text-[#27295B]" 
+                                  : "bg-slate-50 text-neutral-400 group-hover:bg-slate-100 group-hover:text-neutral-600 group-hover:scale-105"
+                              )}>
+                                {type === "International Student" ? <Globe size={20} /> : <MapPin size={20} />}
+                              </div>
+                              <h3 className="font-bold text-sm text-neutral-800 transition-colors group-hover:text-[#27295B]">{type}</h3>
+                              <p className="mt-2 text-xs text-neutral-400 font-medium leading-relaxed">{desc}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
 
-            <div className="p-6 sm:p-8 flex-1">
-              
-              {/* STEP 1: Applicant Type */}
-              {step === 1 && (
-                <div className="space-y-8 animate-in slide-in-from-right-4 duration-300">
-                  <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-neutral-800">Applicant Type</h2>
-                    <p className="text-neutral-400 mt-1 text-sm font-medium">Please select the category that best describes your residency status.</p>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-                    {[
-                      { type: "Local Student", desc: "Citizens of the host country" },
-                      { type: "Permanent Resident", desc: "For permanent residency status holders" },
-                      { type: "International Student", desc: "For students requiring a student visa" }
-                    ].map(({ type, desc }) => {
-                      const isSelected = watchApplicantType === type;
-                      return (
-                        <div 
-                          key={type}
-                          onClick={() => setValue("applicantType", type)}
-                          className={cn(
-                            "relative p-8 rounded-2xl border-2 cursor-pointer transition-all duration-300 flex flex-col items-center text-center group",
-                            isSelected 
-                              ? "border-[#27295B] bg-[#27295B]/5 shadow-md shadow-[#27295B]/5" 
-                              : "border-neutral-200 hover:border-[#27295B]/30 hover:bg-slate-50/30"
-                          )}
-                        >
-                          <div className={cn(
-                            "w-14 h-14 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300",
-                            isSelected 
-                              ? "bg-[#27295B] text-white shadow-xs" 
-                              : "bg-slate-50 text-neutral-400 group-hover:bg-slate-100 group-hover:text-neutral-600 group-hover:scale-105"
-                          )}>
-                            {type === "International Student" ? <Globe size={24} /> : <MapPin size={24} />}
-                          </div>
-                          <h3 className="font-bold text-base text-neutral-800 transition-colors group-hover:text-[#27295B]">{type}</h3>
-                          <p className="mt-1.5 text-xs text-neutral-400 font-medium leading-relaxed max-w-[180px]">{desc}</p>
+                      <div className="flex gap-3 bg-[#eef2f6]/70 border border-neutral-100 rounded-xl p-4.5 mt-6 text-left">
+                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#3b82f6] text-white text-[10px] font-bold font-mono">
+                          i
                         </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                        <div>
+                          <h4 className="text-xs font-bold text-[#1e3a8a]">Important Information</h4>
+                          <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
+                            Your selection helps us personalize your application form. Some questions and requirements may vary based on your choice.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4 pt-6 border-t border-neutral-100 mt-6 text-left">
+                        <h3 className="font-heading font-semibold text-neutral-800 text-[15px]">Additional Information</h3>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Country of Residence *</Label>
+                          <Controller
+                            name="contact.country"
+                            control={control}
+                            defaultValue="Singapore"
+                            render={({ field }) => (
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
+                                  <SelectValue placeholder="Select Country" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Singapore">🇸🇬 Singapore</SelectItem>
+                                  <SelectItem value="Malaysia">🇲🇾 Malaysia</SelectItem>
+                                  <SelectItem value="Indonesia">🇮🇩 Indonesia</SelectItem>
+                                  <SelectItem value="India">🇮🇳 India</SelectItem>
+                                  <SelectItem value="China">🇨🇳 China</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
             {/* STEP 2: Programme Selection */}
             {step === 2 && (
@@ -880,29 +892,105 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
           </div>
 
           {/* Bottom Action Bar */}
-          <div className="p-5 bg-[#f8fafc]/80 border-t border-neutral-200/60 flex items-center justify-between sticky bottom-0 z-10 backdrop-blur-md">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={prevStep}
-              disabled={step === 1 || isSubmitting}
-              className="h-11 px-6 border-neutral-200 text-neutral-600 hover:bg-slate-50 rounded-xl font-bold transition-all duration-300"
-            >
-              Back
-            </Button>
+          <div className="mt-8 pt-6 border-t border-neutral-100 flex items-center justify-end gap-3">
+            {step > 1 && (
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={prevStep}
+                disabled={isSubmitting}
+                className="h-11 px-6 border-neutral-200 text-neutral-600 hover:bg-slate-50 rounded-xl font-bold transition-all duration-300"
+              >
+                Back
+              </Button>
+            )}
             
             <Button 
               type="submit" 
               disabled={isSubmitting}
-              className="h-11 px-8 bg-[#27295B] hover:bg-[#1E2045] text-white font-bold gap-2 shadow-xs rounded-xl transition-all duration-300 hover:shadow-md hover:shadow-[#27295B]/10 hover:-translate-y-0.5"
+              className="h-11 px-8 bg-[#ED1C24] hover:bg-[#D91A20] text-white font-bold gap-2 shadow-xs rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ml-auto"
             >
-              {isSubmitting ? "Processing..." : step === 12 ? "Pay & Submit Application" : "Save & Continue"}
-              {!isSubmitting && step !== 12 && <ChevronRight size={16} className="transition-transform group-hover:translate-x-0.5" />}
+              {isSubmitting ? "Processing..." : step === 12 ? "Pay & Submit" : "Save & Continue"}
+              {!isSubmitting && <ChevronRight size={16} />}
             </Button>
           </div>
-        </form>
+        </div>
+      </form>
+    </div>
+
+    {/* Saved progress check badge at the bottom of form card */}
+    <div className="flex items-center justify-center gap-2 bg-[#F8FAFC] border border-neutral-200/50 rounded-2xl py-3.5 px-4 shadow-3xs text-neutral-500 text-xs font-semibold">
+      <Check size={14} className="text-emerald-500 bg-emerald-50 rounded-full p-0.5" />
+      <span>Your progress is automatically saved. You can exit and continue later.</span>
+    </div>
+  </div>
+
+    {/* Right Column: Details Panel */}
+    <aside className="w-full lg:col-span-3 space-y-6">
+      {/* Card 1: Application Progress */}
+      <div className="bg-white p-5 rounded-2xl border border-neutral-200/60 shadow-2xs text-left">
+        <h3 className="font-heading font-bold text-[15px] text-neutral-800 mb-3">Application Progress</h3>
+        <div className="text-xs font-semibold text-neutral-500 mb-1.5">Step {step} of 12</div>
+        <div className="h-1.5 w-full bg-neutral-100 rounded-full overflow-hidden mb-1.5">
+          <div 
+            className="h-full bg-[#ED1C24] rounded-full transition-all duration-300"
+            style={{ width: `${(step / 12) * 100}%` }}
+          />
+        </div>
+        <div className="text-xs font-bold text-neutral-700">{Math.round(((step - 1) / 12) * 100)}% Complete</div>
       </div>
-    </div>
-    </div>
+
+      {/* Card 2: Application Summary */}
+      <div className="bg-white p-5 rounded-2xl border border-neutral-200/60 shadow-2xs text-left">
+        <h3 className="font-heading font-bold text-[15px] text-slate-800 border-b border-neutral-100 pb-3 mb-4">Application Summary</h3>
+        <div className="space-y-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Applicant Type</p>
+            <p className="text-xs font-bold text-neutral-700 mt-0.5">{watchApplicantType || "Not Selected"}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Programme</p>
+            <p className="text-xs font-bold text-neutral-700 mt-0.5">
+              {selectedProgramme ? `${selectedProgramme.name} (${selectedProgramme.code})` : "Not Selected"}
+            </p>
+          </div>
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Intake</p>
+            <p className="text-xs font-bold text-neutral-700 mt-0.5 font-sans">
+              {watchIntake || "Not Selected"}
+            </p>
+          </div>
+          <div className="border-t border-neutral-100 pt-3">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Application Fee</p>
+            <p className="text-sm font-extrabold text-[#27295B] mt-0.5">
+              SGD {selectedProgramme?.applicationFee || "50.00"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Card 3: Need Help? */}
+      <div className="bg-white p-5 rounded-2xl border border-neutral-200/60 shadow-2xs text-left">
+        <h3 className="font-heading font-bold text-[15px] text-neutral-800 mb-2">Need Help?</h3>
+        <p className="text-xs text-neutral-500 mb-4 leading-relaxed">Our admission advisors are available to assist you.</p>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2.5 text-xs text-neutral-600 font-medium">
+            <Phone size={14} className="text-[#27295B]" />
+            <a href="tel:+6561234567" className="hover:underline">+65 6123 4567</a>
+          </div>
+          <div className="flex items-center gap-2.5 text-xs text-neutral-600 font-medium">
+            <Mail size={14} className="text-[#27295B]" />
+            <a href="mailto:admissions@educare.edu.sg" className="hover:underline">admissions@educare.edu.sg</a>
+          </div>
+          <div className="flex items-start gap-2.5 text-xs text-neutral-500">
+            <Clock size={14} className="text-[#27295B] shrink-0 mt-0.5" />
+            <span>Mon - Fri, 9:00 AM - 6:00 PM (SGT)</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+    
+  </div>
+</div>
   );
 }

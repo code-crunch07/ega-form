@@ -32,7 +32,9 @@ import {
   Menu,
   X,
   ChevronRight,
+  ChevronDown,
   HelpCircle,
+  Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getUserDisplayName, getUserInitials, getDashboardBreadcrumbs } from "@/lib/dashboard-utils";
@@ -111,13 +113,15 @@ function NavLinks({
     <>
       {NAV_SECTIONS.map((section) => (
         <div key={section.label} className="space-y-1.5">
-          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-neutral-400/90 font-mono">
+          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400/90 font-mono">
             {section.label}
           </p>
           {section.items.map((item) => {
             const isActive = item.exact
               ? pathname === item.href
               : pathname.startsWith(item.href);
+
+            const hasBadge = item.label === "Messages";
 
             return (
               <Link
@@ -127,24 +131,29 @@ function NavLinks({
                 className={cn(
                   "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-heading font-medium transition-all duration-300 relative overflow-hidden",
                   isActive
-                    ? "bg-[#27295B] text-white shadow-lg shadow-indigo-900/15 font-semibold"
-                    : "text-neutral-600 hover:bg-neutral-100/80 hover:text-neutral-900"
+                    ? "bg-[#ED1C24] text-white shadow-lg shadow-red-900/10 font-semibold"
+                    : "text-slate-300 hover:bg-[#1E2045]/60 hover:text-white"
                 )}
               >
                 <item.icon
                   size={18}
                   className={cn(
                     "shrink-0 transition-all duration-300 group-hover:scale-110",
-                    isActive ? "text-white" : "text-neutral-400 group-hover:text-[#27295B]"
+                    isActive ? "text-white" : "text-slate-400 group-hover:text-white"
                   )}
                 />
                 <span className={cn("flex-1 transition-colors duration-300", isActive && "font-semibold")}>
                   {item.label}
                 </span>
+                {hasBadge && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#ED1C24] text-[10px] font-bold text-white shrink-0">
+                    2
+                  </span>
+                )}
                 {isActive ? (
-                  <ChevronRight size={14} className="opacity-90 translate-x-0 transition-transform duration-300" />
+                  <ChevronRight size={14} className="opacity-90 translate-x-0 transition-transform duration-300 ml-auto" />
                 ) : (
-                  <ChevronRight size={14} className="opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all duration-300 text-neutral-400" />
+                  <ChevronRight size={14} className="opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all duration-300 text-slate-400 ml-auto" />
                 )}
               </Link>
             );
@@ -184,9 +193,9 @@ export function DashboardShell({
   return (
     <div className="flex min-h-screen bg-[#f8fafc] font-sans selection:bg-[#27295B]/20">
       {/* Desktop Sidebar */}
-      <aside className="z-20 hidden w-[272px] shrink-0 flex-col border-r border-neutral-200/50 bg-white/70 backdrop-blur-xl md:flex">
-        <div className="flex h-16 items-center border-b border-neutral-100 px-6">
-          <Logo href="/dashboard" iconSize={120} textClass="hidden" />
+      <aside className="z-20 hidden w-[272px] shrink-0 flex-col border-r border-[#27295B]/10 bg-[#27295B] text-white md:flex">
+        <div className="flex h-16 items-center border-b border-white/5 px-6">
+          <Logo href="/dashboard" iconSize={130} />
         </div>
 
         <div className="no-scrollbar flex-1 overflow-y-auto px-4 py-6 flex flex-col justify-between">
@@ -194,19 +203,18 @@ export function DashboardShell({
             <NavLinks pathname={pathname} />
           </div>
 
-          <div className="relative mx-1 mt-10 overflow-hidden rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-xs">
-            <div className="absolute -right-6 -bottom-6 h-20 w-20 rounded-full bg-[#27295B]/10 blur-xl pointer-events-none" />
-            <div className="relative z-10">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#27295B]/8 text-[#27295B]">
-                <HelpCircle size={18} />
+          <div className="relative mx-1 mt-10 overflow-hidden rounded-2xl border border-white/10 bg-[#1E2045] p-5 shadow-xs">
+            <div className="relative z-10 flex flex-col items-center text-center">
+              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#ED1C24]/10 text-[#ED1C24]">
+                <Headphones size={18} />
               </div>
-              <h4 className="text-sm font-bold text-neutral-800">Need help?</h4>
-              <p className="mt-1 mb-4 text-xs leading-relaxed text-neutral-500 font-medium">
-                Our admissions team can guide you through documents and deadlines.
+              <h4 className="text-sm font-bold text-white">Need Help?</h4>
+              <p className="mt-1.5 mb-4 text-xs leading-relaxed text-slate-300 font-medium">
+                Our admission team is here to assist you with your application.
               </p>
               <Link
                 href="/dashboard/messages"
-                className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-3 py-2 text-xs font-bold text-[#27295B] shadow-2xs transition-all hover:bg-[#27295B] hover:text-white hover:border-[#27295B]"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-[#ED1C24] bg-transparent px-3 py-2 text-xs font-bold text-[#ED1C24] transition-all hover:bg-[#ED1C24] hover:text-white"
               >
                 Contact Support
               </Link>
@@ -221,16 +229,16 @@ export function DashboardShell({
           <button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-neutral-900/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#27295B]/40 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute left-0 top-0 flex h-full w-[min(300px,85vw)] flex-col bg-white shadow-2xl">
-            <div className="flex h-16 items-center justify-between border-b border-neutral-100 px-5">
-              <Logo href="/dashboard" iconSize={100} textClass="hidden" />
+          <aside className="absolute left-0 top-0 flex h-full w-[min(300px,85vw)] flex-col bg-[#27295B] text-white shadow-2xl">
+            <div className="flex h-16 items-center justify-between border-b border-white/5 px-5">
+              <Logo href="/dashboard" iconSize={110} />
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg p-2 text-neutral-500 hover:bg-neutral-100"
+                className="rounded-lg p-2 text-slate-300 hover:bg-white/10 hover:text-white"
               >
                 <X size={20} />
               </button>
@@ -247,7 +255,7 @@ export function DashboardShell({
       <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="pointer-events-none absolute inset-x-0 top-0 h-96 bg-gradient-to-b from-[#27295B]/[0.03] to-transparent" />
 
-        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-neutral-200/50 bg-white/75 px-4 backdrop-blur-xl sm:px-6">
+        <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-neutral-200/50 bg-white px-4 shadow-sm backdrop-blur-xl sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
@@ -270,41 +278,42 @@ export function DashboardShell({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            {!isWizard && (
-              <Link
-                href="/dashboard/applications/new"
-                className="hidden items-center gap-2 rounded-xl bg-[#27295B] hover:bg-[#1E2045] px-4 py-2 text-sm font-bold text-white shadow-xs transition-all hover:opacity-95 hover:shadow-md hover:-translate-y-0.5 sm:inline-flex"
-              >
-                <PlusCircle size={15} />
-                New Application
-              </Link>
-            )}
+          <div className="flex items-center gap-4 sm:gap-6">
+            <Link
+              href="/dashboard/messages"
+              className="hidden items-center gap-2 text-sm font-semibold text-neutral-600 hover:text-[#27295B] sm:inline-flex"
+            >
+              <HelpCircle size={18} className="text-neutral-500" />
+              <span>Need Help?</span>
+            </Link>
 
             <Link
               href="/dashboard/notifications"
               className="relative rounded-xl border border-neutral-200 bg-white p-2.5 text-neutral-500 transition-all hover:bg-neutral-50 hover:text-[#27295B]"
             >
               <Bell size={18} />
-              <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full border-2 border-white bg-rose-500 animate-pulse" />
+              <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#ED1C24] text-[10px] font-bold text-white border-2 border-white">
+                3
+              </span>
             </Link>
 
             <div className="hidden h-6 w-px bg-neutral-200 sm:block" />
 
             <DropdownMenu>
               <DropdownMenuTrigger className="group outline-none">
-                <div className="flex items-center gap-2.5 rounded-xl border border-neutral-200 bg-white/90 p-1.5 pr-3 transition-all duration-300 hover:bg-neutral-50 hover:shadow-2xs group-data-open:bg-neutral-50 sm:pr-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#27295B] text-xs font-bold text-white shadow-xs">
-                    {initials}
+                <div className="flex items-center gap-3 rounded-xl border border-neutral-200 bg-white/90 p-1.5 pr-3 transition-all duration-300 hover:bg-neutral-50 hover:shadow-2xs group-data-open:bg-neutral-50 sm:pr-4">
+                  <div className="relative flex h-9 w-9 items-center justify-center rounded-lg bg-neutral-100 text-xs font-bold text-neutral-800 border border-neutral-200 shrink-0">
+                    <UserIcon size={16} />
                   </div>
                   <div className="hidden flex-col items-start sm:flex text-left">
                     <span className="max-w-[120px] truncate text-sm font-bold leading-none text-neutral-800 group-hover:text-[#27295B]">
                       {displayName}
                     </span>
-                    <span className="mt-1.5 text-[9px] font-bold uppercase tracking-wider text-neutral-400 font-mono">
-                      Applicant
+                    <span className="mt-1.5 text-[10px] font-semibold text-neutral-400">
+                      Applicant ID: APP-{user.id.substring(0, 5).toUpperCase()}
                     </span>
                   </div>
+                  <ChevronDown size={14} className="text-neutral-400 group-hover:text-neutral-600 ml-1 hidden sm:block" />
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -344,7 +353,10 @@ export function DashboardShell({
         </header>
 
         <div className="no-scrollbar relative z-[1] flex-1 overflow-auto p-4 sm:p-6 md:p-8">
-          <div className="mx-auto w-full max-w-[1200px]">
+          <div className="mx-auto w-full max-w-[1280px]">
+            {isWizard && breadcrumbs.length > 0 && (
+              <Breadcrumbs items={breadcrumbs} className="mb-4" />
+            )}
             {!isWizard && breadcrumbs.length > 0 && (
               <Breadcrumbs items={breadcrumbs} />
             )}
