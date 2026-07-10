@@ -353,7 +353,7 @@ export function DashboardShell({
         </header>
 
         <div className="no-scrollbar relative z-[1] flex-1 overflow-auto p-4 sm:p-6 md:p-8">
-          <div className="mx-auto w-full max-w-[1280px]">
+          <div className={cn("mx-auto w-full", isWizard ? "max-w-none" : "max-w-[1280px]")}>
             {isWizard && breadcrumbs.length > 0 && (
               <Breadcrumbs items={breadcrumbs} className="mb-4" />
             )}

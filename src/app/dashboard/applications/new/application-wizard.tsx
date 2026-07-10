@@ -137,7 +137,7 @@ export default function ApplicationWizard({ user, programmes, intakes }: { user:
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-4">
+    <div className="w-full px-2 sm:px-4 py-4">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
         {/* Left Column: Sidebar Stepper */}
