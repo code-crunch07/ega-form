@@ -92,7 +92,7 @@ export default async function AdminFeesPage() {
                   )}
                 </TableCell>
                 <TableCell className="py-3 px-6 text-right">
-                  <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex justify-end items-center gap-1.5">
                     <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
                       <Link href={`/admin/fees/${fee.id}`}>
                         <Edit size={16} />

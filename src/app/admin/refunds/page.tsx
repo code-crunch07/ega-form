@@ -117,7 +117,7 @@ export default async function AdminRefundsPage() {
                       {ref.status === "Rejected" && <Badge variant="destructive" className="shadow-sm px-2.5 py-0.5">Rejected</Badge>}
                     </TableCell>
                     <TableCell className="py-3 px-6 text-right">
-                      <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end items-center gap-1.5">
                         {ref.status === "Pending" && (
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg" title="Process Refund">
                             <RotateCcw size={16} />
