@@ -225,7 +225,7 @@ function ApplicationCard({
             </Button>
           ) : (
             <Button asChild variant="outline" className="rounded-xl border-neutral-200">
-              <Link href="/dashboard/applications">View Details</Link>
+              <Link href={`/dashboard/applications/${app.id}`}>View Details</Link>
             </Button>
           )}
         </div>

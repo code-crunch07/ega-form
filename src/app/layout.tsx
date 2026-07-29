@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
+import { Onest } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+
+const onest = Onest({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-onest",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Admissions Management System",
@@ -16,9 +24,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className="font-sans h-full antialiased"
+      className={`${onest.variable} ${onest.className} font-sans h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className={`${onest.className} min-h-full flex flex-col text-sm`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

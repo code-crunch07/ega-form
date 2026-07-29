@@ -3,11 +3,14 @@
 import { prisma } from "@/lib/prisma";
 import { getMockSessionUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { applicationSchema } from "@/lib/application-schema";
 
 export async function submitApplication(data: any) {
   const user = await getMockSessionUser();
 
   try {
+    const validatedData = applicationSchema.parse(data);
+    
     // Generate a mock application number
     const appNumber = `APP${new Date().getFullYear()}${Math.floor(10000 + Math.random() * 90000)}`;
 
@@ -90,9 +93,9 @@ export async function submitApplication(data: any) {
           postalCode: data.contact?.postalCode,
           country: data.contact?.country,
           
-          emergencyContactName: data.family?.fatherName || data.family?.guardianName,
-          emergencyContactRelation: data.family?.fatherName ? "Father" : "Guardian",
-          emergencyContactPhone: data.family?.emergencyPhone,
+          emergencyContactName: data.family?.fatherName,
+          emergencyContactRelation: data.family?.fatherRelationship || "Parent / Guardian",
+          emergencyContactPhone: data.family?.fatherPhone,
         }
       });
     }

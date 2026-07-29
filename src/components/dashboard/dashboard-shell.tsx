@@ -112,8 +112,8 @@ function NavLinks({
   return (
     <>
       {NAV_SECTIONS.map((section) => (
-        <div key={section.label} className="space-y-1.5">
-          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400/90 font-mono">
+        <div key={section.label} className="space-y-1">
+          <p className="mb-1.5 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-mono">
             {section.label}
           </p>
           {section.items.map((item) => {
@@ -129,31 +129,31 @@ function NavLinks({
                 href={item.href}
                 onClick={onNavigate}
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-heading font-medium transition-all duration-300 relative overflow-hidden",
+                  "group flex items-center gap-2.5 rounded-xl px-3 py-2 text-[13px] font-medium transition-all duration-200 relative overflow-hidden",
                   isActive
-                    ? "bg-[#ED1C24] text-white shadow-lg shadow-red-900/10 font-semibold"
-                    : "text-slate-300 hover:bg-[#1E2045]/60 hover:text-white"
+                    ? "bg-[#ED1C24] text-white shadow-xs font-semibold"
+                    : "text-slate-400 hover:bg-white/5 hover:text-white"
                 )}
               >
                 <item.icon
-                  size={18}
+                  size={16}
                   className={cn(
-                    "shrink-0 transition-all duration-300 group-hover:scale-110",
+                    "shrink-0 transition-transform duration-200 group-hover:scale-110",
                     isActive ? "text-white" : "text-slate-400 group-hover:text-white"
                   )}
                 />
-                <span className={cn("flex-1 transition-colors duration-300", isActive && "font-semibold")}>
+                <span className={cn("flex-1 transition-colors duration-200 truncate", isActive && "font-semibold")}>
                   {item.label}
                 </span>
                 {hasBadge && (
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#ED1C24] text-[10px] font-bold text-white shrink-0">
+                  <span className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#ED1C24] text-[10px] font-bold text-white shrink-0">
                     2
                   </span>
                 )}
                 {isActive ? (
-                  <ChevronRight size={14} className="opacity-90 translate-x-0 transition-transform duration-300 ml-auto" />
+                  <ChevronRight size={13} className="opacity-90 translate-x-0 transition-transform duration-200 ml-auto" />
                 ) : (
-                  <ChevronRight size={14} className="opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all duration-300 text-slate-400 ml-auto" />
+                  <ChevronRight size={13} className="opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all duration-200 text-slate-500 ml-auto" />
                 )}
               </Link>
             );
@@ -193,28 +193,30 @@ export function DashboardShell({
   return (
     <div className="flex min-h-screen bg-[#f8fafc] font-sans selection:bg-[#27295B]/20">
       {/* Desktop Sidebar */}
-      <aside className="z-20 hidden w-[272px] shrink-0 flex-col border-r border-[#27295B]/10 bg-[#27295B] text-white md:flex">
-        <div className="flex h-16 items-center border-b border-white/5 px-6">
-          <Logo href="/dashboard" iconSize={130} />
+      <aside className="z-20 hidden w-[260px] shrink-0 flex-col border-r border-[#131d35] bg-[#0c1427] text-white md:flex">
+        <div className="flex h-16 items-center border-b border-[#131d35] px-5 bg-[#0c1427]">
+          <div className="bg-white/95 px-3 py-1.5 rounded-xl border border-white/20 shadow-xs flex items-center justify-center w-full">
+            <Logo href="/dashboard" iconSize={125} />
+          </div>
         </div>
 
-        <div className="no-scrollbar flex-1 overflow-y-auto px-4 py-6 flex flex-col justify-between">
-          <div className="space-y-8">
+        <div className="no-scrollbar flex-1 overflow-y-auto px-3 py-5 flex flex-col justify-between">
+          <div className="space-y-6">
             <NavLinks pathname={pathname} />
           </div>
 
-          <div className="relative mx-1 mt-10 overflow-hidden rounded-2xl border border-white/10 bg-[#1E2045] p-5 shadow-xs">
+          <div className="relative mx-1 mt-6 overflow-hidden rounded-2xl border border-white/10 bg-[#131d35] p-4 shadow-xs">
             <div className="relative z-10 flex flex-col items-center text-center">
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-[#ED1C24]/10 text-[#ED1C24]">
-                <Headphones size={18} />
+              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[#ED1C24]/10 text-[#ED1C24]">
+                <Headphones size={16} />
               </div>
-              <h4 className="text-sm font-bold text-white">Need Help?</h4>
-              <p className="mt-1.5 mb-4 text-xs leading-relaxed text-slate-300 font-medium">
-                Our admission team is here to assist you with your application.
+              <h4 className="text-xs font-bold text-white">Need Help?</h4>
+              <p className="mt-1 mb-3 text-[11px] leading-relaxed text-slate-300 font-medium">
+                Our admission team is here to assist you.
               </p>
               <Link
                 href="/dashboard/messages"
-                className="inline-flex w-full items-center justify-center rounded-xl border border-[#ED1C24] bg-transparent px-3 py-2 text-xs font-bold text-[#ED1C24] transition-all hover:bg-[#ED1C24] hover:text-white"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-[#ED1C24] bg-transparent px-3 py-1.5 text-[11px] font-bold text-[#ED1C24] transition-all hover:bg-[#ED1C24] hover:text-white"
               >
                 Contact Support
               </Link>
@@ -229,22 +231,24 @@ export function DashboardShell({
           <button
             type="button"
             aria-label="Close menu"
-            className="absolute inset-0 bg-[#27295B]/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#0c1427]/60 backdrop-blur-xs"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute left-0 top-0 flex h-full w-[min(300px,85vw)] flex-col bg-[#27295B] text-white shadow-2xl">
-            <div className="flex h-16 items-center justify-between border-b border-white/5 px-5">
-              <Logo href="/dashboard" iconSize={110} />
+          <aside className="absolute left-0 top-0 flex h-full w-[min(280px,85vw)] flex-col bg-[#0c1427] text-white shadow-2xl">
+            <div className="flex h-16 items-center justify-between border-b border-[#131d35] px-5">
+              <div className="bg-white/95 px-3 py-1.5 rounded-xl border border-white/20 shadow-xs">
+                <Logo href="/dashboard" iconSize={110} />
+              </div>
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg p-2 text-slate-300 hover:bg-white/10 hover:text-white"
               >
-                <X size={20} />
+                <X size={18} />
               </button>
             </div>
-            <div className="no-scrollbar flex-1 overflow-y-auto px-4 py-6">
-              <div className="space-y-8">
+            <div className="no-scrollbar flex-1 overflow-y-auto px-3 py-5">
+              <div className="space-y-6">
                 <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
               </div>
             </div>

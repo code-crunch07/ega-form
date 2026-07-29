@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight, Upload, Plus, FileText, Globe, MapPin, Building2, UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, ScrollText, CreditCard, Phone, Mail, Clock } from "lucide-react";
+import { Check, ChevronRight, Upload, Plus, FileText, Globe, MapPin, Building2, UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, ScrollText, CreditCard, Phone, Mail, Clock, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,75 +11,120 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { submitApplication } from "@/app/actions/application";
 import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { applicationSchema } from "@/lib/application-schema";
 
-const STEPS = [
-  { id: 1, name: "Applicant Type", icon: UserCircle2 },
-  { id: 2, name: "Programme", icon: Building2 },
-  { id: 3, name: "Personal", icon: UserCircle2 },
-  { id: 4, name: "Contact", icon: MapPin },
-  { id: 5, name: "Family", icon: UserCircle2 },
-  { id: 6, name: "Education", icon: GraduationCap },
-  { id: 7, name: "Employment", icon: Briefcase },
-  { id: 8, name: "English", icon: Languages },
-  { id: 9, name: "Documents", icon: FileText },
-  { id: 10, name: "Review", icon: ClipboardCheck },
-  { id: 11, name: "Declaration", icon: ScrollText },
-  { id: 12, name: "Payment", icon: CreditCard },
+const SECTIONS = [
+  { id: 1, name: "Programme & Residency", shortName: "1. Programme", icon: Building2, desc: "Residency & programme choice" },
+  { id: 2, name: "Personal & Contact Details", shortName: "2. Personal & Contact", icon: UserCircle2, desc: "Identity, address & emergency contact" },
+  { id: 3, name: "Education & Qualifications", shortName: "3. Education", icon: GraduationCap, desc: "Academic history & English test" },
+  { id: 4, name: "Employment & Documents", shortName: "4. Employment & Docs", icon: Briefcase, desc: "Work history & document uploads" },
+  { id: 5, name: "Review & Payment", shortName: "5. Review & Pay", icon: CreditCard, desc: "Review summary, terms & payment" },
 ];
 
 export default function ApplicationWizard({ user, programmes, intakes, schools = [] }: { user: any, programmes: any[], intakes: any[], schools?: any[] }) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successAppNumber, setSuccessAppNumber] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [editingQualId, setEditingQualId] = useState<number | null>(null);
   const [educationList, setEducationList] = useState<any[]>([
-    { id: 1, qualification: "Bachelor's Degree", institution: "National University of Singapore", major: "Business Administration", year: "2020" },
-    { id: 2, qualification: "Higher Secondary", institution: "Singapore Polytechnic", major: "Business", year: "2016" },
-    { id: 3, qualification: "Secondary School", institution: "St. Andrew's School", major: "General", year: "2014" }
+    { id: 1, qualification: "Bachelor's Degree", institution: "National University of Singapore", major: "Business Administration", year: "2020-2024", country: "Singapore", modeOfStudy: "Full Time", completionStatus: "Completed", language: "English" },
+    { id: 2, qualification: "Higher Secondary", institution: "Singapore Polytechnic", major: "Business", year: "2016-2019", country: "Singapore", modeOfStudy: "Full Time", completionStatus: "Completed", language: "English" },
+    { id: 3, qualification: "Secondary School", institution: "St. Andrew's School", major: "General", year: "2012-2016", country: "Singapore", modeOfStudy: "Full Time", completionStatus: "Completed", language: "English" }
   ]);
+  const [isQualModalOpen, setIsQualModalOpen] = useState(false);
+  const [qualForm, setQualForm] = useState<{
+    country: string;
+    qualification: string;
+    institution: string;
+    school: string;
+    major: string;
+    startYear: string;
+    endYear: string;
+    modeOfStudy: string;
+    completionStatus: string;
+    language: string;
+    gpa: string;
+    classification: string;
+  }>({
+    country: "Singapore",
+    qualification: "Bachelor's Degree",
+    institution: "",
+    school: "",
+    major: "",
+    startYear: "2020",
+    endYear: "2024",
+    modeOfStudy: "Full Time",
+    completionStatus: "Completed",
+    language: "English",
+    gpa: "",
+    classification: "Pass With Merit"
+  });
   const router = useRouter();
 
-  const { register, handleSubmit, control, watch, setValue, getValues } = useForm<any>({
+  const { register, handleSubmit, control, watch, setValue, getValues, trigger, formState: { errors } } = useForm<any>({
+    resolver: zodResolver(applicationSchema),
     defaultValues: {
       applicantType: "Local Student",
-      // Pre-fill from Profile
+      courseType: "Standalone Course",
+      courseLevel: "",
+      progressionOption: "",
       personal: {
         title: user.profile?.title || "mr",
         firstName: user.profile?.firstName || "",
         lastName: user.profile?.lastName || "",
         gender: user.profile?.gender || "male",
         dob: user.profile?.dob ? new Date(user.profile.dob).toISOString().split('T')[0] : "",
-        nationality: user.profile?.nationality || "",
+        nationality: user.profile?.nationality || "Singaporean",
         passportNumber: user.profile?.passportNumber || "",
       },
       contact: {
         email: user.email,
         phone: user.profile?.phone || "",
         addressLine1: user.profile?.address || "",
-        city: user.profile?.city || "",
+        city: user.profile?.city || "Singapore",
         state: user.profile?.state || "",
         postalCode: user.profile?.postalCode || "",
-        country: user.profile?.country || "",
+        country: user.profile?.country || "Singapore",
       },
       family: {
         fatherName: user.profile?.emergencyContactName || "",
-        emergencyPhone: user.profile?.emergencyContactPhone || "",
+        fatherPhone: user.profile?.emergencyContactPhone || "",
+        fatherEmail: "",
+        fatherRelationship: "Father",
       },
-      education: [{}], // Initialize with one blank row
+      marketingSource: "Online Search",
+      agent: {
+        isAgentSubmitted: false,
+        agentCompanyName: "",
+        counsellorName: "",
+        agentEmail: "",
+      },
+      education: [{}],
       employment: [{}],
       englishTest: { testName: "None" }
     }
   });
 
   const watchApplicantType = watch("applicantType");
+  const watchCourseType = watch("courseType") || "Standalone Course";
+  const watchCourseLevel = watch("courseLevel");
+  const watchProgressionOption = watch("progressionOption");
   const watchProgrammeId = watch("programmeId");
   const watchEnglishTest = watch("englishTest.testName");
   const watchEmployed = watch("isEmployed");
   const watchIntake = watch("intake");
   const watchSchool = watch("school");
+  const watchMarketingSource = watch("marketingSource");
+  const watchIsAgent = watch("agent.isAgentSubmitted");
 
   const filteredProgrammes = programmes.filter(p => {
-    if (!watchSchool) return true;
-    return p.schoolId === watchSchool || p.school?.name === watchSchool;
+    if (watchSchool && p.schoolId !== watchSchool && p.school?.name !== watchSchool) return false;
+    if (watchCourseLevel && watchCourseLevel !== "All Levels" && watchCourseLevel !== "") {
+      return p.level?.toLowerCase().includes(watchCourseLevel.toLowerCase()) || p.name?.toLowerCase().includes(watchCourseLevel.toLowerCase());
+    }
+    return true;
   });
 
   const selectedProgramme = programmes.find(p => p.id === watchProgrammeId);
@@ -88,26 +133,48 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
     setValue("education", educationList);
   }, [educationList, setValue]);
 
-  const nextStep = () => {
-    if (step < 12) {
-      setStep(step + 1);
-      window.scrollTo(0, 0);
+  const nextStep = async () => {
+    if (step < 5) {
+      let fieldsToValidate: string[] = [];
+      switch (step) {
+        case 1: fieldsToValidate = ['applicantType', 'contact.country', 'programmeId', 'intake']; break;
+        case 2: fieldsToValidate = ['personal.firstName', 'personal.dob', 'personal.gender', 'personal.nationality', 'personal.passportNumber', 'contact.email', 'contact.phone', 'contact.addressLine1', 'contact.city', 'contact.postalCode', 'family.fatherName', 'family.fatherPhone']; break;
+        case 3: fieldsToValidate = ['education']; break;
+        case 4: fieldsToValidate = []; break;
+      }
+      
+      const isStepValid = fieldsToValidate.length > 0 ? await trigger(fieldsToValidate as any) : true;
+      
+      if (isStepValid) {
+        setFormError(null);
+        setStep(step + 1);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setFormError("There are incomplete required fields in this section. Please fill all fields marked with *.");
+      }
     }
   };
 
   const prevStep = () => {
     if (step > 1) {
       setStep(step - 1);
-      window.scrollTo(0, 0);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
   const onSubmit = async (data: any) => {
-    if (step !== 12) {
-      nextStep();
+    if (step !== 5) {
+      await nextStep();
       return;
     }
     
+    // Validate declaration agreement
+    const declarationCheck = (document.getElementById("declareCheck") as HTMLInputElement)?.checked;
+    if (!declarationCheck) {
+      setFormError("You must accept the declaration agreement before submitting.");
+      return;
+    }
+
     // Final Submit
     setIsSubmitting(true);
     const result = await submitApplication(data);
@@ -116,35 +183,35 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
     if (result.success) {
       setSuccessAppNumber(result.appNumber);
     } else {
-      alert("Error submitting application: " + result.error);
+      setFormError("Error submitting application: " + (result.error || "Please try again."));
     }
   };
 
   if (successAppNumber) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center animate-in zoom-in duration-500">
-        <div className="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-6">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center animate-in zoom-in duration-500 font-sans">
+        <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-sm">
           <Check size={48} strokeWidth={3} />
         </div>
-        <h1 className="text-4xl font-bold text-neutral-900 mb-2">🎉 Congratulations!</h1>
-        <p className="text-xl text-neutral-600 mb-8">Your application has been submitted successfully.</p>
+        <h1 className="text-4xl font-bold text-neutral-900 mb-2 font-heading">🎉 Congratulations!</h1>
+        <p className="text-lg text-neutral-600 mb-8 font-medium">Your application has been submitted successfully.</p>
         
-        <div className="bg-white p-6 rounded-xl border border-neutral-200 shadow-sm max-w-sm w-full mb-8">
-          <p className="text-sm text-neutral-500 mb-1">Application Number</p>
-          <p className="text-2xl font-mono font-bold text-[#27295B]">{successAppNumber}</p>
-          <div className="h-px bg-neutral-100 my-4 w-full"></div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-neutral-500">Status</span>
-            <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded">Submitted</span>
+        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm max-w-sm w-full mb-8">
+          <p className="text-xs text-neutral-400 font-semibold uppercase tracking-wider font-mono mb-1">Application Number</p>
+          <p className="text-2xl font-mono font-extrabold text-[#27295B]">{successAppNumber}</p>
+          <div className="h-px bg-neutral-100 my-4 w-full" />
+          <div className="flex justify-between items-center text-xs">
+            <span className="text-neutral-500 font-medium">Status</span>
+            <span className="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full">Submitted</span>
           </div>
         </div>
 
         <div className="flex gap-4">
-          <Button onClick={() => router.push("/dashboard")} variant="outline" className="h-12 px-6">
+          <Button onClick={() => router.push("/dashboard")} variant="outline" className="h-11 px-6 rounded-xl font-bold">
             Return to Dashboard
           </Button>
-          <Button onClick={() => router.push("/dashboard/applications")} className="h-12 px-6 bg-[#27295B] hover:bg-slate-800 text-white">
-            View Application
+          <Button onClick={() => router.push("/dashboard/applications")} className="h-11 px-6 bg-[#27295B] hover:bg-[#1e204b] text-white rounded-xl font-bold">
+            View My Applications
           </Button>
         </div>
       </div>
@@ -152,692 +219,711 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
   }
 
   return (
-    <div className="w-full px-2 sm:px-4 py-4">
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Left Column: Sidebar Stepper */}
-        <aside className="w-full lg:col-span-3 space-y-4">
-          {/* Mobile Stepper Header */}
-          <div className="lg:hidden bg-white p-5 rounded-2xl border border-neutral-200/60 shadow-2xs mb-2 text-left">
-            <div className="flex justify-between items-center text-xs font-bold text-neutral-500 uppercase tracking-wider mb-2 font-mono">
-              <span>Progress</span>
-              <span>Step {step} of 12</span>
-            </div>
-            <h3 className="text-sm font-bold text-neutral-800 mb-3">
-              {STEPS.find(s => s.id === step)?.name}
-            </h3>
-            <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-[#ED1C24] transition-all duration-300 rounded-full"
-                style={{ width: `${(step / 12) * 100}%` }}
-              />
-            </div>
+    <div className="w-full max-w-5xl mx-auto px-4 py-6 space-y-8 text-left font-sans">
+      
+      {/* 1. Header Banner & Section Navigation Bar */}
+      <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs p-6 sm:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-5">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#27295B] bg-[#27295B]/10 px-3 py-1 rounded-full font-mono">
+              EGA Admissions Portal
+            </span>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 mt-2 font-heading tracking-tight">
+              Student Application Form
+            </h1>
+            <p className="text-xs sm:text-sm text-neutral-500 mt-1 font-medium">
+              Complete the 5 application sections below to submit your application.
+            </p>
           </div>
 
-          {/* Desktop Stepper Track */}
-          <div className="hidden lg:block bg-white p-6 rounded-3xl border border-neutral-200/60 shadow-2xs text-left">
-            <h3 className="font-heading font-bold text-[15px] text-neutral-800 mb-5">Application Steps</h3>
-            <div className="relative pl-1 space-y-3">
-              {/* Stepper Timeline Connection Line */}
-              <div className="absolute left-5 top-3 bottom-3 w-0.5 bg-slate-100 pointer-events-none" />
-              <div 
-                className="absolute left-5 top-3 w-0.5 bg-[#27295B] transition-all duration-300 pointer-events-none" 
-                style={{ height: `${((step - 1) / 11) * 92}%`, minHeight: '0%' }}
-              />
-
-              {STEPS.map((s) => {
-                const isActive = step === s.id;
-                const isCompleted = step > s.id;
-
-                return (
-                  <div key={s.id} className={cn("relative flex items-center gap-3.5 px-3 py-2 rounded-xl transition-all duration-300", isActive && "bg-[#F8FAFC] border border-neutral-100/50")}>
-                    <div className={cn(
-                      "z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 font-bold text-xs font-heading",
-                      isActive
-                        ? "border-[#27295B] bg-[#27295B] text-white shadow-xs"
-                        : isCompleted
-                        ? "border-neutral-300 bg-neutral-100 text-neutral-600"
-                        : "border-neutral-200 bg-neutral-100 text-neutral-400"
-                    )}>
-                      {s.id}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className={cn(
-                        "text-[13px] font-heading font-semibold leading-none tracking-wide transition-colors",
-                        isActive ? "text-[#27295B]" : isCompleted ? "text-neutral-700" : "text-neutral-400 font-medium"
-                      )}>
-                        {s.name}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
+          <div className="flex items-center gap-4 bg-slate-50 border border-neutral-200/60 p-3.5 rounded-2xl shrink-0">
+            <div className="text-right">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Progress</p>
+              <p className="text-sm font-extrabold text-[#27295B]">{Math.round((step / 5) * 100)}% Complete</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-[#27295B] text-white flex items-center justify-center font-bold text-xs font-mono shadow-xs">
+              {step}/5
             </div>
           </div>
-        </aside>
+        </div>
 
-        {/* Middle Column: Form Panel */}
-        <div className="lg:col-span-6 space-y-6">
-          <div className="bg-white rounded-3xl border border-neutral-200/60 shadow-2xs overflow-hidden min-h-[620px] flex flex-col">
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full flex-1">
-              <div className="p-6 sm:p-8 flex-1 flex flex-col justify-between">
-                <div>
-                  {/* STEP 1: Applicant Type */}
-                  {step === 1 && (
-                    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                      <div>
-                        <h2 className="text-2xl font-bold tracking-tight text-neutral-800">1. Applicant Type</h2>
-                        <p className="text-neutral-400 mt-1.5 text-sm font-medium">Select the option that best describes you.</p>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                        {[
-                          { type: "Local Student", desc: "I am a citizen or resident of the country where the institution is located." },
-                          { type: "Permanent Resident", desc: "I am a permanent resident of the country where the institution is located." },
-                          { type: "International Student", desc: "I am not a citizen or resident of the country where the institution is located." }
-                        ].map(({ type, desc }) => {
-                          const isSelected = watchApplicantType === type;
-                          return (
-                            <div 
-                              key={type}
-                              onClick={() => setValue("applicantType", type)}
-                              className={cn(
-                                "relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 flex flex-col items-center text-center group min-h-[200px] justify-center",
-                                isSelected 
-                                  ? "border-[#27295B] bg-[#27295B]/5 shadow-xs" 
-                                  : "border-neutral-200 hover:border-[#27295B]/30 hover:bg-slate-50/30"
-                              )}
-                            >
-                              {isSelected && (
-                                <div className="absolute top-3 right-3 h-5 w-5 rounded-full bg-[#27295B] border-2 border-white flex items-center justify-center">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                                </div>
-                              )}
-                              <div className={cn(
-                                "w-11 h-11 rounded-2xl flex items-center justify-center mb-3 transition-all duration-300",
-                                isSelected 
-                                  ? "bg-[#27295B]/10 text-[#27295B]" 
-                                  : "bg-slate-50 text-neutral-400 group-hover:bg-slate-100 group-hover:text-neutral-600 group-hover:scale-105"
-                              )}>
-                                {type === "International Student" ? <Globe size={20} /> : <MapPin size={20} />}
-                              </div>
-                              <h3 className="font-bold text-sm text-neutral-800 transition-colors group-hover:text-[#27295B]">{type}</h3>
-                              <p className="mt-2 text-xs text-neutral-400 font-medium leading-relaxed">{desc}</p>
-                            </div>
-                          );
-                        })}
-                      </div>
+        {/* 5-Section Stepper Track */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+          {SECTIONS.map((sec) => {
+            const isActive = step === sec.id;
+            const isCompleted = step > sec.id;
+            const IconComp = sec.icon;
 
-                      <div className="flex gap-3 bg-[#eef2f6]/70 border border-neutral-100 rounded-xl p-4.5 mt-6 text-left">
-                        <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#3b82f6] text-white text-[10px] font-bold font-mono">
-                          i
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-[#1e3a8a]">Important Information</h4>
-                          <p className="text-xs text-neutral-500 mt-1 leading-relaxed">
-                            Your selection helps us personalize your application form. Some questions and requirements may vary based on your choice.
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4 pt-6 border-t border-neutral-100 mt-6 text-left">
-                        <h3 className="font-heading font-semibold text-neutral-800 text-[15px]">Additional Information</h3>
-                        <div className="space-y-2">
-                          <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Country of Residence *</Label>
-                          <Controller
-                            name="contact.country"
-                            control={control}
-                            defaultValue="Singapore"
-                            render={({ field }) => (
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
-                                  <SelectValue placeholder="Select Country" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Singapore">🇸🇬 Singapore</SelectItem>
-                                  <SelectItem value="Malaysia">🇲🇾 Malaysia</SelectItem>
-                                  <SelectItem value="Indonesia">🇮🇩 Indonesia</SelectItem>
-                                  <SelectItem value="India">🇮🇳 India</SelectItem>
-                                  <SelectItem value="China">🇨🇳 China</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}            {/* STEP 2: Programme Selection */}
-            {step === 2 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">2. Programme Selection</h2>
-                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Choose the programme you want to apply for.</p>
+            return (
+              <button
+                type="button"
+                key={sec.id}
+                onClick={() => {
+                  if (sec.id <= step || isCompleted) {
+                    setStep(sec.id);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }
+                }}
+                className={cn(
+                  "flex flex-col items-center sm:items-start text-center sm:text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer group relative overflow-hidden",
+                  isActive 
+                    ? "bg-[#27295B] text-white border-[#27295B] shadow-md" 
+                    : isCompleted
+                    ? "bg-emerald-50/80 border-emerald-200 text-emerald-900 hover:bg-emerald-100/70"
+                    : "bg-slate-50/70 border-neutral-200/80 text-neutral-400 hover:bg-slate-100/60"
+                )}
+              >
+                <div className="flex items-center justify-between w-full mb-2">
+                  <div className={cn(
+                    "w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold font-mono transition-colors",
+                    isActive ? "bg-white/20 text-white" : isCompleted ? "bg-emerald-600 text-white" : "bg-white text-neutral-500 border border-neutral-200"
+                  )}>
+                    {isCompleted ? <Check size={14} strokeWidth={3} /> : sec.id}
+                  </div>
+                  <IconComp size={16} className={cn(isActive ? "text-white/80" : isCompleted ? "text-emerald-600" : "text-neutral-300")} />
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-[13px]">School / Faculty *</Label>
-                    <Controller
-                      name="school"
-                      control={control}
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
-                            <SelectValue placeholder="Select School / Faculty" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {schools && schools.length > 0 ? (
-                              schools.map(s => (
-                                <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                              ))
-                            ) : (
-                              <>
-                                <SelectItem value="School of Business">School of Business</SelectItem>
-                                <SelectItem value="School of Computing">School of Computing</SelectItem>
-                                <SelectItem value="School of Engineering">School of Engineering</SelectItem>
-                              </>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
+                <p className={cn("text-xs font-bold truncate w-full", isActive ? "text-white" : isCompleted ? "text-emerald-950" : "text-neutral-700")}>
+                  {sec.shortName}
+                </p>
+                <p className={cn("text-[10px] truncate w-full mt-0.5 hidden sm:block", isActive ? "text-white/70" : isCompleted ? "text-emerald-700" : "text-neutral-400")}>
+                  {sec.desc}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-[13px]">Programme *</Label>
-                    <Controller
-                      name="programmeId"
-                      control={control}
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
-                            <SelectValue placeholder="Select Programme" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {filteredProgrammes.map(p => (
-                              <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
+      {/* Top Error Alert Banner */}
+      {formError && (
+        <div className="p-4 rounded-2xl bg-rose-600 text-white font-semibold text-xs sm:text-sm flex items-center justify-between shadow-lg animate-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-3">
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-white font-bold text-xs">
+              ✕
+            </div>
+            <span>{formError}</span>
+          </div>
+          <button type="button" onClick={() => setFormError(null)} className="text-white/80 hover:text-white text-xs font-mono font-bold ml-4 shrink-0">
+            Dismiss
+          </button>
+        </div>
+      )}
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-[13px]">Intake / Entry Term *</Label>
-                    <Controller
-                      name="intake"
-                      control={control}
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
-                            <SelectValue placeholder="Select Intake" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {intakes.map(i => (
-                              <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="mt-6 p-5 rounded-2xl border border-neutral-200 bg-neutral-50/30 text-left space-y-3">
-                    <h4 className="font-heading font-bold text-sm text-neutral-800">Programme Details</h4>
-                    <div className="grid grid-cols-2 gap-4 text-xs">
-                      <div>
-                        <p className="text-neutral-400 font-medium">Duration</p>
-                        <p className="text-neutral-800 font-bold mt-0.5">12 Months (Full-time)</p>
-                      </div>
-                      <div>
-                        <p className="text-neutral-400 font-medium">Location</p>
-                        <p className="text-neutral-800 font-bold mt-0.5">Singapore Campus</p>
-                      </div>
-                      <div className="col-span-2 pt-2 border-t border-neutral-100">
-                        <p className="text-neutral-400 font-medium">Application Fee</p>
-                        <p className="text-sm font-extrabold text-[#27295B] mt-0.5">
-                          SGD {selectedProgramme?.applicationFee || "50.00"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+      {/* 2. Main Section Form Container */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs p-6 sm:p-10 space-y-8 min-h-[500px]">
+          
+          {/* SECTION 1: Programme & Residency Selection */}
+          {step === 1 && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div>
+                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 1 of 5</span>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Programme & Residency Selection</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium">Select your residency status and target program for admission.</p>
               </div>
-            )}
 
-            {/* STEP 3: Personal Information */}
-            {step === 3 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">3. Personal Information</h2>
-                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Provide your basic personal details.</p>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-[13px]">Full Name (as in Passport) *</Label>
-                    <Input {...register("personal.firstName")} placeholder="John Michael Doe" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Date of Birth *</Label>
-                      <div className="relative">
-                        <Input type="date" {...register("personal.dob")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Gender *</Label>
-                      <Controller
-                        name="personal.gender"
-                        control={control}
-                        defaultValue="male"
-                        render={({ field }) => (
-                          <div className="flex h-12 items-center gap-6 bg-white border border-neutral-200 rounded-xl px-4">
-                            {["male", "female", "other"].map(genderVal => (
-                              <label key={genderVal} className="flex items-center gap-2 text-sm text-neutral-700 capitalize cursor-pointer">
-                                <input
-                                  type="radio"
-                                  name="gender"
-                                  value={genderVal}
-                                  checked={field.value === genderVal}
-                                  onChange={() => field.onChange(genderVal)}
-                                  className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]"
-                                />
-                                <span>{genderVal}</span>
-                              </label>
-                            ))}
+              {/* Sub-card 1: Residency Status */}
+              <div className="space-y-4 pt-2">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  Residency Status *
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { type: "Local Student", icon: MapPin, title: "Local Student", desc: "Citizen or resident of Singapore" },
+                    { type: "Permanent Resident", icon: Building2, title: "Permanent Resident", desc: "Singapore PR pass holder" },
+                    { type: "International Student", icon: Globe, title: "International Student", desc: "Overseas applicant requiring Student Pass" }
+                  ].map(({ type, icon: IconComp, title, desc }) => {
+                    const isSelected = watchApplicantType === type;
+                    return (
+                      <div 
+                        key={type}
+                        onClick={() => {
+                          setValue("applicantType", type, { shouldValidate: true });
+                          if (type === "Local Student" || type === "Permanent Resident") {
+                            setValue("contact.country", "Singapore", { shouldValidate: true });
+                          }
+                        }}
+                        className={cn(
+                          "relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between group min-h-[140px]",
+                          isSelected 
+                            ? "border-[#27295B] bg-[#27295B]/5 shadow-xs" 
+                            : "border-neutral-200 hover:border-[#27295B]/40 hover:bg-slate-50/50"
+                        )}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className={cn(
+                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
+                            isSelected ? "bg-[#27295B] text-white" : "bg-slate-100 text-neutral-500 group-hover:bg-[#27295B]/10 group-hover:text-[#27295B]"
+                          )}>
+                            <IconComp size={20} />
                           </div>
-                        )}
-                      />
-                    </div>
-                  </div>
+                          <div className={cn(
+                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5",
+                            isSelected ? "border-[#27295B] bg-[#27295B]" : "border-neutral-300"
+                          )}>
+                            {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
+                          </div>
+                        </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Nationality *</Label>
-                      <Controller
-                        name="personal.nationality"
-                        control={control}
-                        defaultValue="Singaporean"
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
-                              <SelectValue placeholder="Select Nationality" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Singaporean">Singaporean</SelectItem>
-                              <SelectItem value="Malaysian">Malaysian</SelectItem>
-                              <SelectItem value="Indonesian">Indonesian</SelectItem>
-                              <SelectItem value="Indian">Indian</SelectItem>
-                              <SelectItem value="Chinese">Chinese</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">NRIC / Passport Number *</Label>
-                      <Input {...register("personal.passportNumber")} placeholder="e.g. S1234567A / E1234567" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Country of Birth *</Label>
-                      <Controller
-                        name="personal.countryOfBirth"
-                        control={control}
-                        defaultValue="Singapore"
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
-                              <SelectValue placeholder="Select Country" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Singapore">Singapore</SelectItem>
-                              <SelectItem value="Malaysia">Malaysia</SelectItem>
-                              <SelectItem value="Indonesia">Indonesia</SelectItem>
-                              <SelectItem value="India">India</SelectItem>
-                              <SelectItem value="China">China</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-                  </div>
+                        <div className="mt-3">
+                          <h4 className="font-bold text-sm text-neutral-900 group-hover:text-[#27295B]">{title}</h4>
+                          <p className="mt-1 text-xs text-neutral-500 leading-normal font-medium">{desc}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            )}
 
-            {/* STEP 4: Contact Information */}
-            {step === 4 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">4. Contact Information</h2>
-                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">How can we reach you?</p>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Email Address *</Label>
-                      <Input {...register("contact.email")} type="email" disabled className="h-12 bg-neutral-100 border border-neutral-200 rounded-xl text-neutral-500 font-medium" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Phone Number *</Label>
-                      <div className="flex gap-2">
-                        <Controller
-                          name="contact.phonePrefix"
-                          control={control}
-                          defaultValue="+65"
-                          render={({ field }) => (
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium shrink-0">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="+65">🇸🇬 +65</SelectItem>
-                                <SelectItem value="+60">🇲🇾 +60</SelectItem>
-                                <SelectItem value="+62">🇮🇩 +62</SelectItem>
-                                <SelectItem value="+91">🇮🇳 +91</SelectItem>
-                                <SelectItem value="+86">🇨🇳 +86</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                        <Input {...register("contact.phone")} placeholder="9123 4567" className="flex-1 h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+              {/* Sub-card 2: Course Selection Type (Standalone vs Package) */}
+              <div className="space-y-4 pt-4 border-t border-neutral-100">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  Course Selection Type *
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {[
+                    { value: "Standalone Course", title: "Standalone Course", desc: "Select a single course level and program" },
+                    { value: "Package Course", title: "Package Course", desc: "Select course level, course, and progression / package options" }
+                  ].map(c => (
+                    <label 
+                      key={c.value}
+                      className={cn(
+                        "p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3",
+                        watchCourseType === c.value ? "border-[#27295B] bg-[#27295B]/5" : "border-neutral-200 hover:border-[#27295B]/30"
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="courseType"
+                        value={c.value}
+                        checked={watchCourseType === c.value}
+                        onChange={() => {
+                          setValue("courseType", c.value, { shouldValidate: true });
+                          setValue("progressionOption", "");
+                        }}
+                        className="mt-1 w-4 h-4 text-[#27295B]"
+                      />
+                      <div>
+                        <h4 className="font-bold text-sm text-neutral-900">{c.title}</h4>
+                        <p className="text-xs text-neutral-500 font-medium mt-0.5">{c.desc}</p>
                       </div>
-                    </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sub-card 3: Country of Residence & School */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-neutral-100">
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-semibold text-xs">Country of Residence *</Label>
+                  <Controller
+                    name="contact.country"
+                    control={control}
+                    defaultValue="Singapore"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value || "Singapore"}>
+                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/20">
+                          <SelectValue placeholder="Select Country" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Singapore">🇸🇬 Singapore</SelectItem>
+                          <SelectItem value="Malaysia">🇲🇾 Malaysia</SelectItem>
+                          <SelectItem value="Indonesia">🇮🇩 Indonesia</SelectItem>
+                          <SelectItem value="India">🇮🇳 India</SelectItem>
+                          <SelectItem value="China">🇨🇳 China</SelectItem>
+                          <SelectItem value="United Kingdom">🇬🇧 United Kingdom</SelectItem>
+                          <SelectItem value="United States">🇺🇸 United States</SelectItem>
+                          <SelectItem value="Australia">🇦🇺 Australia</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-semibold text-xs">School / Faculty *</Label>
+                  <Controller
+                    name="school"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/20">
+                          <SelectValue placeholder="Select School / Faculty" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {schools && schools.length > 0 ? (
+                            schools.map(s => (
+                              <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                            ))
+                          ) : (
+                            <>
+                              <SelectItem value="School of Business">School of Business</SelectItem>
+                              <SelectItem value="School of Computing">School of Computing</SelectItem>
+                              <SelectItem value="School of Engineering">School of Engineering</SelectItem>
+                            </>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Sub-card 4: Course Level, Target Programme & Intake */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-neutral-100">
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-semibold text-xs">Course Level *</Label>
+                  <Controller
+                    name="courseLevel"
+                    control={control}
+                    defaultValue="Diploma"
+                    render={({ field }) => (
+                      <Select onValueChange={(val) => {
+                        field.onChange(val);
+                        setValue("programmeId", "");
+                        setValue("progressionOption", "");
+                      }} value={field.value || ""}>
+                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium">
+                          <SelectValue placeholder="Select Level" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All Levels">All Levels</SelectItem>
+                          <SelectItem value="Diploma">Diploma</SelectItem>
+                          <SelectItem value="Advanced Diploma">Advanced Diploma</SelectItem>
+                          <SelectItem value="Bachelor">Bachelor's Degree</SelectItem>
+                          <SelectItem value="Master">Master's / Post Graduate</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-semibold text-xs">Target Programme *</Label>
+                  <Controller
+                    name="programmeId"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={(val) => {
+                        field.onChange(val);
+                        setValue("progressionOption", "");
+                      }} value={field.value || ""}>
+                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/20">
+                          <SelectValue placeholder="Select Programme" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filteredProgrammes.map(p => (
+                            <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-semibold text-xs">Intake / Entry Term *</Label>
+                  <Controller
+                    name="intake"
+                    control={control}
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/20">
+                          <SelectValue placeholder="Select Intake" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {intakes.map(i => (
+                            <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Sub-card 5: Package Progression Options (Visible when Package Course selected) */}
+              {watchCourseType === "Package Course" && selectedProgramme && (
+                <div className="space-y-4 pt-4 border-t border-neutral-100 animate-in fade-in duration-300">
+                  <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3 flex items-center justify-between">
+                    <span>Package Progression Options *</span>
+                    <span className="text-xs font-mono font-semibold text-[#27295B] bg-[#27295B]/10 px-2.5 py-1 rounded-full">Progression Package</span>
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-medium">Select your intended pathway after completing {selectedProgramme.name}:</p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      `Advanced Diploma in ${selectedProgramme.name.replace(/^Diploma in /i, '')}`,
+                      `Advanced Diploma in ${selectedProgramme.name.replace(/^Diploma in /i, '')} + Bachelor's`
+                    ].map((opt, idx) => (
+                      <label 
+                        key={idx}
+                        className={cn(
+                          "p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3",
+                          watchProgressionOption === opt ? "border-[#27295B] bg-[#27295B]/5 font-bold" : "border-neutral-200 hover:border-[#27295B]/30"
+                        )}
+                      >
+                        <input 
+                          type="radio" 
+                          name="progressionOption" 
+                          value={opt} 
+                          checked={watchProgressionOption === opt} 
+                          onChange={() => setValue("progressionOption", opt, { shouldValidate: true })}
+                          className="mt-1 w-4 h-4 text-[#27295B]" 
+                        />
+                        <div>
+                          <p className="text-xs sm:text-sm text-neutral-900 font-bold">{opt}</p>
+                          <p className="text-[10px] text-neutral-500 font-medium mt-1">Option {idx + 1} Progression Pathway</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Programme Summary Banner */}
+              <div className="p-5 rounded-2xl bg-slate-50 border border-neutral-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Selected Programme Summary</p>
+                  <h4 className="text-sm font-bold text-neutral-900 mt-0.5">
+                    {selectedProgramme ? `${selectedProgramme.name} (${selectedProgramme.code})` : "Please select a programme above"}
+                  </h4>
+                  <p className="text-xs text-neutral-500 mt-1 font-medium">
+                    Location: Singapore Campus • Duration: 12 Months • Mode: Full Time
+                  </p>
+                </div>
+
+                <div className="text-left sm:text-right shrink-0 border-t sm:border-t-0 sm:border-l border-neutral-200 pt-3 sm:pt-0 sm:pl-6">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Application Fee</p>
+                  <p className="text-lg font-extrabold text-[#27295B] mt-0.5">
+                    SGD {selectedProgramme?.applicationFee || "50.00"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 2: Personal & Contact Particulars */}
+          {step === 2 && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div>
+                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 2 of 5</span>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Personal & Contact Details</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium">Provide your legal personal information, address, and emergency contact.</p>
+              </div>
+
+              {/* Personal Particulars */}
+              <div className="space-y-4 pt-2">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  Personal Particulars
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Title *</Label>
+                    <Controller
+                      name="personal.title"
+                      control={control}
+                      defaultValue="mr"
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value || "mr"}>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                            <SelectValue placeholder="Title" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="mr">Mr.</SelectItem>
+                            <SelectItem value="ms">Ms.</SelectItem>
+                            <SelectItem value="mrs">Mrs.</SelectItem>
+                            <SelectItem value="dr">Dr.</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Alternate Phone Number</Label>
-                      <div className="flex gap-2">
-                        <Controller
-                          name="contact.altPhonePrefix"
-                          control={control}
-                          defaultValue="+65"
-                          render={({ field }) => (
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium shrink-0">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="+65">🇸🇬 +65</SelectItem>
-                                <SelectItem value="+60">🇲🇾 +60</SelectItem>
-                                <SelectItem value="+62">🇮🇩 +62</SelectItem>
-                                <SelectItem value="+91">🇮🇳 +91</SelectItem>
-                                <SelectItem value="+86">🇨🇳 +86</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                        <Input {...register("contact.altPhone")} placeholder="9876 5432" className="flex-1 h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                      </div>
-                    </div>
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Full Name (as in Passport / NRIC) *</Label>
+                    <Input {...register("personal.firstName")} placeholder="e.g. John Michael Doe" className="h-12 rounded-xl" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Date of Birth *</Label>
+                    <Input type="date" {...register("personal.dob")} className="h-12 rounded-xl" />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-[13px]">Current Address *</Label>
-                    <Input {...register("contact.addressLine1")} placeholder="123 Orchard Road, #05-01 Singapore 238845" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
+                    <Label className="text-slate-700 font-semibold text-xs">Gender *</Label>
+                    <Controller
+                      name="personal.gender"
+                      control={control}
+                      defaultValue="male"
+                      render={({ field }) => (
+                        <div className="flex h-12 items-center gap-4 bg-white border border-neutral-200 rounded-xl px-4">
+                          {["male", "female", "other"].map(genderVal => (
+                            <label key={genderVal} className="flex items-center gap-1.5 text-xs text-neutral-700 capitalize cursor-pointer font-medium">
+                              <input
+                                type="radio"
+                                name="gender"
+                                value={genderVal}
+                                checked={field.value === genderVal}
+                                onChange={() => field.onChange(genderVal)}
+                                className="w-4 h-4 text-[#27295B]"
+                              />
+                              <span>{genderVal}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Country *</Label>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Nationality *</Label>
+                    <Controller
+                      name="personal.nationality"
+                      control={control}
+                      defaultValue="Singaporean"
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value || "Singaporean"}>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                            <SelectValue placeholder="Nationality" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Singaporean">Singaporean</SelectItem>
+                            <SelectItem value="Malaysian">Malaysian</SelectItem>
+                            <SelectItem value="Indonesian">Indonesian</SelectItem>
+                            <SelectItem value="Indian">Indian</SelectItem>
+                            <SelectItem value="Chinese">Chinese</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">NRIC / Passport Number *</Label>
+                    <Input {...register("personal.passportNumber")} placeholder="e.g. S1234567A / E1234567" className="h-12 rounded-xl" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Country of Birth</Label>
+                    <Input {...register("personal.countryOfBirth")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Details & Address */}
+              <div className="space-y-4 pt-6 border-t border-neutral-100">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  Contact Details & Home Address
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Notification Email *</Label>
+                    <Input {...register("contact.email")} type="email" disabled className="h-12 bg-neutral-100 text-neutral-500 rounded-xl font-medium" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Mobile Phone Number *</Label>
+                    <div className="flex gap-2">
                       <Controller
-                        name="contact.country"
+                        name="contact.phonePrefix"
                         control={control}
-                        defaultValue="Singapore"
+                        defaultValue="+65"
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] hover:bg-neutral-50/50 transition-all font-medium">
-                              <SelectValue placeholder="Select Country" />
+                          <Select onValueChange={field.onChange} value={field.value || "+65"}>
+                            <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 rounded-xl font-medium shrink-0">
+                              <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Singapore">Singapore</SelectItem>
-                              <SelectItem value="Malaysia">Malaysia</SelectItem>
-                              <SelectItem value="Indonesia">Indonesia</SelectItem>
-                              <SelectItem value="India">India</SelectItem>
-                              <SelectItem value="China">China</SelectItem>
+                              <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                              <SelectItem value="+60">🇲🇾 +60</SelectItem>
+                              <SelectItem value="+62">🇮🇩 +62</SelectItem>
+                              <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                              <SelectItem value="+86">🇨🇳 +86</SelectItem>
                             </SelectContent>
                           </Select>
                         )}
                       />
+                      <Input {...register("contact.phone")} placeholder="9123 4567" className="flex-1 h-12 rounded-xl" />
                     </div>
+                  </div>
+                </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">City *</Label>
-                      <Input {...register("contact.city")} placeholder="Singapore" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                    </div>
+                <div className="space-y-2 pt-2">
+                  <Label className="text-slate-700 font-semibold text-xs">Address Line 1 *</Label>
+                  <Input {...register("contact.addressLine1")} placeholder="123 Orchard Road, #05-01 Singapore" className="h-12 rounded-xl" />
+                </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Postal Code *</Label>
-                      <Input {...register("contact.postalCode")} placeholder="238845" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">City *</Label>
+                    <Input {...register("contact.city")} placeholder="Singapore" className="h-12 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">State / Region</Label>
+                    <Input {...register("contact.state")} placeholder="Singapore" className="h-12 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Postal Code *</Label>
+                    <Input {...register("contact.postalCode")} placeholder="238845" className="h-12 rounded-xl" />
                   </div>
                 </div>
               </div>
-            )}
 
-            {/* STEP 5: Family / Emergency */}
-            {step === 5 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">5. Family / Emergency</h2>
-                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Provide your family and emergency contact details.</p>
-                </div>
-                
-                <div className="space-y-6">
-                  {/* Parent / Guardian Info */}
-                  <div className="space-y-4">
-                    <h3 className="font-heading font-semibold text-neutral-800 text-[15px] border-b border-neutral-100 pb-2">Parent / Guardian Information</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-[13px]">Full Name *</Label>
-                        <Input {...register("family.fatherName")} placeholder="Robert Doe" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                      </div>
+              {/* Parents' Details */}
+              <div className="space-y-4 pt-6 border-t border-neutral-100">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3 flex items-center justify-between">
+                  <span>Parents' Details</span>
+                  <span className="text-xs text-rose-500 font-normal">* Parent's Name & Contact Number are mandatory</span>
+                </h3>
 
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-[13px]">Relationship *</Label>
-                        <Controller
-                          name="family.fatherRelationship"
-                          control={control}
-                          defaultValue="Father"
-                          render={({ field }) => (
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Father">Father</SelectItem>
-                                <SelectItem value="Mother">Mother</SelectItem>
-                                <SelectItem value="Guardian">Guardian</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-[13px]">Email *</Label>
-                        <Input type="email" {...register("family.fatherEmail")} placeholder="robert.doe@email.com" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-[13px]">Phone Number *</Label>
-                        <div className="flex gap-2">
-                          <Controller
-                            name="family.fatherPhonePrefix"
-                            control={control}
-                            defaultValue="+65"
-                            render={({ field }) => (
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium shrink-0">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="+65">🇸🇬 +65</SelectItem>
-                                  <SelectItem value="+60">🇲🇾 +60</SelectItem>
-                                  <SelectItem value="+62">🇮🇩 +62</SelectItem>
-                                  <SelectItem value="+91">🇮🇳 +91</SelectItem>
-                                  <SelectItem value="+86">🇨🇳 +86</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
-                          <Input {...register("family.fatherPhone")} placeholder="9224 5678" className="flex-1 h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                        </div>
-                      </div>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Parent's / Guardian's Name *</Label>
+                    <Input {...register("family.fatherName")} placeholder="e.g. Robert Doe" className="h-12 rounded-xl" />
                   </div>
 
-                  {/* Emergency Contact */}
-                  <div className="space-y-4 pt-4 border-t border-neutral-100">
-                    <h3 className="font-heading font-semibold text-neutral-800 text-[15px] border-b border-neutral-100 pb-2">Emergency Contact (if different from above)</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-[13px]">Full Name</Label>
-                        <Input {...register("family.emergencyName")} placeholder="Jane Doe" className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                      </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Contact Number *</Label>
+                    <Input {...register("family.fatherPhone")} placeholder="e.g. +65 9224 5678" className="h-12 rounded-xl" />
+                  </div>
+                </div>
 
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-[13px]">Relationship</Label>
-                        <Controller
-                          name="family.emergencyRelationship"
-                          control={control}
-                          defaultValue="Sister"
-                          render={({ field }) => (
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Sister">Sister</SelectItem>
-                                <SelectItem value="Brother">Brother</SelectItem>
-                                <SelectItem value="Spouse">Spouse</SelectItem>
-                                <SelectItem value="Friend">Friend</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Email Address (Optional)</Label>
+                    <Input {...register("family.fatherEmail")} type="email" placeholder="e.g. parent@example.com" className="h-12 rounded-xl" />
+                  </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-[13px]">Phone Number</Label>
-                        <div className="flex gap-2">
-                          <Controller
-                            name="family.emergencyPhonePrefix"
-                            control={control}
-                            defaultValue="+65"
-                            render={({ field }) => (
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium shrink-0">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="+65">🇸🇬 +65</SelectItem>
-                                  <SelectItem value="+60">🇲🇾 +60</SelectItem>
-                                  <SelectItem value="+62">🇮🇩 +62</SelectItem>
-                                  <SelectItem value="+91">🇮🇳 +91</SelectItem>
-                                  <SelectItem value="+86">🇨🇳 +86</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
-                          <Input {...register("family.emergencyPhone")} placeholder="9355 8877" className="flex-1 h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                        </div>
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Relationship</Label>
+                    <Controller
+                      name="family.fatherRelationship"
+                      control={control}
+                      defaultValue="Father"
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value || "Father"}>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                            <SelectValue placeholder="Relationship" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Father">Father</SelectItem>
+                            <SelectItem value="Mother">Mother</SelectItem>
+                            <SelectItem value="Guardian">Legal Guardian</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* STEP 6: Academic Qualifications */}
-            {step === 6 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-neutral-800">6. Academic Qualifications</h2>
-                    <p className="text-neutral-400 mt-1.5 text-sm font-medium">List your previous academic qualifications.</p>
-                  </div>
+          {/* SECTION 3: Education & English Language */}
+          {step === 3 && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div>
+                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 3 of 5</span>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Education & Language Proficiency</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium">List your academic qualifications and English language proficiency test results.</p>
+              </div>
+
+              {/* Academic Qualifications Table */}
+              <div className="space-y-4 pt-2">
+                <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
+                  <h3 className="font-heading font-bold text-base text-neutral-900">Academic Qualifications</h3>
                   <Button 
                     type="button" 
-                    variant="outline" 
                     onClick={() => {
-                      const qual = prompt("Enter Qualification Level (e.g. Diploma):");
-                      const inst = prompt("Enter Institution Name:");
-                      const major = prompt("Enter Field of Study:");
-                      const year = prompt("Enter Completion Year:");
-                      if (qual && inst && major && year) {
-                        setEducationList([...educationList, { id: Date.now(), qualification: qual, institution: inst, major, year }]);
-                      }
+                      setEditingQualId(null);
+                      setQualForm({
+                        country: "Singapore",
+                        qualification: "Bachelor's Degree",
+                        institution: "",
+                        school: "",
+                        major: "",
+                        startYear: "2020",
+                        endYear: "2024",
+                        modeOfStudy: "Full Time",
+                        completionStatus: "Completed",
+                        language: "English",
+                        gpa: "",
+                        classification: "Pass With Merit"
+                      });
+                      setIsQualModalOpen(true);
                     }}
-                    className="h-10 px-4 border-[#27295B] text-[#27295B] hover:bg-[#27295B]/5 rounded-xl font-bold transition-all text-xs"
+                    className="h-10 px-4 bg-[#27295B] hover:bg-[#1e204b] text-white rounded-xl font-bold text-xs"
                   >
-                    + Add Qualification
+                    + Add Education
                   </Button>
                 </div>
-                
-                <div className="border border-neutral-200/80 rounded-2xl overflow-hidden bg-white shadow-3xs">
+
+                <div className="border border-neutral-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-neutral-50/70 border-b border-neutral-200 text-neutral-500 font-bold uppercase tracking-wider">
-                        <th className="px-5 py-4 font-bold">Qualification</th>
-                        <th className="px-5 py-4 font-bold">Institution</th>
-                        <th className="px-5 py-4 font-bold">Field of Study</th>
-                        <th className="px-5 py-4 font-bold">Year</th>
-                        <th className="px-5 py-4 font-bold text-center">Action</th>
+                      <tr className="bg-slate-50 border-b border-neutral-200 text-neutral-500 font-bold uppercase tracking-wider">
+                        <th className="px-5 py-3.5">Qualification</th>
+                        <th className="px-5 py-3.5">Institution</th>
+                        <th className="px-5 py-3.5">Field of Study</th>
+                        <th className="px-5 py-3.5">Period</th>
+                        <th className="px-5 py-3.5 text-center">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-100">
                       {educationList.map((item) => (
-                        <tr key={item.id} className="hover:bg-neutral-50/50 transition-colors text-neutral-700 font-medium">
-                          <td className="px-5 py-4">{item.qualification}</td>
-                          <td className="px-5 py-4">{item.institution}</td>
-                          <td className="px-5 py-4">{item.major}</td>
-                          <td className="px-5 py-4">{item.year}</td>
-                          <td className="px-5 py-4">
+                        <tr key={item.id} className="hover:bg-slate-50/50 text-neutral-700 font-medium">
+                          <td className="px-5 py-3.5 font-bold text-neutral-900">
+                            {item.qualification}
+                            <span className="block text-[10px] text-neutral-400 font-normal">{item.country || "Singapore"} • {item.modeOfStudy || "Full Time"}</span>
+                          </td>
+                          <td className="px-5 py-3.5">{item.institution}</td>
+                          <td className="px-5 py-3.5">{item.major}</td>
+                          <td className="px-5 py-3.5 font-mono text-[11px]">{item.year}</td>
+                          <td className="px-5 py-3.5 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button 
                                 type="button"
                                 onClick={() => {
-                                  const qual = prompt("Edit Qualification Level:", item.qualification);
-                                  const inst = prompt("Edit Institution Name:", item.institution);
-                                  const major = prompt("Edit Field of Study:", item.major);
-                                  const year = prompt("Edit Completion Year:", item.year);
-                                  if (qual && inst && major && year) {
-                                    setEducationList(educationList.map(el => el.id === item.id ? { ...el, qualification: qual, institution: inst, major, year } : el));
-                                  }
+                                  setEditingQualId(item.id);
+                                  const years = (item.year || "2020-2024").split("-");
+                                  setQualForm({
+                                    country: item.country || "Singapore",
+                                    qualification: item.qualification,
+                                    institution: item.institution,
+                                    school: item.school || item.institution,
+                                    major: item.major,
+                                    startYear: years[0] || "2020",
+                                    endYear: years[1] || "2024",
+                                    modeOfStudy: item.modeOfStudy || "Full Time",
+                                    completionStatus: item.completionStatus || "Completed",
+                                    language: item.language || "English",
+                                    gpa: item.gpa || "",
+                                    classification: item.classification || "Pass With Merit"
+                                  });
+                                  setIsQualModalOpen(true);
                                 }}
-                                className="p-1.5 hover:bg-neutral-100 rounded-lg text-neutral-500 hover:text-neutral-800 transition-colors"
+                                className="px-2.5 py-1 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-neutral-700 font-bold transition-colors"
                               >
-                                ✏️
+                                Edit
                               </button>
                               <button 
                                 type="button"
                                 onClick={() => {
-                                  if (confirm("Are you sure you want to delete this qualification?")) {
+                                  if (confirm("Delete this qualification?")) {
                                     setEducationList(educationList.filter(el => el.id !== item.id));
                                   }
                                 }}
-                                className="p-1.5 hover:bg-rose-50 rounded-lg text-neutral-400 hover:text-rose-600 transition-colors"
+                                className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-600 font-bold transition-colors"
                               >
-                                🗑️
+                                Delete
                               </button>
                             </div>
                           </td>
@@ -847,436 +933,504 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                   </table>
                 </div>
               </div>
-            )}
 
-            {/* STEP 7: Employment History */}
-            {step === 7 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">7. Employment History</h2>
-                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Provide your employment details (if applicable).</p>
+              {/* English Language Proficiency */}
+              <div className="space-y-4 pt-6 border-t border-neutral-100">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  English Language Proficiency
+                </h3>
+
+                <div className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl">
+                  <input 
+                    type="checkbox" 
+                    id="englishExempt" 
+                    {...register("englishTest.exempt")} 
+                    className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" 
+                  />
+                  <Label htmlFor="englishExempt" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                    I am exempt from English proficiency requirement (studied in an English-speaking medium institution)
+                  </Label>
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 bg-neutral-50 border border-neutral-200/50 p-4 rounded-xl">
-                    <input 
-                      type="checkbox" 
-                      id="notEmployed" 
-                      {...register("notEmployed")} 
-                      className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]" 
+
+                <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 transition-opacity duration-300", watch("englishTest.exempt") && "opacity-40 pointer-events-none")}>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Test Type</Label>
+                    <Controller
+                      name="englishTest.testName"
+                      control={control}
+                      defaultValue="IELTS Academic"
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value || "IELTS Academic"} disabled={watch("englishTest.exempt")}>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                            <SelectValue placeholder="Select Test" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="IELTS Academic">IELTS Academic</SelectItem>
+                            <SelectItem value="TOEFL iBT">TOEFL iBT</SelectItem>
+                            <SelectItem value="PTE Academic">PTE Academic</SelectItem>
+                            <SelectItem value="Duolingo English Test">Duolingo English Test</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     />
-                    <Label htmlFor="notEmployed" className="text-neutral-700 font-semibold cursor-pointer">I am currently not employed</Label>
                   </div>
 
-                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-300", watch("notEmployed") && "opacity-40 pointer-events-none")}>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Current Employment Status *</Label>
-                      <Controller
-                        name="employmentStatus"
-                        control={control}
-                        defaultValue="Employed Full-time"
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={watch("notEmployed")}>
-                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium">
-                              <SelectValue placeholder="Select Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Employed Full-time">Employed Full-time</SelectItem>
-                              <SelectItem value="Employed Part-time">Employed Part-time</SelectItem>
-                              <SelectItem value="Self-employed">Self-employed</SelectItem>
-                              <SelectItem value="Unemployed">Unemployed</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Company / Organization *</Label>
-                      <Input {...register("employment.0.employer")} placeholder="ABC Pte Ltd" disabled={watch("notEmployed")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                    </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Overall Score</Label>
+                    <Input {...register("englishTest.overallScore")} placeholder="e.g. 7.0" disabled={watch("englishTest.exempt")} className="h-12 rounded-xl" />
                   </div>
 
-                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-300", watch("notEmployed") && "opacity-40 pointer-events-none")}>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Job Title *</Label>
-                      <Input {...register("employment.0.position")} placeholder="Business Analyst" disabled={watch("notEmployed")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Employment Start Date *</Label>
-                      <Input type="date" {...register("employment.0.startDate")} disabled={watch("notEmployed")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                    </div>
-                  </div>
-
-                  <div className={cn("space-y-2 transition-opacity duration-300", watch("notEmployed") && "opacity-40 pointer-events-none")}>
-                    <Label className="text-slate-700 font-semibold text-[13px]">Brief Description of Duties</Label>
-                    <textarea 
-                      {...register("employment.0.description")} 
-                      placeholder="Analyze business processes and prepare reports." 
-                      disabled={watch("notEmployed")}
-                      rows={3}
-                      className="w-full p-4 bg-white border border-neutral-200 rounded-xl focus:outline-none focus:border-[#27295B] focus:ring-1 focus:ring-[#27295B] text-slate-800 text-[15px] font-normal"
-                    />
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Exam Date</Label>
+                    <Input type="date" {...register("englishTest.testDate")} disabled={watch("englishTest.exempt")} className="h-12 rounded-xl" />
                   </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* STEP 8: English Proficiency */}
-            {step === 8 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">8. English Proficiency</h2>
-                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Provide your English language test details.</p>
+          {/* SECTION 4: Employment & Documents */}
+          {step === 4 && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div>
+                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 4 of 5</span>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Employment & Document Uploads</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium">Provide current employment history and upload required application documents.</p>
+              </div>
+
+              {/* Employment Particulars */}
+              <div className="space-y-4 pt-2">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  Employment Particulars
+                </h3>
+
+                <div className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl">
+                  <input 
+                    type="checkbox" 
+                    id="notEmployed" 
+                    {...register("notEmployed")} 
+                    className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" 
+                  />
+                  <Label htmlFor="notEmployed" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                    Currently not employed / Fresh Graduate
+                  </Label>
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 bg-neutral-50 border border-neutral-200/50 p-4 rounded-xl">
-                    <input 
-                      type="checkbox" 
-                      id="englishExempt" 
-                      {...register("englishTest.exempt")} 
-                      className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]" 
-                    />
-                    <Label htmlFor="englishExempt" className="text-neutral-700 font-semibold cursor-pointer">I am exempt from English proficiency requirement</Label>
+
+                <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 transition-opacity duration-300", watch("notEmployed") && "opacity-40 pointer-events-none")}>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Employer / Company Name</Label>
+                    <Input {...register("employment.0.employer")} placeholder="e.g. ABC Pte Ltd" disabled={watch("notEmployed")} className="h-12 rounded-xl" />
                   </div>
 
-                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-300", watch("englishTest.exempt") && "opacity-40 pointer-events-none")}>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Test Type *</Label>
-                      <Controller
-                        name="englishTest.testName"
-                        control={control}
-                        defaultValue="IELTS Academic"
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} defaultValue={field.value} disabled={watch("englishTest.exempt")}>
-                            <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl focus:ring-1 focus:ring-[#27295B] focus:border-[#27295B] font-medium">
-                              <SelectValue placeholder="Select Test Type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="IELTS Academic">IELTS Academic</SelectItem>
-                              <SelectItem value="TOEFL iBT">TOEFL iBT</SelectItem>
-                              <SelectItem value="PTE Academic">PTE Academic</SelectItem>
-                              <SelectItem value="Duolingo English Test">Duolingo English Test</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Overall Score *</Label>
-                      <Input {...register("englishTest.overallScore")} placeholder="7.0" disabled={watch("englishTest.exempt")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                    </div>
-                  </div>
-
-                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 transition-opacity duration-300", watch("englishTest.exempt") && "opacity-40 pointer-events-none")}>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Exam Date *</Label>
-                      <Input type="date" {...register("englishTest.testDate")} disabled={watch("englishTest.exempt")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-[13px]">Test Centre / Location *</Label>
-                      <Input {...register("englishTest.location")} placeholder="British Council Singapore" disabled={watch("englishTest.exempt")} className="h-12 bg-white border border-neutral-200 rounded-xl focus-visible:border-[#27295B] focus-visible:ring-1 focus-visible:ring-[#27295B]" />
-                    </div>
-                  </div>
-
-                  <div className={cn("space-y-2 pt-4 border-t border-neutral-100 transition-opacity duration-300", watch("englishTest.exempt") && "opacity-40 pointer-events-none")}>
-                    <Label className="text-slate-700 font-semibold text-[13px]">Upload Test Report *</Label>
-                    <div className="flex items-center justify-between border border-neutral-200 bg-white p-4.5 rounded-xl">
-                      <div className="flex items-center gap-2.5">
-                        <FileText size={18} className="text-red-500" />
-                        <span className="text-xs font-bold text-neutral-700">ielts_report.pdf</span>
-                      </div>
-                      <Button type="button" variant="outline" className="h-9 px-4 border-neutral-200 hover:bg-neutral-50 rounded-lg text-xs font-bold">
-                        Browse
-                      </Button>
-                    </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Job Title / Position</Label>
+                    <Input {...register("employment.0.position")} placeholder="e.g. Business Analyst" disabled={watch("notEmployed")} className="h-12 rounded-xl" />
                   </div>
                 </div>
               </div>
-            )}
 
-            {/* STEP 9: Supporting Documents */}
-            {step === 9 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">9. Supporting Documents</h2>
-                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Upload the required documents.</p>
-                </div>
-                
-                <div className="space-y-3.5">
+              {/* Marketing / Referral Source: How did you get to know about us? */}
+              <div className="space-y-4 pt-6 border-t border-neutral-100">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  How did you get to know about us?
+                </h3>
+                <p className="text-xs text-neutral-500 font-medium">Select the primary channel through which you learned about our institution:</p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {[
-                    { label: "Passport / NRIC Copy *", filename: "passport.pdf" },
-                    { label: "Academic Transcript(s) *", filename: "transcript.pdf" },
-                    { label: "Degree / Certificate *", filename: "degree.pdf" },
-                    { label: "CV / Resume *", filename: "resume.pdf" },
-                    { label: "English Test Report *", filename: "ielts_report.pdf" },
-                    { label: "Passport-size Photo *", filename: "photo.jpg" }
+                    "Education Fair / Exhibition",
+                    "Search Engine (Google / Baidu)",
+                    "Social Media (Instagram / Facebook / Redbook)",
+                    "Friend / Family Recommendation",
+                    "Education Agent / Consultancy",
+                    "School / College Representative",
+                    "Advertisement / Billboard",
+                    "Other"
+                  ].map((source, idx) => (
+                    <label 
+                      key={idx}
+                      className={cn(
+                        "p-3.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all text-xs font-semibold",
+                        watchMarketingSource === source ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]" : "border-neutral-200 hover:border-neutral-300 text-neutral-700"
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="marketingSource"
+                        value={source}
+                        checked={watchMarketingSource === source}
+                        onChange={() => setValue("marketingSource", source)}
+                        className="w-4 h-4 text-[#27295B]"
+                      />
+                      <span>{source}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Agent Details Page / Section */}
+              <div className="space-y-4 pt-6 border-t border-neutral-100">
+                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                  <h3 className="font-heading font-bold text-base text-neutral-900">
+                    Agent Details
+                  </h3>
+                  <span className="text-xs text-neutral-400 font-medium">Fill if applying through an agency</span>
+                </div>
+
+                <div className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl">
+                  <input 
+                    type="checkbox" 
+                    id="isAgentSubmitted" 
+                    {...register("agent.isAgentSubmitted")} 
+                    className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" 
+                  />
+                  <Label htmlFor="isAgentSubmitted" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                    This application is being submitted through an Education Agent / Representative
+                  </Label>
+                </div>
+
+                <div className={cn("space-y-4 pt-2 transition-opacity duration-300", !watchIsAgent && "opacity-40 pointer-events-none")}>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Company Name</Label>
+                    <Input 
+                      {...register("agent.agentCompanyName")} 
+                      placeholder="e.g. Global Education Agency Pte Ltd" 
+                      disabled={!watchIsAgent} 
+                      className="h-12 rounded-xl" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Counsellor's Name *</Label>
+                    <Input 
+                      {...register("agent.counsellorName")} 
+                      placeholder="e.g. Jane Smith" 
+                      disabled={!watchIsAgent} 
+                      className="h-12 rounded-xl" 
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Agent Contact Email / Phone (Optional)</Label>
+                    <Input 
+                      {...register("agent.agentEmail")} 
+                      placeholder="e.g. counsellor@agency.com" 
+                      disabled={!watchIsAgent} 
+                      className="h-12 rounded-xl" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Document Upload Cards */}
+              <div className="space-y-4 pt-6 border-t border-neutral-100">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  Required Application Documents
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  {[
+                    { label: "Passport / NRIC Copy", req: "Mandatory" },
+                    { label: "Academic Transcripts", req: "Mandatory" },
+                    { label: "Degree Certificate", req: "Mandatory" },
+                    { label: "Resume / CV", req: "Mandatory" },
+                    { label: "English Test Report", req: "Optional" },
+                    { label: "Passport-size Photo", req: "Mandatory" },
                   ].map((doc, idx) => (
-                    <div key={idx} className="flex items-center justify-between border border-neutral-200/80 bg-white p-4.5 rounded-xl hover:shadow-3xs transition-shadow">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-xl bg-slate-50 border border-neutral-100 flex items-center justify-center text-[#27295B]">
-                          <FileText size={16} />
-                        </div>
-                        <div>
-                          <p className="text-xs font-bold text-neutral-800">{doc.label}</p>
-                          <p className="text-[11px] text-slate-400 font-medium mt-0.5">{doc.filename}</p>
-                        </div>
+                    <div key={idx} className="p-4 rounded-2xl border border-neutral-200/80 bg-slate-50/60 flex flex-col justify-between space-y-3">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">{doc.req}</span>
+                        <h4 className="font-bold text-xs text-neutral-900 mt-0.5">{doc.label}</h4>
                       </div>
-                      
-                      <div className="flex items-center gap-4">
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold text-emerald-600 border border-emerald-100/50">
-                          <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                          Uploaded
-                        </span>
-                        <button type="button" className="p-1 text-slate-400 hover:text-rose-600 transition-colors">
-                          🗑️
-                        </button>
+                      <div className="flex items-center justify-between pt-2 border-t border-neutral-200/60">
+                        <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Uploaded</span>
+                        <Button type="button" variant="ghost" className="h-7 px-2 text-[11px] font-bold text-[#27295B]">
+                          <Upload size={12} className="mr-1" /> Re-upload
+                        </Button>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* STEP 10: Review Application */}
-            {step === 10 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-2xl font-bold tracking-tight text-neutral-800">10. Review Application</h2>
-                    <p className="text-neutral-400 mt-1.5 text-sm font-medium">Please review your information before proceeding.</p>
+          {/* SECTION 5: Review, Declaration & Payment */}
+          {step === 5 && (
+            <div className="space-y-8 animate-in fade-in duration-300">
+              <div>
+                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 5 of 5</span>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Review, Declaration & Payment</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium font-sans">Verify your details, accept terms, and complete application fee payment.</p>
+              </div>
+
+              {/* Comprehensive Summary Cards */}
+              <div className="space-y-4 pt-2">
+                <div className="bg-slate-50/80 rounded-2xl border border-neutral-200/80 p-5 space-y-3">
+                  <div className="flex justify-between items-center border-b border-neutral-200/60 pb-3">
+                    <h3 className="font-heading font-bold text-sm text-neutral-900">1. Programme & Residency</h3>
+                    <Button type="button" variant="ghost" onClick={() => setStep(1)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
                   </div>
-                  <Button type="button" variant="outline" onClick={() => setStep(3)} className="h-9 px-4 border-neutral-200 text-neutral-600 hover:bg-neutral-50 rounded-lg text-xs font-bold">
-                    Edit
-                  </Button>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="bg-white rounded-2xl border border-neutral-200/80 p-6 shadow-3xs">
-                    <h3 className="font-heading font-bold text-[15px] text-neutral-800 border-b border-neutral-100 pb-3 mb-4">Applicant Information</h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
-                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
-                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Applicant Type</span>
-                        <span className="text-xs text-neutral-700 font-bold col-span-2">{watchApplicantType}</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
-                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Full Name</span>
-                        <span className="text-xs text-neutral-700 font-bold col-span-2">{getValues("personal.firstName")} {getValues("personal.lastName") || ""}</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
-                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Email</span>
-                        <span className="text-xs text-neutral-700 font-bold col-span-2">{getValues("contact.email")}</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
-                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Phone Number</span>
-                        <span className="text-xs text-neutral-700 font-bold col-span-2">{getValues("contact.phonePrefix")} {getValues("contact.phone")}</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
-                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Programme</span>
-                        <span className="text-xs text-neutral-700 font-bold col-span-2">{selectedProgramme?.name || "Not Selected"}</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 py-1 border-b border-neutral-50">
-                        <span className="text-xs text-neutral-400 font-semibold col-span-1">Intake</span>
-                        <span className="text-xs text-neutral-700 font-bold col-span-2">{getValues("intake") || "Not Selected"}</span>
-                      </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div><span className="text-neutral-400 font-medium">Type:</span> <span className="font-bold text-neutral-800">{watchApplicantType}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Course Mode:</span> <span className="font-bold text-neutral-800">{watchCourseType}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Programme:</span> <span className="font-bold text-neutral-800">{selectedProgramme?.name || "Not Selected"}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Intake:</span> <span className="font-bold text-neutral-800">{getValues("intake")}</span></div>
+                  </div>
+                  {watchCourseType === "Package Course" && watchProgressionOption && (
+                    <div className="pt-2 border-t border-neutral-200/60 text-xs">
+                      <span className="text-neutral-400 font-medium">Package Progression:</span> <span className="font-bold text-[#27295B]">{watchProgressionOption}</span>
                     </div>
+                  )}
+                </div>
+
+                <div className="bg-slate-50/80 rounded-2xl border border-neutral-200/80 p-5 space-y-3">
+                  <div className="flex justify-between items-center border-b border-neutral-200/60 pb-3">
+                    <h3 className="font-heading font-bold text-sm text-neutral-900">2. Personal & Parents' Details</h3>
+                    <Button type="button" variant="ghost" onClick={() => setStep(2)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div><span className="text-neutral-400 font-medium">Student Name:</span> <span className="font-bold text-neutral-800">{getValues("personal.firstName")}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Email:</span> <span className="font-bold text-neutral-800">{getValues("contact.email")}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Parent's Name:</span> <span className="font-bold text-neutral-800">{getValues("family.fatherName")}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Parent's Contact:</span> <span className="font-bold text-neutral-800">{getValues("family.fatherPhone")}</span></div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50/80 rounded-2xl border border-neutral-200/80 p-5 space-y-3">
+                  <div className="flex justify-between items-center border-b border-neutral-200/60 pb-3">
+                    <h3 className="font-heading font-bold text-sm text-neutral-900">4. Referral & Agent Info</h3>
+                    <Button type="button" variant="ghost" onClick={() => setStep(4)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div><span className="text-neutral-400 font-medium">How Heard:</span> <span className="font-bold text-neutral-800">{getValues("marketingSource") || "N/A"}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Agency:</span> <span className="font-bold text-neutral-800">{watchIsAgent ? (getValues("agent.agentCompanyName") || "Yes") : "No Agent"}</span></div>
+                    {watchIsAgent && (
+                      <div><span className="text-neutral-400 font-medium">Counsellor's Name:</span> <span className="font-bold text-neutral-800">{getValues("agent.counsellorName") || "N/A"}</span></div>
+                    )}
                   </div>
                 </div>
               </div>
-            )}
 
-            {/* STEP 11: Declaration */}
-            {step === 11 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">11. Declaration</h2>
-                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Please read and accept the declaration.</p>
+              {/* Declaration Checkbox */}
+              <div className="space-y-4 pt-4 border-t border-neutral-100">
+                <h3 className="font-heading font-bold text-base text-neutral-900">Declaration & Terms</h3>
+                <div className="p-4 bg-slate-50 border border-neutral-200 rounded-xl text-xs text-neutral-600 leading-relaxed font-medium">
+                  I hereby declare that all information provided in this application is accurate and complete. I acknowledge that providing false details may lead to immediate rejection of admission.
                 </div>
-                
-                <div className="space-y-4">
-                  <div className="p-5.5 bg-[#F8FAFC] border border-neutral-200/65 rounded-2xl text-xs leading-relaxed text-neutral-600 font-medium">
-                    I hereby declare that all the information provided in this application is true, complete and accurate to the best of my knowledge. I understand that providing false or misleading information may result in the rejection of my application or cancellation of admission at any time.
-                  </div>
-
-                  <div className="flex items-center space-x-3 bg-neutral-50 border border-neutral-200/50 p-4 rounded-xl mt-4">
-                    <input 
-                      type="checkbox" 
-                      id="declareCheck" 
-                      required
-                      className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]" 
-                    />
-                    <Label htmlFor="declareCheck" className="text-neutral-700 font-semibold cursor-pointer">I have read, understood and agree to the above declaration.</Label>
-                  </div>
+                <div className="flex items-center space-x-3 bg-white border border-neutral-200 p-4 rounded-xl">
+                  <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" />
+                  <Label htmlFor="declareCheck" className="text-neutral-900 font-bold cursor-pointer text-xs sm:text-sm">
+                    I have read, understood, and accept the application declaration *
+                  </Label>
                 </div>
               </div>
-            )}
 
-            {/* STEP 12: Payment */}
-            {step === 12 && (
-              <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 text-left">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-neutral-800">12. Payment</h2>
-                  <p className="text-neutral-400 mt-1.5 text-sm font-medium">Complete your application by paying the application fee.</p>
+              {/* Payment Method & Submission */}
+              <div className="space-y-4 pt-4 border-t border-neutral-100">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-heading font-bold text-base text-neutral-900">Application Fee Payment</h3>
+                  <span className="text-xl font-extrabold text-[#27295B]">SGD {selectedProgramme?.applicationFee || "50.00"}</span>
                 </div>
-                
-                <div className="space-y-6">
-                  <div className="flex justify-between items-center border-b border-neutral-100 pb-4 mb-4">
-                    <span className="text-slate-600 font-semibold text-sm">Application Fee</span>
-                    <span className="text-xl font-extrabold text-[#27295B]">
-                      SGD {selectedProgramme?.applicationFee || "50.00"}
-                    </span>
-                  </div>
 
-                  <div className="space-y-3">
-                    <Label className="text-slate-700 font-semibold text-xs uppercase tracking-wide">Payment Method</Label>
-                    <Controller
-                      name="paymentMethod"
-                      control={control}
-                      defaultValue="card"
-                      render={({ field }) => (
-                        <div className="flex flex-col gap-2.5 bg-white border border-neutral-200 p-4 rounded-xl">
-                          {[
-                            { value: "card", label: "Credit / Debit Card" },
-                            { value: "paypal", label: "PayPal" },
-                            { value: "bank", label: "Bank Transfer" }
-                          ].map(method => (
-                            <label key={method.value} className="flex items-center gap-3 text-sm text-slate-700 font-semibold cursor-pointer">
-                              <input
-                                type="radio"
-                                name="paymentMethod"
-                                value={method.value}
-                                checked={(field.value || "card") === method.value}
-                                onChange={() => field.onChange(method.value)}
-                                className="w-4 h-4 text-[#27295B] border-neutral-300 focus:ring-[#27295B]"
-                              />
-                              <span>{method.label}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    />
-                  </div>
-
-                  <div className="flex gap-3 bg-[#eef2f6]/70 border border-neutral-100 rounded-xl p-4.5 text-left">
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#3b82f6] text-white text-[10px] font-bold font-mono">
-                      i
-                    </div>
-                    <div>
-                      <p className="text-xs text-neutral-500 font-medium leading-relaxed">
-                        Your application will be submitted after the payment is successful.
-                      </p>
-                    </div>
-                  </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { value: "card", label: "Credit / Debit Card" },
+                    { value: "paypal", label: "PayPal" },
+                    { value: "bank", label: "Bank Transfer" }
+                  ].map(m => (
+                    <label key={m.value} className="flex items-center gap-3 p-4 bg-white border border-neutral-200 rounded-xl cursor-pointer hover:border-[#27295B]/40 font-semibold text-xs text-neutral-800">
+                      <input type="radio" name="paymentMethod" value={m.value} defaultChecked={m.value === "card"} className="w-4 h-4 text-[#27295B]" />
+                      <span>{m.label}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+        </div>
 
-          {/* Bottom Action Bar */}
-          <div className="mt-8 pt-6 border-t border-neutral-100 flex items-center justify-end gap-3">
-            {step > 1 && (
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={prevStep}
-                disabled={isSubmitting}
-                className="h-11 px-6 border-neutral-200 text-neutral-600 hover:bg-slate-50 rounded-xl font-bold transition-all duration-300"
-              >
-                Back
-              </Button>
-            )}
-            
-            <Button 
-              type="submit" 
+        {/* Action Buttons Footer */}
+        <div className="flex items-center justify-between pt-2">
+          {step > 1 ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={prevStep}
               disabled={isSubmitting}
-              className="h-11 px-8 bg-[#ED1C24] hover:bg-[#D91A20] text-white font-bold gap-2 shadow-xs rounded-xl transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 ml-auto"
+              className="h-12 px-6 border-neutral-200 text-neutral-700 rounded-xl font-bold gap-2"
             >
-              {isSubmitting ? "Processing..." : step === 12 ? "Pay & Submit" : "Save & Continue"}
-              {!isSubmitting && <ChevronRight size={16} />}
+              <ArrowLeft size={16} /> Back
             </Button>
-          </div>
+          ) : (
+            <div />
+          )}
+
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="h-12 px-8 bg-[#ED1C24] hover:bg-[#D91A20] text-white rounded-xl font-bold gap-2 shadow-md hover:shadow-lg transition-all"
+          >
+            {isSubmitting ? "Processing..." : step === 5 ? "Pay & Submit Application" : `Continue to ${SECTIONS.find(s => s.id === step + 1)?.shortName || "Next"} >`}
+          </Button>
         </div>
       </form>
+
+      {/* Rich Education Modal (Matching SIMConnect Benchmark) */}
+      {isQualModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-2xl p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto no-scrollbar text-left border border-neutral-200 font-sans">
+            <div className="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
+              <div>
+                <h3 className="text-xl font-bold text-neutral-900 font-heading">
+                  {editingQualId ? "Edit Education Qualification" : "Add Education Qualification"}
+                </h3>
+                <p className="text-xs text-neutral-500 mt-1 font-medium">
+                  Please fill in your academic qualification details as shown on your certificates.
+                </p>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsQualModalOpen(false)}
+                className="text-neutral-400 hover:text-neutral-700 p-1.5 rounded-xl hover:bg-neutral-100 transition-colors text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="space-y-1.5">
+                <Label className="text-slate-700 font-semibold text-xs">Country of Awarding Institution *</Label>
+                <Select value={qualForm.country || "Singapore"} onValueChange={v => setQualForm({...qualForm, country: v || "Singapore"})}>
+                  <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium">
+                    <SelectValue placeholder="Select Country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Singapore">🇸🇬 Singapore</SelectItem>
+                    <SelectItem value="Malaysia">🇲🇾 Malaysia</SelectItem>
+                    <SelectItem value="Indonesia">🇮🇩 Indonesia</SelectItem>
+                    <SelectItem value="India">🇮🇳 India</SelectItem>
+                    <SelectItem value="China">🇨🇳 China</SelectItem>
+                    <SelectItem value="United Kingdom">🇬🇧 United Kingdom</SelectItem>
+                    <SelectItem value="United States">🇺🇸 United States</SelectItem>
+                    <SelectItem value="Australia">🇦🇺 Australia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-700 font-semibold text-xs">Qualification Title / Level *</Label>
+                <Select value={qualForm.qualification || "Bachelor's Degree"} onValueChange={v => setQualForm({...qualForm, qualification: v || "Bachelor's Degree"})}>
+                  <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium">
+                    <SelectValue placeholder="Select Qualification" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Bachelor's Degree">Bachelor's Degree</SelectItem>
+                    <SelectItem value="Master's Degree">Master's Degree</SelectItem>
+                    <SelectItem value="Diploma">Diploma</SelectItem>
+                    <SelectItem value="Higher Secondary / A-Levels">Higher Secondary / A-Levels</SelectItem>
+                    <SelectItem value="Secondary School / O-Levels">Secondary School / O-Levels</SelectItem>
+                    <SelectItem value="Doctorate / PhD">Doctorate / PhD</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex justify-between items-center">
+                  <Label className="text-slate-700 font-semibold text-xs">Awarding Institution *</Label>
+                  <span className="text-[10px] text-[#27295B] font-semibold hover:underline cursor-pointer">I can't find my institution</span>
+                </div>
+                <Input value={qualForm.institution} onChange={e => setQualForm({...qualForm, institution: e.target.value})} placeholder="e.g. National University of Singapore" className="h-11 rounded-xl" />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-700 font-semibold text-xs">School / College Attended *</Label>
+                <Input value={qualForm.school} onChange={e => setQualForm({...qualForm, school: e.target.value})} placeholder="e.g. NUS Business School" className="h-11 rounded-xl" />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-700 font-semibold text-xs">Specialization / Major</Label>
+                <Input value={qualForm.major} onChange={e => setQualForm({...qualForm, major: e.target.value})} placeholder="e.g. Business Administration" className="h-11 rounded-xl" />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
+                <Select value={qualForm.modeOfStudy || "Full Time"} onValueChange={v => setQualForm({...qualForm, modeOfStudy: v || "Full Time"})}>
+                  <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium">
+                    <SelectValue placeholder="Select Mode" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Full Time">Full Time</SelectItem>
+                    <SelectItem value="Part Time">Part Time</SelectItem>
+                    <SelectItem value="Online / Distance">Online / Distance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-700 font-semibold text-xs">Study Period (Start - End Year) *</Label>
+                <div className="flex gap-2 items-center">
+                  <Input value={qualForm.startYear} onChange={e => setQualForm({...qualForm, startYear: e.target.value})} placeholder="2020" type="number" className="h-11 rounded-xl" />
+                  <span className="text-neutral-400 font-bold">To</span>
+                  <Input value={qualForm.endYear} onChange={e => setQualForm({...qualForm, endYear: e.target.value})} placeholder="2024" type="number" className="h-11 rounded-xl" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-slate-700 font-semibold text-xs">Completion Status *</Label>
+                <div className="flex items-center gap-3 h-11 px-3 border border-neutral-200 rounded-xl bg-white">
+                  {["Completed", "Currently Pursuing", "Incomplete"].map(status => (
+                    <label key={status} className="flex items-center gap-1 text-[11px] text-neutral-700 cursor-pointer font-medium">
+                      <input type="radio" name="modalCompletionStatus" value={status} checked={qualForm.completionStatus === status} onChange={() => setQualForm({...qualForm, completionStatus: status})} className="w-3.5 h-3.5 text-[#27295B]" />
+                      <span>{status}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-neutral-100">
+              <Button variant="outline" type="button" onClick={() => setIsQualModalOpen(false)} className="h-10 px-5 rounded-xl font-bold">
+                Cancel
+              </Button>
+              <Button 
+                type="button"
+                className="h-10 px-6 bg-[#27295B] hover:bg-[#1e204b] text-white rounded-xl font-bold"
+                onClick={() => {
+                  if (qualForm.qualification && qualForm.institution) {
+                    const newItem = {
+                      id: editingQualId || Date.now(),
+                      qualification: qualForm.qualification,
+                      institution: qualForm.institution,
+                      school: qualForm.school || qualForm.institution,
+                      major: qualForm.major || "General",
+                      year: `${qualForm.startYear}-${qualForm.endYear}`,
+                      country: qualForm.country,
+                      modeOfStudy: qualForm.modeOfStudy,
+                      completionStatus: qualForm.completionStatus,
+                      language: qualForm.language,
+                      gpa: qualForm.gpa,
+                      classification: qualForm.classification,
+                    };
+
+                    if (editingQualId) {
+                      setEducationList(educationList.map(item => item.id === editingQualId ? newItem : item));
+                    } else {
+                      setEducationList([...educationList, newItem]);
+                    }
+                    setIsQualModalOpen(false);
+                    setEditingQualId(null);
+                  } else {
+                    alert("Please fill in Qualification Title and Institution.");
+                  }
+                }}
+              >
+                {editingQualId ? "Save Changes" : "Add Education"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-
-    {/* Saved progress check badge at the bottom of form card */}
-    <div className="flex items-center justify-center gap-2 bg-[#F8FAFC] border border-neutral-200/50 rounded-2xl py-3.5 px-4 shadow-3xs text-neutral-500 text-xs font-semibold">
-      <Check size={14} className="text-emerald-500 bg-emerald-50 rounded-full p-0.5" />
-      <span>Your progress is automatically saved. You can exit and continue later.</span>
-    </div>
-  </div>
-
-    {/* Right Column: Details Panel */}
-    <aside className="w-full lg:col-span-3 space-y-6">
-      {/* Card 1: Application Progress */}
-      <div className="bg-white p-5 rounded-2xl border border-neutral-200/60 shadow-2xs text-left">
-        <h3 className="font-heading font-bold text-[15px] text-neutral-800 mb-3">Application Progress</h3>
-        <div className="text-xs font-semibold text-neutral-500 mb-1.5">Step {step} of 12</div>
-        <div className="h-1.5 w-full bg-neutral-100 rounded-full overflow-hidden mb-1.5">
-          <div 
-            className="h-full bg-[#ED1C24] rounded-full transition-all duration-300"
-            style={{ width: `${(step / 12) * 100}%` }}
-          />
-        </div>
-        <div className="text-xs font-bold text-neutral-700">{Math.round(((step - 1) / 12) * 100)}% Complete</div>
-      </div>
-
-      {/* Card 2: Application Summary */}
-      <div className="bg-white p-5 rounded-2xl border border-neutral-200/60 shadow-2xs text-left">
-        <h3 className="font-heading font-bold text-[15px] text-slate-800 border-b border-neutral-100 pb-3 mb-4">Application Summary</h3>
-        <div className="space-y-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Applicant Type</p>
-            <p className="text-xs font-bold text-neutral-700 mt-0.5">{watchApplicantType || "Not Selected"}</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Programme</p>
-            <p className="text-xs font-bold text-neutral-700 mt-0.5">
-              {selectedProgramme ? `${selectedProgramme.name} (${selectedProgramme.code})` : "Not Selected"}
-            </p>
-          </div>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Intake</p>
-            <p className="text-xs font-bold text-neutral-700 mt-0.5 font-sans">
-              {watchIntake || "Not Selected"}
-            </p>
-          </div>
-          <div className="border-t border-neutral-100 pt-3">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Application Fee</p>
-            <p className="text-sm font-extrabold text-[#27295B] mt-0.5">
-              SGD {selectedProgramme?.applicationFee || "50.00"}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Card 3: Need Help? */}
-      <div className="bg-white p-5 rounded-2xl border border-neutral-200/60 shadow-2xs text-left">
-        <h3 className="font-heading font-bold text-[15px] text-neutral-800 mb-2">Need Help?</h3>
-        <p className="text-xs text-neutral-500 mb-4 leading-relaxed">Our admission advisors are available to assist you.</p>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2.5 text-xs text-neutral-600 font-medium">
-            <Phone size={14} className="text-[#27295B]" />
-            <a href="tel:+6561234567" className="hover:underline">+65 6123 4567</a>
-          </div>
-          <div className="flex items-center gap-2.5 text-xs text-neutral-600 font-medium">
-            <Mail size={14} className="text-[#27295B]" />
-            <a href="mailto:admissions@educare.edu.sg" className="hover:underline">admissions@educare.edu.sg</a>
-          </div>
-          <div className="flex items-start gap-2.5 text-xs text-neutral-500">
-            <Clock size={14} className="text-[#27295B] shrink-0 mt-0.5" />
-            <span>Mon - Fri, 9:00 AM - 6:00 PM (SGT)</span>
-          </div>
-        </div>
-      </div>
-    </aside>
-    
-  </div>
-</div>
   );
 }
