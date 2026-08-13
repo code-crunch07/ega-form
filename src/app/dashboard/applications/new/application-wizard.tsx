@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { 
-  Check, ChevronRight, Upload, Plus, FileText, Globe, MapPin, Building2, 
+  Check, ChevronRight, ChevronDown, Upload, Plus, FileText, Globe, MapPin, Building2, 
   UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, 
   ScrollText, CreditCard, Phone, Mail, Clock, ArrowLeft, AlertCircle, Info, ShieldCheck, Sparkles
 } from "lucide-react";
@@ -25,6 +25,65 @@ const SECTIONS = [
   { id: 5, name: "Review & Payment", shortName: "5. Review & Pay", icon: CreditCard, desc: "Review, fee payment & submit" },
 ];
 
+function AccordionCard({
+  title,
+  subtitle,
+  badge,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white shadow-2xs overflow-hidden transition-all duration-200">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between p-4 sm:p-5 bg-slate-50/80 hover:bg-slate-100/80 transition-colors text-left focus:outline-none select-none"
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-xl bg-[#27295B]/10 text-[#27295B] flex items-center justify-center font-bold text-xs shrink-0">
+            <div className={cn("transition-transform duration-200", isOpen && "rotate-90")}>
+              <ChevronRight size={16} />
+            </div>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-heading font-bold text-sm sm:text-base text-slate-900">{title}</h3>
+              {badge && (
+                <span className="text-[10px] font-bold font-mono text-[#27295B] bg-[#27295B]/10 px-2.5 py-0.5 rounded-full">
+                  {badge}
+                </span>
+              )}
+            </div>
+            {subtitle && <p className="text-xs text-slate-500 font-medium mt-0.5">{subtitle}</p>}
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 ml-4">
+          <span className="text-xs font-semibold text-slate-400 hidden sm:inline">
+            {isOpen ? "Collapse" : "Expand"}
+          </span>
+          <div className={cn("transition-transform duration-200 text-slate-400", isOpen && "rotate-180")}>
+            <ChevronDown size={18} />
+          </div>
+        </div>
+      </button>
+
+      {isOpen && (
+        <div className="p-5 sm:p-6 border-t border-slate-100 bg-white animate-in fade-in duration-200 space-y-6">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ApplicationWizard({ 
   user, 
   programmes = [], 
@@ -40,7 +99,30 @@ export default function ApplicationWizard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successAppNumber, setSuccessAppNumber] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  
+
+  // Accordion Open/Closed State
+  const [openPanels, setOpenPanels] = useState<Record<string, boolean>>({
+    partnerMode: true,
+    courseType: true,
+    counselling: true,
+    personal: true,
+    guardian: true,
+    passport: true,
+    address: true,
+    academics: true,
+    english: true,
+    health: true,
+    conduct: true,
+    marketing: true,
+    agent: true,
+    declarations: true,
+    payment: true,
+  });
+
+  const togglePanel = (key: string) => {
+    setOpenPanels((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   // Qualifications state
   const [educationList, setEducationList] = useState<any[]>([
     { id: 1, qualificationTitle: "Bachelor's Degree", institution: "National University of Singapore", schoolAttended: "NUS Business School", specialization: "Business Administration", studyPeriodStart: "2020-08", studyPeriodEnd: "2024-05", modeOfStudy: "Full Time", completionStatus: "Completed", languageOfInstruction: "English" },
@@ -348,7 +430,6 @@ export default function ApplicationWizard({
             {SECTIONS.map((sec) => {
               const isActive = step === sec.id;
               const isCompleted = step > sec.id;
-              const IconComp = sec.icon;
 
               return (
                 <button
@@ -403,11 +484,11 @@ export default function ApplicationWizard({
 
       {/* Main Form Content Container */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-6 sm:p-10 space-y-8 min-h-[500px]">
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-6 sm:p-10 space-y-6 min-h-[500px]">
           
           {/* STEP 1: Programme Selection & Pre-Course Counselling */}
           {step === 1 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="space-y-6 animate-in fade-in duration-300">
               <div className="border-b border-slate-100 pb-4">
                 <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
                   Section 1 of 5
@@ -416,120 +497,33 @@ export default function ApplicationWizard({
                 <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Select your university partner, study mode, course type, and target programme.</p>
               </div>
 
-              {/* Partner & Mode of Study */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-semibold text-xs">University Partner *</Label>
-                  <Controller
-                    name="universityPartner"
-                    control={control}
-                    defaultValue="Educare Global Academy"
-                    render={({ field }) => (
-                      <Select onValueChange={(val) => {
-                        field.onChange(val);
-                        setValue("programmeId", "");
-                      }} value={field.value || "Educare Global Academy"}>
-                        <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
-                          <SelectValue placeholder="Select University Partner" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Educare Global Academy">Educare Global Academy (EGA)</SelectItem>
-                          <SelectItem value="Glasgow Caledonian University (UK)">Glasgow Caledonian University (UK)</SelectItem>
-                          <SelectItem value="Kingston University (UK)">Kingston University (UK)</SelectItem>
-                          <SelectItem value="NCC">NCC Education</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
-                  <Controller
-                    name="studyMode"
-                    control={control}
-                    defaultValue="Full Time"
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value || "Full Time"}>
-                        <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
-                          <SelectValue placeholder="Select Mode of Study" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Full Time">Full Time</SelectItem>
-                          <SelectItem value="Part Time">Part Time</SelectItem>
-                          <SelectItem value="E-Learning">E-Learning</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Course Type: Standalone vs Package */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
-                  Course Type *
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { value: "Standalone Course", title: "Standalone Course", desc: "Single programme selection at your target academic level." },
-                    { value: "Package Courses", title: "Package Courses", desc: "Fixed 3-programme package (Foundation → Diploma → Undergraduate)." }
-                  ].map(c => {
-                    const isSelected = watchCourseType === c.value;
-                    return (
-                      <label 
-                        key={c.value}
-                        className={cn(
-                          "p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-start gap-4 relative overflow-hidden",
-                          isSelected 
-                            ? "border-[#27295B] bg-[#27295B]/5 shadow-2xs" 
-                            : "border-slate-200 hover:border-[#27295B]/30 bg-white"
-                        )}
-                      >
-                        <input
-                          type="radio"
-                          name="courseType"
-                          value={c.value}
-                          checked={isSelected}
-                          onChange={() => {
-                            setValue("courseType", c.value, { shouldValidate: true });
-                            setValue("programmeId", "");
-                          }}
-                          className="mt-1 w-4 h-4 text-[#27295B]"
-                        />
-                        <div>
-                          <h4 className="font-bold text-sm text-slate-900">{c.title}</h4>
-                          <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">{c.desc}</p>
-                        </div>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Standalone vs Package Logic */}
-              {watchCourseType === "Standalone Course" ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
+              {/* Accordion 1: Partner & Mode */}
+              <AccordionCard
+                title="University Partner & Study Mode"
+                subtitle="Select the institution and study schedule"
+                isOpen={!!openPanels.partnerMode}
+                onToggle={() => togglePanel('partnerMode')}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Academic Level *</Label>
+                    <Label className="text-slate-700 font-semibold text-xs">University Partner *</Label>
                     <Controller
-                      name="academicLevel"
+                      name="universityPartner"
                       control={control}
-                      defaultValue="Diploma"
+                      defaultValue="Educare Global Academy"
                       render={({ field }) => (
                         <Select onValueChange={(val) => {
                           field.onChange(val);
                           setValue("programmeId", "");
-                        }} value={field.value || "Diploma"}>
-                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
-                            <SelectValue placeholder="Select Level" />
+                        }} value={field.value || "Educare Global Academy"}>
+                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
+                            <SelectValue placeholder="Select University Partner" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Preparatory">Preparatory</SelectItem>
-                            <SelectItem value="Foundation">Foundation</SelectItem>
-                            <SelectItem value="Diploma">Diploma / Advanced / Higher Diploma</SelectItem>
-                            <SelectItem value="Undergraduate">Undergraduate</SelectItem>
-                            <SelectItem value="Postgraduate">Postgraduate</SelectItem>
+                            <SelectItem value="Educare Global Academy">Educare Global Academy (EGA)</SelectItem>
+                            <SelectItem value="Glasgow Caledonian University (UK)">Glasgow Caledonian University (UK)</SelectItem>
+                            <SelectItem value="Kingston University (UK)">Kingston University (UK)</SelectItem>
+                            <SelectItem value="NCC">NCC Education</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -537,172 +531,266 @@ export default function ApplicationWizard({
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Available Programme *</Label>
+                    <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
                     <Controller
-                      name="programmeId"
+                      name="studyMode"
                       control={control}
-                      render={({ field }) => {
-                        const selectedProg = programmes.find(p => p.id === field.value);
-                        const displayName = selectedProg 
-                          ? `${selectedProg.name} (${selectedProg.code})`
-                          : field.value === "p1" ? "Diploma in International Hotel and Tourism Management"
-                          : field.value === "p2" ? "Diploma in Business Administration"
-                          : field.value === "p3" ? "Higher Diploma in Computer Science"
-                          : field.value;
+                      defaultValue="Full Time"
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value || "Full Time"}>
+                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
+                            <SelectValue placeholder="Select Mode of Study" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Full Time">Full Time</SelectItem>
+                            <SelectItem value="Part Time">Part Time</SelectItem>
+                            <SelectItem value="E-Learning">E-Learning</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                </div>
+              </AccordionCard>
 
-                        return (
-                          <Select onValueChange={field.onChange} value={field.value || ""}>
-                            <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
-                              <span className="truncate text-left font-semibold">
-                                {field.value ? displayName : <span className="text-slate-400 font-normal">Select Programme</span>}
-                              </span>
+              {/* Accordion 2: Course Type */}
+              <AccordionCard
+                title="Course Type & Target Programme"
+                subtitle="Choose Standalone Course or 3-Level Package Pathway"
+                badge="Mandatory"
+                isOpen={!!openPanels.courseType}
+                onToggle={() => togglePanel('courseType')}
+              >
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      { value: "Standalone Course", title: "Standalone Course", desc: "Single programme selection at your target academic level." },
+                      { value: "Package Courses", title: "Package Courses", desc: "Fixed 3-programme package (Foundation → Diploma → Undergraduate)." }
+                    ].map(c => {
+                      const isSelected = watchCourseType === c.value;
+                      return (
+                        <label 
+                          key={c.value}
+                          className={cn(
+                            "p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-start gap-4 relative overflow-hidden",
+                            isSelected 
+                              ? "border-[#27295B] bg-[#27295B]/5 shadow-2xs" 
+                              : "border-slate-200 hover:border-[#27295B]/30 bg-white"
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="courseType"
+                            value={c.value}
+                            checked={isSelected}
+                            onChange={() => {
+                              setValue("courseType", c.value, { shouldValidate: true });
+                              setValue("programmeId", "");
+                            }}
+                            className="mt-1 w-4 h-4 text-[#27295B]"
+                          />
+                          <div>
+                            <h4 className="font-bold text-sm text-slate-900">{c.title}</h4>
+                            <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">{c.desc}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {/* Standalone vs Package Logic */}
+                  {watchCourseType === "Standalone Course" ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Academic Level *</Label>
+                        <Controller
+                          name="academicLevel"
+                          control={control}
+                          defaultValue="Diploma"
+                          render={({ field }) => (
+                            <Select onValueChange={(val) => {
+                              field.onChange(val);
+                              setValue("programmeId", "");
+                            }} value={field.value || "Diploma"}>
+                              <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
+                                <SelectValue placeholder="Select Level" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Preparatory">Preparatory</SelectItem>
+                                <SelectItem value="Foundation">Foundation</SelectItem>
+                                <SelectItem value="Diploma">Diploma / Advanced / Higher Diploma</SelectItem>
+                                <SelectItem value="Undergraduate">Undergraduate</SelectItem>
+                                <SelectItem value="Postgraduate">Postgraduate</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Available Programme *</Label>
+                        <Controller
+                          name="programmeId"
+                          control={control}
+                          render={({ field }) => {
+                            const selectedProg = programmes.find(p => p.id === field.value);
+                            const displayName = selectedProg 
+                              ? `${selectedProg.name} (${selectedProg.code})`
+                              : field.value === "p1" ? "Diploma in International Hotel and Tourism Management"
+                              : field.value === "p2" ? "Diploma in Business Administration"
+                              : field.value === "p3" ? "Higher Diploma in Computer Science"
+                              : field.value;
+
+                            return (
+                              <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
+                                  <span className="truncate text-left font-semibold">
+                                    {field.value ? displayName : <span className="text-slate-400 font-normal">Select Programme</span>}
+                                  </span>
+                                </SelectTrigger>
+                                <SelectContent className="w-[320px] max-w-md">
+                                  {filteredProgrammes.length > 0 ? (
+                                    filteredProgrammes.map(p => (
+                                      <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
+                                    ))
+                                  ) : (
+                                    <>
+                                      <SelectItem value="p1">Diploma in International Hotel and Tourism Management</SelectItem>
+                                      <SelectItem value="p2">Diploma in Business Administration</SelectItem>
+                                      <SelectItem value="p3">Higher Diploma in Computer Science</SelectItem>
+                                    </>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            );
+                          }}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Intake *</Label>
+                        <Controller
+                          name="intake"
+                          control={control}
+                          defaultValue="January 2026"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value || "January 2026"}>
+                              <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
+                                <SelectValue placeholder="Select Intake" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {intakes && intakes.length > 0 ? (
+                                  intakes.map(i => (
+                                    <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
+                                  ))
+                                ) : (
+                                  <>
+                                    <SelectItem value="January 2026">January 2026</SelectItem>
+                                    <SelectItem value="April 2026">April 2026</SelectItem>
+                                    <SelectItem value="July 2026">July 2026</SelectItem>
+                                    <SelectItem value="October 2026">October 2026</SelectItem>
+                                  </>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Package Courses: 3 Slots */
+                    <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-300">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h4 className="font-heading font-bold text-sm text-slate-900">
+                          Package Programme Slots (All 3 Slots Mandatory) *
+                        </h4>
+                        <span className="text-xs font-mono font-bold text-[#27295B] bg-[#27295B]/10 px-3 py-1 rounded-full">
+                          Fixed 3-Level Pathway
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Slot 1</span>
+                            <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Foundation Level</span>
+                          </div>
+                          <Label className="text-slate-800 font-bold text-xs">Foundation Programme *</Label>
+                          <Select defaultValue="f1">
+                            <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
+                              <SelectValue placeholder="Select Foundation" />
                             </SelectTrigger>
-                            <SelectContent className="w-[320px] max-w-md">
-                              {filteredProgrammes.length > 0 ? (
-                                filteredProgrammes.map(p => (
-                                  <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
-                                ))
-                              ) : (
-                                <>
-                                  <SelectItem value="p1">Diploma in International Hotel and Tourism Management</SelectItem>
-                                  <SelectItem value="p2">Diploma in Business Administration</SelectItem>
-                                  <SelectItem value="p3">Higher Diploma in Computer Science</SelectItem>
-                                </>
-                              )}
+                            <SelectContent>
+                              <SelectItem value="f1">International Foundation Certificate</SelectItem>
+                              <SelectItem value="f2">Foundation Diploma in Higher Education</SelectItem>
                             </SelectContent>
                           </Select>
-                        );
-                      }}
-                    />
-                  </div>
+                        </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Intake *</Label>
-                    <Controller
-                      name="intake"
-                      control={control}
-                      defaultValue="January 2026"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || "January 2026"}>
-                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
-                            <SelectValue placeholder="Select Intake" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {intakes && intakes.length > 0 ? (
-                              intakes.map(i => (
-                                <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
-                              ))
-                            ) : (
-                              <>
-                                <SelectItem value="January 2026">January 2026</SelectItem>
-                                <SelectItem value="April 2026">April 2026</SelectItem>
-                                <SelectItem value="July 2026">July 2026</SelectItem>
-                                <SelectItem value="October 2026">October 2026</SelectItem>
-                              </>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-                </div>
-              ) : (
-                /* Package Courses: 3 Predefined Mandatory Slots */
-                <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-300">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <h3 className="font-heading font-bold text-base text-slate-900">
-                      Package Programme Slots (All 3 Slots Mandatory) *
-                    </h3>
-                    <span className="text-xs font-mono font-bold text-[#27295B] bg-[#27295B]/10 px-3 py-1 rounded-full">
-                      Fixed 3-Level Pathway
-                    </span>
-                  </div>
+                        <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Slot 2</span>
+                            <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Diploma Family</span>
+                          </div>
+                          <Label className="text-slate-800 font-bold text-xs">Diploma / Advanced Diploma *</Label>
+                          <Select defaultValue="d1">
+                            <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
+                              <SelectValue placeholder="Select Diploma" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="d1">Diploma in International Hotel & Tourism Management</SelectItem>
+                              <SelectItem value="d2">Advanced Diploma in Tourism & Hospitality Management</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Slot 1 */}
-                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Slot 1</span>
-                        <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Foundation Level</span>
+                        <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Slot 3</span>
+                            <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Undergraduate</span>
+                          </div>
+                          <Label className="text-slate-800 font-bold text-xs">Undergraduate Degree *</Label>
+                          <Select defaultValue="u1">
+                            <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
+                              <SelectValue placeholder="Select Degree" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="u1">BSc (Hons) International Tourism & Hospitality Management</SelectItem>
+                              <SelectItem value="u2">BA (Hons) Business & Management Top-Up</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      <Label className="text-slate-800 font-bold text-xs">Foundation Programme *</Label>
-                      <Select defaultValue="f1">
-                        <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
-                          <SelectValue placeholder="Select Foundation" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="f1">International Foundation Certificate</SelectItem>
-                          <SelectItem value="f2">Foundation Diploma in Higher Education</SelectItem>
-                        </SelectContent>
-                      </Select>
                     </div>
-
-                    {/* Slot 2 */}
-                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Slot 2</span>
-                        <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Diploma Family</span>
-                      </div>
-                      <Label className="text-slate-800 font-bold text-xs">Diploma / Advanced Diploma *</Label>
-                      <Select defaultValue="d1">
-                        <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
-                          <SelectValue placeholder="Select Diploma" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="d1">Diploma in International Hotel & Tourism Management</SelectItem>
-                          <SelectItem value="d2">Advanced Diploma in Tourism & Hospitality Management</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Slot 3 */}
-                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Slot 3</span>
-                        <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Undergraduate</span>
-                      </div>
-                      <Label className="text-slate-800 font-bold text-xs">Undergraduate Degree *</Label>
-                      <Select defaultValue="u1">
-                        <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
-                          <SelectValue placeholder="Select Degree" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="u1">BSc (Hons) International Tourism & Hospitality Management</SelectItem>
-                          <SelectItem value="u2">BA (Hons) Business & Management Top-Up</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                  )}
                 </div>
-              )}
+              </AccordionCard>
 
-              {/* Pre-Course Counselling Declaration Box */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 pt-4">
-                <div className="flex items-start gap-3">
-                  <Info size={20} className="text-[#27295B] mt-0.5 shrink-0" />
-                  <div>
-                    <h3 className="font-heading font-bold text-sm text-slate-900">
-                      Pre-Course Counselling Declaration *
-                    </h3>
-                    <p className="text-xs text-slate-600 font-medium mt-1 leading-relaxed">
-                      Confirm you have gathered sufficient information regarding your choice of study at {watchPartner} by selecting your declaration statement below:
-                    </p>
-                  </div>
-                </div>
+              {/* Accordion 3: Counselling */}
+              <AccordionCard
+                title="Pre-Course Counselling Declaration"
+                subtitle="Confirm pre-course information and advisory counselling"
+                badge="Mandatory"
+                isOpen={!!openPanels.counselling}
+                onToggle={() => togglePanel('counselling')}
+              >
+                <div className="space-y-4">
+                  <p className="text-xs text-slate-600 font-medium leading-relaxed">
+                    Confirm you have gathered sufficient information regarding your choice of study at {watchPartner} by selecting your declaration statement below:
+                  </p>
 
-                <div className="space-y-2 pt-2">
                   <Controller
                     name="counsellingDeclaration"
                     control={control}
                     defaultValue="counselled"
                     render={({ field }) => (
-                      <div className="space-y-2">
+                      <div className="space-y-2.5">
                         {[
                           { val: "counselled", label: "I have been counselled by EGA / EGA Appointed Agents regarding this information." },
                           { val: "read_contacted", label: "I have read sufficient information and, where applicable, I have contacted EGA / EGA Appointed Agents for clarification." },
                           { val: "read_self", label: "I have read sufficient information on my own and confirm that I do not require pre-course counselling by EGA / EGA Appointed Agents." }
                         ].map((opt) => (
-                          <label key={opt.val} className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-[#27295B]/40 font-medium text-xs text-slate-900 transition-all">
+                          <label key={opt.val} className="flex items-center gap-3 p-3.5 rounded-xl bg-[#27295B]/5 border border-[#27295B]/15 cursor-pointer hover:border-[#27295B]/40 font-medium text-xs text-slate-900 transition-all">
                             <input 
                               type="radio" 
                               name="counsellingDeclaration" 
@@ -718,13 +806,13 @@ export default function ApplicationWizard({
                     )}
                   />
                 </div>
-              </div>
+              </AccordionCard>
             </div>
           )}
 
           {/* STEP 2: Section 1 (Personal Particulars) & Section 2 (Citizenship & Address) */}
           {step === 2 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="space-y-6 animate-in fade-in duration-300">
               <div className="border-b border-slate-100 pb-4">
                 <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
                   Section 2 of 5
@@ -733,229 +821,240 @@ export default function ApplicationWizard({
                 <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Provide legal identity information, passport data, and official addresses.</p>
               </div>
 
-              {/* Personal Particulars */}
-              <div className="space-y-4 pt-2">
-                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
-                  Personal Particulars
-                </h3>
+              {/* Accordion 1: Personal Particulars */}
+              <AccordionCard
+                title="Personal Particulars"
+                subtitle="Full legal name, contact details, date of birth, and nationality"
+                badge="Mandatory"
+                isOpen={!!openPanels.personal}
+                onToggle={() => togglePanel('personal')}
+              >
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Title *</Label>
+                      <Controller
+                        name="personal.title"
+                        control={control}
+                        defaultValue="mr"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value || "mr"}>
+                            <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                              <SelectValue placeholder="Title" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="mr">Mr.</SelectItem>
+                              <SelectItem value="ms">Ms.</SelectItem>
+                              <SelectItem value="mrs">Mrs.</SelectItem>
+                              <SelectItem value="miss">Miss</SelectItem>
+                              <SelectItem value="dr">Dr.</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Title *</Label>
-                    <Controller
-                      name="personal.title"
-                      control={control}
-                      defaultValue="mr"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || "mr"}>
-                          <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
-                            <SelectValue placeholder="Title" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="mr">Mr.</SelectItem>
-                            <SelectItem value="ms">Ms.</SelectItem>
-                            <SelectItem value="mrs">Mrs.</SelectItem>
-                            <SelectItem value="miss">Miss</SelectItem>
-                            <SelectItem value="dr">Dr.</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
+                    <div className="md:col-span-2 space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Full Name (as in NRIC / Passport) *</Label>
+                      <Input {...register("personal.fullName")} placeholder="e.g. John Michael Doe" className="h-12 rounded-xl" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Surname *</Label>
+                      <Input {...register("personal.surname")} placeholder="Enter . if no family name" className="h-12 rounded-xl" />
+                    </div>
                   </div>
 
-                  <div className="md:col-span-2 space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Full Name (as in NRIC / Passport) *</Label>
-                    <Input {...register("personal.fullName")} placeholder="e.g. John Michael Doe" className="h-12 rounded-xl" />
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Date of Birth *</Label>
+                      <Input type="date" {...register("personal.dob")} className="h-12 rounded-xl" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Gender *</Label>
+                      <Controller
+                        name="personal.gender"
+                        control={control}
+                        defaultValue="male"
+                        render={({ field }) => (
+                          <div className="flex h-12 items-center gap-4 bg-white border border-slate-200 rounded-xl px-4 text-xs font-semibold text-slate-800">
+                            {["male", "female"].map(g => (
+                              <label key={g} className="flex items-center gap-1.5 capitalize cursor-pointer">
+                                <input type="radio" name="gender" value={g} checked={field.value === g} onChange={() => field.onChange(g)} className="w-4 h-4 text-[#27295B]" />
+                                <span>{g}</span>
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Marital Status *</Label>
+                      <Controller
+                        name="personal.maritalStatus"
+                        control={control}
+                        defaultValue="Single"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value || "Single"}>
+                            <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                              <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Single">Single</SelectItem>
+                              <SelectItem value="Married">Married</SelectItem>
+                              <SelectItem value="Divorced">Divorced</SelectItem>
+                              <SelectItem value="Widowed">Widowed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Nationality *</Label>
+                      <Input {...register("personal.nationality")} placeholder="e.g. Singaporean" className="h-12 rounded-xl" />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Surname *</Label>
-                    <Input {...register("personal.surname")} placeholder="Enter . if no family name" className="h-12 rounded-xl" />
-                  </div>
-                </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Email Address (Read Only) *</Label>
+                      <Input {...register("personal.email")} type="email" disabled className="h-12 bg-slate-100 text-slate-500 rounded-xl font-medium" />
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Date of Birth *</Label>
-                    <Input type="date" {...register("personal.dob")} className="h-12 rounded-xl" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Gender *</Label>
-                    <Controller
-                      name="personal.gender"
-                      control={control}
-                      defaultValue="male"
-                      render={({ field }) => (
-                        <div className="flex h-12 items-center gap-4 bg-white border border-slate-200 rounded-xl px-4 text-xs font-semibold text-slate-800">
-                          {["male", "female"].map(g => (
-                            <label key={g} className="flex items-center gap-1.5 capitalize cursor-pointer">
-                              <input type="radio" name="gender" value={g} checked={field.value === g} onChange={() => field.onChange(g)} className="w-4 h-4 text-[#27295B]" />
-                              <span>{g}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Marital Status *</Label>
-                    <Controller
-                      name="personal.maritalStatus"
-                      control={control}
-                      defaultValue="Single"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || "Single"}>
-                          <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
-                            <SelectValue placeholder="Status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Single">Single</SelectItem>
-                            <SelectItem value="Married">Married</SelectItem>
-                            <SelectItem value="Divorced">Divorced</SelectItem>
-                            <SelectItem value="Widowed">Widowed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Nationality *</Label>
-                    <Input {...register("personal.nationality")} placeholder="e.g. Singaporean" className="h-12 rounded-xl" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Email Address (Read Only) *</Label>
-                    <Input {...register("personal.email")} type="email" disabled className="h-12 bg-slate-100 text-slate-500 rounded-xl font-medium" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Contact Number *</Label>
-                    <div className="flex gap-2">
-                      <Input {...register("personal.phoneCountryCode")} placeholder="+65" className="w-20 h-12 rounded-xl text-center shrink-0 font-mono font-semibold" />
-                      <Input {...register("personal.phone")} placeholder="9123 4567" className="flex-1 h-12 rounded-xl" />
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Contact Number *</Label>
+                      <div className="flex gap-2">
+                        <Input {...register("personal.phoneCountryCode")} placeholder="+65" className="w-20 h-12 rounded-xl text-center shrink-0 font-mono font-semibold" />
+                        <Input {...register("personal.phone")} placeholder="9123 4567" className="flex-1 h-12 rounded-xl" />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </AccordionCard>
 
-              {/* Under-18 Guardian Details */}
+              {/* Accordion 2: Under-18 Guardian (Conditional) */}
               {isUnder18 && (
-                <div className="space-y-4 pt-6 border-t border-rose-100 bg-rose-50/40 p-5 rounded-2xl animate-in fade-in duration-300">
-                  <div className="flex items-center justify-between border-b border-rose-200/80 pb-3">
-                    <h3 className="font-heading font-bold text-base text-rose-950">
-                      Parent / Legal Guardian Details (Mandatory for Applicants under 18) *
-                    </h3>
-                    <span className="text-xs font-mono font-bold text-rose-700 bg-rose-100 px-3 py-1 rounded-full">
-                      Age: {applicantAge} Years
-                    </span>
-                  </div>
+                <AccordionCard
+                  title="Parent / Legal Guardian Details"
+                  subtitle="Required for applicants under 18 years of age"
+                  badge={`Age: ${applicantAge} Years`}
+                  isOpen={!!openPanels.guardian}
+                  onToggle={() => togglePanel('guardian')}
+                >
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Guardian Full Name (as in ID) *</Label>
+                        <Input {...register("guardian.fullName")} placeholder="e.g. Robert Doe" className="h-12 bg-white rounded-xl" />
+                      </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Guardian Full Name (as in ID) *</Label>
-                      <Input {...register("guardian.fullName")} placeholder="e.g. Robert Doe" className="h-12 bg-white rounded-xl" />
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Guardian Email Address *</Label>
+                        <Input {...register("guardian.email")} type="email" placeholder="e.g. guardian@example.com" className="h-12 bg-white rounded-xl" />
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Guardian Email Address *</Label>
-                      <Input {...register("guardian.email")} type="email" placeholder="e.g. guardian@example.com" className="h-12 bg-white rounded-xl" />
+                    <div className="space-y-2 pt-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Guardian Contact Number *</Label>
+                      <div className="flex gap-2">
+                        <Input {...register("guardian.countryCode")} placeholder="+65" className="w-20 h-12 bg-white rounded-xl text-center font-mono font-semibold" />
+                        <Input {...register("guardian.phone")} placeholder="9224 5678" className="flex-1 h-12 bg-white rounded-xl" />
+                      </div>
                     </div>
                   </div>
-
-                  <div className="space-y-2 pt-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Guardian Contact Number *</Label>
-                    <div className="flex gap-2">
-                      <Input {...register("guardian.countryCode")} placeholder="+65" className="w-20 h-12 bg-white rounded-xl text-center font-mono font-semibold" />
-                      <Input {...register("guardian.phone")} placeholder="9224 5678" className="flex-1 h-12 bg-white rounded-xl" />
-                    </div>
-                  </div>
-                </div>
+                </AccordionCard>
               )}
 
-              {/* Passport Details */}
-              <div className="space-y-4 pt-6 border-t border-slate-100">
-                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
-                  Passport & Citizenship Details
-                </h3>
+              {/* Accordion 3: Passport & Citizenship */}
+              <AccordionCard
+                title="Passport & Citizenship Details"
+                subtitle="Official passport number, country of issue, and validity dates"
+                badge="Mandatory"
+                isOpen={!!openPanels.passport}
+                onToggle={() => togglePanel('passport')}
+              >
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Passport Number *</Label>
+                      <Input {...register("passport.passportNumber")} placeholder="e.g. S1234567A" className="h-12 rounded-xl font-mono uppercase" />
+                    </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Passport Number *</Label>
-                    <Input {...register("passport.passportNumber")} placeholder="e.g. S1234567A" className="h-12 rounded-xl font-mono uppercase" />
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Passport Country of Issue *</Label>
+                      <Input {...register("passport.countryOfIssue")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Country of Birth *</Label>
+                      <Input {...register("passport.countryOfBirth")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Passport Country of Issue *</Label>
-                    <Input {...register("passport.countryOfIssue")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
-                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Passport Issue Date</Label>
+                      <Input type="date" {...register("passport.issueDate")} className="h-12 rounded-xl" />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Country of Birth *</Label>
-                    <Input {...register("passport.countryOfBirth")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Passport Expiry Date</Label>
+                      <Input type="date" {...register("passport.expiryDate")} className="h-12 rounded-xl" />
+                    </div>
                   </div>
                 </div>
+              </AccordionCard>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Passport Issue Date</Label>
-                    <Input type="date" {...register("passport.issueDate")} className="h-12 rounded-xl" />
+              {/* Accordion 4: Overseas & Permanent Address */}
+              <AccordionCard
+                title="Overseas & Permanent Address"
+                subtitle="Official permanent residential address details"
+                badge="Mandatory"
+                isOpen={!!openPanels.address}
+                onToggle={() => togglePanel('address')}
+              >
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Country *</Label>
+                      <Input {...register("overseasAddress.country")} placeholder="Singapore" className="h-12 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">State / Region</Label>
+                      <Input {...register("overseasAddress.state")} placeholder="Singapore" className="h-12 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">City</Label>
+                      <Input {...register("overseasAddress.city")} placeholder="Singapore" className="h-12 rounded-xl" />
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Passport Expiry Date</Label>
-                    <Input type="date" {...register("passport.expiryDate")} className="h-12 rounded-xl" />
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+                    <div className="md:col-span-2 space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Address Line 1 *</Label>
+                      <Input {...register("overseasAddress.addressLine1")} placeholder="123 Orchard Road" className="h-12 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Unit No.</Label>
+                      <Input {...register("overseasAddress.unitNo")} placeholder="#05-01" className="h-12 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Postal Code *</Label>
+                      <Input {...register("overseasAddress.postalCode")} placeholder="238845" className="h-12 rounded-xl" />
+                    </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Address Information */}
-              <div className="space-y-4 pt-6 border-t border-slate-100">
-                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
-                  Overseas & Permanent Address
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Country *</Label>
-                    <Input {...register("overseasAddress.country")} placeholder="Singapore" className="h-12 rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">State / Region</Label>
-                    <Input {...register("overseasAddress.state")} placeholder="Singapore" className="h-12 rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">City</Label>
-                    <Input {...register("overseasAddress.city")} placeholder="Singapore" className="h-12 rounded-xl" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
-                  <div className="md:col-span-2 space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Address Line 1 *</Label>
-                    <Input {...register("overseasAddress.addressLine1")} placeholder="123 Orchard Road" className="h-12 rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Unit No.</Label>
-                    <Input {...register("overseasAddress.unitNo")} placeholder="#05-01" className="h-12 rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Postal Code *</Label>
-                    <Input {...register("overseasAddress.postalCode")} placeholder="238845" className="h-12 rounded-xl" />
-                  </div>
-                </div>
-              </div>
+              </AccordionCard>
             </div>
           )}
 
           {/* STEP 3: Academic Background & English Proficiency */}
           {step === 3 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="space-y-6 animate-in fade-in duration-300">
               <div className="border-b border-slate-100 pb-4">
                 <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
                   Section 3 of 5
@@ -964,60 +1063,65 @@ export default function ApplicationWizard({
                 <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">List academic qualifications and English language proficiency details.</p>
               </div>
 
-              {/* Academic Qualifications Table */}
-              <div className="space-y-4 pt-2">
-                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                  <h3 className="font-heading font-bold text-base text-slate-900">Academic Qualifications</h3>
-                  <Button 
-                    type="button" 
-                    onClick={() => {
-                      setEditingQualId(null);
-                      setQualForm({
-                        country: "Singapore",
-                        institution: "",
-                        qualificationTitle: "Bachelor's Degree",
-                        schoolAttended: "",
-                        specialization: "",
-                        studyPeriodStart: "2020-08",
-                        studyPeriodEnd: "2024-05",
-                        modeOfStudy: "Full Time",
-                        completionStatus: "Completed",
-                        languageOfInstruction: "English",
-                        dateAwarded: "2024-06-15",
-                        gpa: "3.8 / 4.0",
-                        classification: "Pass With Merit"
-                      });
-                      setIsQualModalOpen(true);
-                    }}
-                    className="h-10 px-4 bg-[#27295B] hover:bg-[#1e204b] text-white rounded-xl font-bold text-xs"
-                  >
-                    + Add Qualification
-                  </Button>
-                </div>
+              {/* Accordion 1: Qualifications */}
+              <AccordionCard
+                title="Academic Qualifications"
+                subtitle="List prior diplomas, degrees, or secondary school qualifications"
+                isOpen={!!openPanels.academics}
+                onToggle={() => togglePanel('academics')}
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <span className="text-xs text-slate-500 font-medium">Recorded Educational History</span>
+                    <Button 
+                      type="button" 
+                      onClick={() => {
+                        setEditingQualId(null);
+                        setQualForm({
+                          country: "Singapore",
+                          institution: "",
+                          qualificationTitle: "Bachelor's Degree",
+                          schoolAttended: "",
+                          specialization: "",
+                          studyPeriodStart: "2020-08",
+                          studyPeriodEnd: "2024-05",
+                          modeOfStudy: "Full Time",
+                          completionStatus: "Completed",
+                          languageOfInstruction: "English",
+                          dateAwarded: "2024-06-15",
+                          gpa: "3.8 / 4.0",
+                          classification: "Pass With Merit"
+                        });
+                        setIsQualModalOpen(true);
+                      }}
+                      className="h-9 px-4 bg-[#27295B] hover:bg-[#1e204b] text-white rounded-xl font-bold text-xs"
+                    >
+                      + Add Qualification
+                    </Button>
+                  </div>
 
-                <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                        <th className="px-5 py-3.5">Qualification</th>
-                        <th className="px-5 py-3.5">Awarding Institution</th>
-                        <th className="px-5 py-3.5">Specialization</th>
-                        <th className="px-5 py-3.5">Period</th>
-                        <th className="px-5 py-3.5 text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {educationList.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50/50 text-slate-700 font-medium">
-                          <td className="px-5 py-3.5 font-bold text-slate-900">
-                            {item.qualificationTitle}
-                            <span className="block text-[10px] text-slate-400 font-normal">{item.country || "Singapore"} • {item.modeOfStudy || "Full Time"}</span>
-                          </td>
-                          <td className="px-5 py-3.5">{item.institution}</td>
-                          <td className="px-5 py-3.5">{item.specialization || "General"}</td>
-                          <td className="px-5 py-3.5 font-mono text-[11px]">{item.studyPeriodStart} to {item.studyPeriodEnd}</td>
-                          <td className="px-5 py-3.5 text-center">
-                            <div className="flex items-center justify-center gap-2">
+                  <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
+                          <th className="px-5 py-3.5">Qualification</th>
+                          <th className="px-5 py-3.5">Awarding Institution</th>
+                          <th className="px-5 py-3.5">Specialization</th>
+                          <th className="px-5 py-3.5">Period</th>
+                          <th className="px-5 py-3.5 text-center">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {educationList.map((item) => (
+                          <tr key={item.id} className="hover:bg-slate-50/50 text-slate-700 font-medium">
+                            <td className="px-5 py-3.5 font-bold text-slate-900">
+                              {item.qualificationTitle}
+                              <span className="block text-[10px] text-slate-400 font-normal">{item.country || "Singapore"} • {item.modeOfStudy || "Full Time"}</span>
+                            </td>
+                            <td className="px-5 py-3.5">{item.institution}</td>
+                            <td className="px-5 py-3.5">{item.specialization || "General"}</td>
+                            <td className="px-5 py-3.5 font-mono text-[11px]">{item.studyPeriodStart} to {item.studyPeriodEnd}</td>
+                            <td className="px-5 py-3.5 text-center">
                               <button 
                                 type="button"
                                 onClick={() => {
@@ -1027,76 +1131,79 @@ export default function ApplicationWizard({
                               >
                                 Delete
                               </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              </AccordionCard>
 
-              {/* English Language Test */}
-              <div className="space-y-4 pt-6 border-t border-slate-100">
-                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
-                  English Language Proficiency Test
-                </h3>
-
-                <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
-                  <input 
-                    type="checkbox" 
-                    id="hasTakenTest" 
-                    {...register("englishTest.hasTakenTest")} 
-                    className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" 
-                  />
-                  <Label htmlFor="hasTakenTest" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
-                    I have taken (or registered for) a formal English Language Proficiency Test
-                  </Label>
-                </div>
-
-                <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 transition-opacity duration-300", !watchHasTakenTest && "opacity-40 pointer-events-none")}>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Test Type</Label>
-                    <Controller
-                      name="englishTest.testType"
-                      control={control}
-                      defaultValue="IELTS"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || "IELTS"}>
-                          <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
-                            <SelectValue placeholder="Select Test" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="IELTS">IELTS Academic</SelectItem>
-                            <SelectItem value="TOEFL">TOEFL iBT</SelectItem>
-                            <SelectItem value="PTE">PTE Academic</SelectItem>
-                            <SelectItem value="Duolingo">Duolingo English Test</SelectItem>
-                            <SelectItem value="Other">Other Test</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
+              {/* Accordion 2: English Test */}
+              <AccordionCard
+                title="English Language Proficiency Test"
+                subtitle="IELTS, TOEFL, PTE, Duolingo, or other official test scores"
+                isOpen={!!openPanels.english}
+                onToggle={() => togglePanel('english')}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                    <input 
+                      type="checkbox" 
+                      id="hasTakenTest" 
+                      {...register("englishTest.hasTakenTest")} 
+                      className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" 
                     />
+                    <Label htmlFor="hasTakenTest" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                      I have taken (or registered for) a formal English Language Proficiency Test
+                    </Label>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Test Date (Actual or Tentative)</Label>
-                    <Input type="date" {...register("englishTest.testDate")} className="h-12 rounded-xl" />
-                  </div>
+                  <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 transition-opacity duration-300", !watchHasTakenTest && "opacity-40 pointer-events-none")}>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Test Type</Label>
+                      <Controller
+                        name="englishTest.testType"
+                        control={control}
+                        defaultValue="IELTS"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value || "IELTS"}>
+                            <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                              <SelectValue placeholder="Select Test" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="IELTS">IELTS Academic</SelectItem>
+                              <SelectItem value="TOEFL">TOEFL iBT</SelectItem>
+                              <SelectItem value="PTE">PTE Academic</SelectItem>
+                              <SelectItem value="Duolingo">Duolingo English Test</SelectItem>
+                              <SelectItem value="Other">Other Test</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
 
-                  <div className="space-y-2 flex flex-col justify-end pb-2">
-                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-700">
-                      <input type="checkbox" {...register("englishTest.isTentativeDate")} className="w-4 h-4 text-[#27295B]" />
-                      <span>This is a tentative / upcoming test date</span>
-                    </label>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Test Date (Actual or Tentative)</Label>
+                      <Input type="date" {...register("englishTest.testDate")} className="h-12 rounded-xl" />
+                    </div>
+
+                    <div className="space-y-2 flex flex-col justify-end pb-2">
+                      <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-700">
+                        <input type="checkbox" {...register("englishTest.isTentativeDate")} className="w-4 h-4 text-[#27295B]" />
+                        <span>This is a tentative / upcoming test date</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </AccordionCard>
             </div>
           )}
 
           {/* STEP 4: Additional Information & Agent Contact */}
           {step === 4 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="space-y-6 animate-in fade-in duration-300">
               <div className="border-b border-slate-100 pb-4">
                 <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
                   Section 4 of 5
@@ -1105,24 +1212,33 @@ export default function ApplicationWizard({
                 <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Health conditions, conduct declarations, marketing channel, and agent details.</p>
               </div>
 
-              {/* Health Conditions */}
-              <div className="space-y-2 pt-2">
-                <Label className="text-slate-700 font-semibold text-xs">Health Conditions & Learning Needs *</Label>
-                <p className="text-[11px] text-slate-400 font-medium">Describe any physical/mental health conditions or learning support requirements. If none, enter NA.</p>
-                <textarea 
-                  {...register("additionalInfo.healthConditions")} 
-                  rows={3} 
-                  className="w-full p-4 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-[#27295B]/20" 
-                  placeholder="Enter NA if not applicable"
-                />
-              </div>
+              {/* Accordion 1: Health Conditions */}
+              <AccordionCard
+                title="Health Conditions & Learning Needs"
+                subtitle="Describe special physical, medical, or learning support requirements"
+                isOpen={!!openPanels.health}
+                onToggle={() => togglePanel('health')}
+              >
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-semibold text-xs">Health Conditions & Learning Needs *</Label>
+                  <p className="text-[11px] text-slate-400 font-medium">Describe any physical/mental health conditions or learning support requirements. If none, enter NA.</p>
+                  <textarea 
+                    {...register("additionalInfo.healthConditions")} 
+                    rows={3} 
+                    className="w-full p-4 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-[#27295B]/20" 
+                    placeholder="Enter NA if not applicable"
+                  />
+                </div>
+              </AccordionCard>
 
-              {/* Conduct Declarations */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
-                  Conduct Declarations *
-                </h3>
-
+              {/* Accordion 2: Conduct Declarations */}
+              <AccordionCard
+                title="Conduct Declarations"
+                subtitle="Academic suspension/exclusion and legal conduct disclosures"
+                badge="Mandatory"
+                isOpen={!!openPanels.conduct}
+                onToggle={() => togglePanel('conduct')}
+              >
                 <div className="space-y-4 text-xs font-medium text-slate-800">
                   <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <p className="flex-1">Have you ever been suspended, excluded and/or expelled from a course at a university or educational institution?</p>
@@ -1148,120 +1264,124 @@ export default function ApplicationWizard({
                     </div>
                   </div>
                 </div>
-              </div>
+              </AccordionCard>
 
-              {/* Marketing Channel */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
-                  How did you hear about EGA? *
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {[
-                    "EGA Website", "Print Advertising", "Online Advertising", 
-                    "Out-of-Home Advertising", "EGA Open House", "School Education Fair", 
-                    "Exhibition", "EGA Seminar", "Recruitment Agents", 
-                    "Recommendations by others", "Website: E-learning", "Referred by EGA Student/Alumni", "Other"
-                  ].map((ch) => (
-                    <label key={ch} className={cn(
-                      "p-3 rounded-xl border flex items-center gap-2 cursor-pointer text-xs font-semibold transition-all",
-                      watchMarketingChannel === ch ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]" : "border-slate-200 hover:border-slate-300"
-                    )}>
-                      <input 
-                        type="radio" 
-                        name="marketingChannel" 
-                        value={ch} 
-                        checked={watchMarketingChannel === ch} 
-                        onChange={() => setValue("additionalInfo.marketingChannel", ch)} 
-                        className="w-4 h-4 text-[#27295B]" 
-                      />
-                      <span>{ch}</span>
-                    </label>
-                  ))}
-                </div>
-
-                {watchMarketingChannel === "Other" && (
-                  <div className="pt-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Specify Other Channel *</Label>
-                    <Input {...register("additionalInfo.marketingOtherText")} placeholder="Please describe" className="h-11 rounded-xl mt-1" />
+              {/* Accordion 3: Marketing Channel */}
+              <AccordionCard
+                title="How did you hear about EGA?"
+                subtitle="Referral and marketing discovery channel"
+                badge="Mandatory"
+                isOpen={!!openPanels.marketing}
+                onToggle={() => togglePanel('marketing')}
+              >
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {[
+                      "EGA Website", "Print Advertising", "Online Advertising", 
+                      "Out-of-Home Advertising", "EGA Open House", "School Education Fair", 
+                      "Exhibition", "EGA Seminar", "Recruitment Agents", 
+                      "Recommendations by others", "Website: E-learning", "Referred by EGA Student/Alumni", "Other"
+                    ].map((ch) => (
+                      <label key={ch} className={cn(
+                        "p-3 rounded-xl border flex items-center gap-2 cursor-pointer text-xs font-semibold transition-all",
+                        watchMarketingChannel === ch ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]" : "border-slate-200 hover:border-slate-300"
+                      )}>
+                        <input 
+                          type="radio" 
+                          name="marketingChannel" 
+                          value={ch} 
+                          checked={watchMarketingChannel === ch} 
+                          onChange={() => setValue("additionalInfo.marketingChannel", ch)} 
+                          className="w-4 h-4 text-[#27295B]" 
+                        />
+                        <span>{ch}</span>
+                      </label>
+                    ))}
                   </div>
-                )}
-                {watchMarketingChannel === "Referred by EGA Student/Alumni" && (
-                  <div className="pt-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Referrer Name / Student ID *</Label>
-                    <Input {...register("additionalInfo.referrerName")} placeholder="Enter Referrer Full Name" className="h-11 rounded-xl mt-1" />
-                  </div>
-                )}
-              </div>
 
-              {/* Agent Details */}
-              <div className="space-y-4 pt-6 border-t border-slate-100">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    EGA Appointed Agent Details
-                  </h3>
-                  <span className="text-xs text-slate-400 font-medium">Fill if represented by an agent</span>
+                  {watchMarketingChannel === "Other" && (
+                    <div className="pt-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Specify Other Channel *</Label>
+                      <Input {...register("additionalInfo.marketingOtherText")} placeholder="Please describe" className="h-11 rounded-xl mt-1" />
+                    </div>
+                  )}
+                  {watchMarketingChannel === "Referred by EGA Student/Alumni" && (
+                    <div className="pt-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Referrer Name / Student ID *</Label>
+                      <Input {...register("additionalInfo.referrerName")} placeholder="Enter Referrer Full Name" className="h-11 rounded-xl mt-1" />
+                    </div>
+                  )}
                 </div>
+              </AccordionCard>
 
-                <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
-                  <input 
-                    type="checkbox" 
-                    id="isAgentRepresented" 
-                    {...register("agent.isAgentRepresented")} 
-                    className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" 
-                  />
-                  <Label htmlFor="isAgentRepresented" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
-                    Are you being represented by an EGA appointed agent for this application?
-                  </Label>
-                </div>
-
-                <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 transition-opacity duration-300", !watchIsAgent && "opacity-40 pointer-events-none")}>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Agent Country *</Label>
-                    <Controller
-                      name="agent.agentCountry"
-                      control={control}
-                      defaultValue="Singapore"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || "Singapore"} disabled={!watchIsAgent}>
-                          <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
-                            <SelectValue placeholder="Select Country" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Singapore">Singapore</SelectItem>
-                            <SelectItem value="Malaysia">Malaysia</SelectItem>
-                            <SelectItem value="Indonesia">Indonesia</SelectItem>
-                            <SelectItem value="China">China</SelectItem>
-                            <SelectItem value="India">India</SelectItem>
-                            <SelectItem value="Vietnam">Vietnam</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
+              {/* Accordion 4: Agent Details */}
+              <AccordionCard
+                title="EGA Appointed Agent Details"
+                subtitle="Specify education recruitment agency details if represented"
+                isOpen={!!openPanels.agent}
+                onToggle={() => togglePanel('agent')}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                    <input 
+                      type="checkbox" 
+                      id="isAgentRepresented" 
+                      {...register("agent.isAgentRepresented")} 
+                      className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" 
                     />
+                    <Label htmlFor="isAgentRepresented" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                      Are you being represented by an EGA appointed agent for this application?
+                    </Label>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Agency Name *</Label>
-                    <Input {...register("agent.agencyName")} placeholder="e.g. Global Education Agency" disabled={!watchIsAgent} className="h-12 rounded-xl" />
-                  </div>
+                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 transition-opacity duration-300", !watchIsAgent && "opacity-40 pointer-events-none")}>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Agent Country *</Label>
+                      <Controller
+                        name="agent.agentCountry"
+                        control={control}
+                        defaultValue="Singapore"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value || "Singapore"} disabled={!watchIsAgent}>
+                            <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                              <SelectValue placeholder="Select Country" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Singapore">Singapore</SelectItem>
+                              <SelectItem value="Malaysia">Malaysia</SelectItem>
+                              <SelectItem value="Indonesia">Indonesia</SelectItem>
+                              <SelectItem value="China">China</SelectItem>
+                              <SelectItem value="India">India</SelectItem>
+                              <SelectItem value="Vietnam">Vietnam</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Counsellor Name *</Label>
-                    <Input {...register("agent.counsellorName")} placeholder="e.g. Jane Smith" disabled={!watchIsAgent} className="h-12 rounded-xl" />
-                  </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Agency Name *</Label>
+                      <Input {...register("agent.agencyName")} placeholder="e.g. Global Education Agency" disabled={!watchIsAgent} className="h-12 rounded-xl" />
+                    </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Counsellor Email *</Label>
-                    <Input {...register("agent.counsellorEmail")} type="email" placeholder="e.g. counsellor@agency.com" disabled={!watchIsAgent} className="h-12 rounded-xl" />
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Counsellor Name *</Label>
+                      <Input {...register("agent.counsellorName")} placeholder="e.g. Jane Smith" disabled={!watchIsAgent} className="h-12 rounded-xl" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Counsellor Email *</Label>
+                      <Input {...register("agent.counsellorEmail")} type="email" placeholder="e.g. counsellor@agency.com" disabled={!watchIsAgent} className="h-12 rounded-xl" />
+                    </div>
                   </div>
                 </div>
-              </div>
+              </AccordionCard>
             </div>
           )}
 
           {/* STEP 5: Review, Declaration & Application Fee Payment */}
           {step === 5 && (
-            <div className="space-y-8 animate-in fade-in duration-300">
+            <div className="space-y-6 animate-in fade-in duration-300">
               <div className="border-b border-slate-100 pb-4">
                 <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
                   Section 5 of 5
@@ -1313,55 +1433,70 @@ export default function ApplicationWizard({
                 </div>
               </div>
 
-              {/* Section 5: Declarations & Consents */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <h3 className="font-heading font-bold text-base text-slate-900">Declarations & Mandatory Consents</h3>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 leading-relaxed font-medium">
-                  I hereby declare that all information provided in this Educare Global Academy application form is complete, true, and correct. I understand that any false statement or omission may lead to rejection of admission or cancellation of enrollment.
-                </div>
-                
-                <div className="space-y-3">
-                  <label className="flex items-center space-x-3 bg-white border border-slate-200 p-4 rounded-xl cursor-pointer">
-                    <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
-                    <span className="text-slate-900 font-bold text-xs sm:text-sm">
-                      I accept the data processing consent and applicant declaration *
-                    </span>
-                  </label>
-
-                  <label className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl cursor-pointer">
-                    <input type="checkbox" {...register("consent.marketingConsent")} className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
-                    <span className="text-slate-700 font-medium text-xs">
-                      (Optional) I consent to receiving educational updates, promotional communications, and event news from EGA via email/SMS.
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              {/* Fee Calculation */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <div className="flex justify-between items-center bg-[#27295B]/5 p-5 rounded-2xl border border-[#27295B]/20">
-                  <div>
-                    <h3 className="font-heading font-bold text-base text-slate-900">Application Fee Summary</h3>
-                    <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                      Partner Rule: {watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC") ? "Partner University Fee (SGD 360)" : "EGA Course Fee (SGD 160)"}
-                    </p>
+              {/* Accordion: Declarations & Consents */}
+              <AccordionCard
+                title="Declarations & Mandatory Consents"
+                subtitle="Review applicant terms and data processing consent"
+                badge="Mandatory"
+                isOpen={!!openPanels.declarations}
+                onToggle={() => togglePanel('declarations')}
+              >
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 leading-relaxed font-medium">
+                    I hereby declare that all information provided in this Educare Global Academy application form is complete, true, and correct. I understand that any false statement or omission may lead to rejection of admission or cancellation of enrollment.
                   </div>
-                  <span className="text-2xl font-mono font-extrabold text-[#27295B]">SGD {feeAmount}.00</span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  {[
-                    { value: "card", label: "Credit / Debit Card" },
-                    { value: "paypal", label: "PayPal" },
-                    { value: "bank", label: "Bank Transfer" }
-                  ].map(m => (
-                    <label key={m.value} className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-[#27295B]/40 font-semibold text-xs text-slate-800">
-                      <input type="radio" name="paymentMethod" value={m.value} defaultChecked={m.value === "card"} className="w-4 h-4 text-[#27295B]" />
-                      <span>{m.label}</span>
+                  
+                  <div className="space-y-3">
+                    <label className="flex items-center space-x-3 bg-white border border-slate-200 p-4 rounded-xl cursor-pointer">
+                      <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
+                      <span className="text-slate-900 font-bold text-xs sm:text-sm">
+                        I accept the data processing consent and applicant declaration *
+                      </span>
                     </label>
-                  ))}
+
+                    <label className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl cursor-pointer">
+                      <input type="checkbox" {...register("consent.marketingConsent")} className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
+                      <span className="text-slate-700 font-medium text-xs">
+                        (Optional) I consent to receiving educational updates, promotional communications, and event news from EGA via email/SMS.
+                      </span>
+                    </label>
+                  </div>
                 </div>
-              </div>
+              </AccordionCard>
+
+              {/* Accordion: Payment Summary */}
+              <AccordionCard
+                title="Application Fee Payment Summary"
+                subtitle="Server-calculated fee and payment method selection"
+                badge={`SGD ${feeAmount}.00`}
+                isOpen={!!openPanels.payment}
+                onToggle={() => togglePanel('payment')}
+              >
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center bg-[#27295B]/5 p-5 rounded-2xl border border-[#27295B]/20">
+                    <div>
+                      <h3 className="font-heading font-bold text-base text-slate-900">Application Fee Summary</h3>
+                      <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                        Partner Rule: {watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC") ? "Partner University Fee (SGD 360)" : "EGA Course Fee (SGD 160)"}
+                      </p>
+                    </div>
+                    <span className="text-2xl font-mono font-extrabold text-[#27295B]">SGD {feeAmount}.00</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                    {[
+                      { value: "card", label: "Credit / Debit Card" },
+                      { value: "paypal", label: "PayPal" },
+                      { value: "bank", label: "Bank Transfer" }
+                    ].map(m => (
+                      <label key={m.value} className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-[#27295B]/40 font-semibold text-xs text-slate-800">
+                        <input type="radio" name="paymentMethod" value={m.value} defaultChecked={m.value === "card"} className="w-4 h-4 text-[#27295B]" />
+                        <span>{m.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </AccordionCard>
             </div>
           )}
         </div>
