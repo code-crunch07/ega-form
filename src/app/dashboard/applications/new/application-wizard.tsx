@@ -333,9 +333,9 @@ export default function ApplicationWizard({
               <div className="flex items-center gap-3 bg-white border border-slate-200/80 px-4 py-2.5 rounded-2xl shrink-0 shadow-2xs">
                 <div className="text-right">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Progress</p>
-                  <p className="text-xs font-bold text-[#27295B]">Step {step} of 5 • {Math.round((step / 5) * 100)}%</p>
+                  <p className="text-xs font-bold text-[#3A57E8]">Step {step} of 5 • {Math.round((step / 5) * 100)}%</p>
                 </div>
-                <div className="h-9 w-9 rounded-xl bg-[#27295B] text-white flex items-center justify-center font-bold text-xs font-mono shadow-2xs">
+                <div className="h-9 w-9 rounded-xl bg-[#3A57E8] text-white flex items-center justify-center font-bold text-xs font-mono shadow-md shadow-[#3A57E8]/25">
                   {step}/5
                 </div>
               </div>
@@ -347,7 +347,7 @@ export default function ApplicationWizard({
                 {/* Background Track Line */}
                 <div className="absolute left-6 right-6 top-5 h-0.5 bg-slate-200 -z-0" />
                 <div 
-                  className="absolute left-6 top-5 h-0.5 bg-[#27295B] transition-all duration-500 -z-0" 
+                  className="absolute left-6 top-5 h-0.5 bg-[#3A57E8] transition-all duration-500 -z-0" 
                   style={{ width: `${((step - 1) / 4) * 94}%` }} 
                 />
 
@@ -371,7 +371,7 @@ export default function ApplicationWizard({
                         className={cn(
                           "w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 shadow-2xs",
                           isActive 
-                            ? "bg-[#27295B] text-white ring-4 ring-[#27295B]/15 scale-110" 
+                            ? "bg-[#3A57E8] text-white ring-4 ring-[#3A57E8]/20 scale-110 shadow-md shadow-[#3A57E8]/30" 
                             : isCompleted
                             ? "bg-emerald-600 text-white hover:bg-emerald-700"
                             : "bg-white text-slate-400 border border-slate-200 group-hover:border-slate-300"
@@ -382,7 +382,7 @@ export default function ApplicationWizard({
                       
                       <span className={cn(
                         "text-xs font-bold mt-2 truncate transition-colors",
-                        isActive ? "text-[#27295B]" : isCompleted ? "text-emerald-950" : "text-slate-500"
+                        isActive ? "text-[#3A57E8]" : isCompleted ? "text-emerald-950" : "text-slate-500"
                       )}>
                         {sec.shortName}
                       </span>
@@ -1383,7 +1383,7 @@ export default function ApplicationWizard({
               type="button"
               onClick={nextStep}
               disabled={isSubmitting}
-              className="h-12 px-8 bg-[#ED1C24] hover:bg-[#D91A20] text-white rounded-xl font-bold gap-2 shadow-md hover:shadow-lg transition-all"
+              className="h-12 px-8 bg-[#3A57E8] hover:bg-[#2B45D4] text-white rounded-xl font-bold gap-2 shadow-md shadow-[#3A57E8]/25 hover:shadow-lg transition-all"
             >
               Continue to {SECTIONS.find(s => s.id === step + 1)?.shortName || "Next"} &gt;
             </Button>
@@ -1391,7 +1391,7 @@ export default function ApplicationWizard({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-12 px-8 bg-[#ED1C24] hover:bg-[#D91A20] text-white rounded-xl font-bold gap-2 shadow-md hover:shadow-lg transition-all"
+              className="h-12 px-8 bg-[#3A57E8] hover:bg-[#2B45D4] text-white rounded-xl font-bold gap-2 shadow-md shadow-[#3A57E8]/25 hover:shadow-lg transition-all"
             >
               {isSubmitting ? "Processing..." : `Pay SGD ${feeAmount}.00 & Submit`}
             </Button>

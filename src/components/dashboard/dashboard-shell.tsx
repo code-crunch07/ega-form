@@ -130,15 +130,15 @@ function NavLinks({
                 className={cn(
                   "group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200 relative overflow-hidden",
                   isActive
-                    ? "bg-[#ED1C24] text-white shadow-sm font-semibold"
-                    : "text-slate-300 hover:bg-white/10 hover:text-white"
+                    ? "bg-[#3A57E8] text-white shadow-md shadow-[#3A57E8]/25 font-semibold"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-[#3A57E8]"
                 )}
               >
                 <item.icon
                   size={17}
                   className={cn(
                     "shrink-0 transition-transform duration-200 group-hover:scale-110",
-                    isActive ? "text-white" : "text-slate-400 group-hover:text-white"
+                    isActive ? "text-white" : "text-slate-400 group-hover:text-[#3A57E8]"
                   )}
                 />
                 <span className={cn("flex-1 transition-colors duration-200 truncate", isActive && "font-semibold")}>
@@ -190,11 +190,11 @@ export function DashboardShell({
   }, [mobileOpen]);
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] font-jost selection:bg-[#27295B]/20">
+    <div className="flex min-h-screen bg-[#F5F6FA] font-jost selection:bg-[#3A57E8]/20">
       {/* Desktop Sidebar */}
-      <aside className="z-20 hidden w-[270px] shrink-0 flex-col border-r border-[#1a233a] bg-[#0c1427] text-white md:flex">
-        <div className="flex h-16 items-center border-b border-[#1a233a] px-5 bg-[#0c1427]">
-          <div className="bg-white/95 px-3 py-1.5 rounded-xl border border-white/20 shadow-xs flex items-center justify-center w-full">
+      <aside className="z-20 hidden w-[270px] shrink-0 flex-col border-r border-slate-200/80 bg-white text-slate-900 md:flex">
+        <div className="flex h-16 items-center border-b border-slate-200/80 px-5 bg-white">
+          <div className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60 flex items-center justify-center w-full">
             <Logo href="/dashboard" iconSize={125} />
           </div>
         </div>
@@ -209,24 +209,22 @@ export function DashboardShell({
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
-            aria-label="Close menu"
-            className="absolute inset-0 bg-[#0c1427]/70 backdrop-blur-xs"
             onClick={() => setMobileOpen(false)}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+            aria-label="Close menu backdrop"
           />
-          <aside className="absolute left-0 top-0 flex h-full w-[min(290px,85vw)] flex-col bg-[#0c1427] text-white shadow-2xl">
-            <div className="flex h-16 items-center justify-between border-b border-[#1a233a] px-5">
-              <div className="bg-white/95 px-3 py-1.5 rounded-xl border border-white/20 shadow-xs">
-                <Logo href="/dashboard" iconSize={110} />
-              </div>
+          <aside className="relative flex h-full w-[270px] max-w-[85vw] flex-col border-r border-slate-200 bg-white text-slate-900 p-0 shadow-2xl animate-in slide-in-from-left duration-200">
+            <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 bg-white">
+              <Logo href="/dashboard" iconSize={120} />
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="rounded-xl p-2 text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-900"
               >
                 <X size={18} />
               </button>
             </div>
-            <div className="no-scrollbar flex-1 overflow-y-auto px-4 py-6">
+            <div className="no-scrollbar flex-1 overflow-y-auto px-3.5 py-6">
               <NavLinks pathname={pathname} onNavigate={() => setMobileOpen(false)} />
             </div>
           </aside>
