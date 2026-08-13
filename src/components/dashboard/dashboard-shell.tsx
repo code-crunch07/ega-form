@@ -335,7 +335,7 @@ export function DashboardShell({
         </header>
 
         {/* Scrollable Main Workspace */}
-        <div className="no-scrollbar relative flex-1 overflow-auto p-4 sm:p-6 md:p-8 bg-[#f3f3fa]">
+        <div className="no-scrollbar relative flex-1 overflow-auto p-4 sm:p-6 md:p-8 pt-8 sm:pt-10 md:pt-12 bg-[#f3f3fa]">
           <div className={cn("mx-auto w-full", isWizard ? "max-w-7xl" : "max-w-[1440px]")}>
             {children}
           </div>
