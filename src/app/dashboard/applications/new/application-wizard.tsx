@@ -200,13 +200,18 @@ export default function ApplicationWizard({
 
   const nextStep = async () => {
     if (step < 5) {
+      if (step === 1 && watchCourseType === "Standalone Course") {
+        const pId = getValues("programmeId");
+        if (!pId) {
+          setFormError("Please select an Available Programme before continuing.");
+          return;
+        }
+      }
+
       let fieldsToValidate: string[] = [];
       switch (step) {
         case 1:
           fieldsToValidate = ['universityPartner', 'studyMode', 'courseType', 'intake'];
-          if (watchCourseType === "Standalone Course") {
-            fieldsToValidate.push('programmeId');
-          }
           break;
         case 2:
           fieldsToValidate = ['personal.fullName', 'personal.surname', 'personal.dob', 'personal.gender', 'personal.maritalStatus', 'passport.passportNumber', 'overseasAddress.country', 'overseasAddress.addressLine1', 'overseasAddress.postalCode'];
@@ -229,7 +234,7 @@ export default function ApplicationWizard({
       
       if (isStepValid) {
         setFormError(null);
-        setStep(step + 1);
+        setStep((prev) => Math.min(prev + 1, 5));
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setFormError("There are incomplete required fields in this section. Please review all fields marked with *.");
@@ -1377,13 +1382,24 @@ export default function ApplicationWizard({
             <div />
           )}
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="h-12 px-8 bg-[#ED1C24] hover:bg-[#D91A20] text-white rounded-xl font-bold gap-2 shadow-md hover:shadow-lg transition-all"
-          >
-            {isSubmitting ? "Processing..." : step === 5 ? `Pay SGD ${feeAmount}.00 & Submit` : `Continue to ${SECTIONS.find(s => s.id === step + 1)?.shortName || "Next"} >`}
-          </Button>
+          {step < 5 ? (
+            <Button
+              type="button"
+              onClick={nextStep}
+              disabled={isSubmitting}
+              className="h-12 px-8 bg-[#ED1C24] hover:bg-[#D91A20] text-white rounded-xl font-bold gap-2 shadow-md hover:shadow-lg transition-all"
+            >
+              Continue to {SECTIONS.find(s => s.id === step + 1)?.shortName || "Next"} &gt;
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="h-12 px-8 bg-[#ED1C24] hover:bg-[#D91A20] text-white rounded-xl font-bold gap-2 shadow-md hover:shadow-lg transition-all"
+            >
+              {isSubmitting ? "Processing..." : `Pay SGD ${feeAmount}.00 & Submit`}
+            </Button>
+          )}
         </div>
       </form>
 
