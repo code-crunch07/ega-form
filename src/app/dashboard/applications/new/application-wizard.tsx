@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { 
   Check, ChevronRight, Upload, Plus, FileText, Globe, MapPin, Building2, 
   UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, 
-  ScrollText, CreditCard, Phone, Mail, Clock, ArrowLeft, AlertCircle, Info, ShieldCheck
+  ScrollText, CreditCard, Phone, Mail, Clock, ArrowLeft, AlertCircle, Info, ShieldCheck, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -270,19 +270,19 @@ export default function ApplicationWizard({
 
   if (successAppNumber) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center animate-in zoom-in duration-500 font-sans">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] p-8 text-center animate-in zoom-in duration-500 font-jost">
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-sm">
           <Check size={48} strokeWidth={3} />
         </div>
-        <h1 className="text-4xl font-bold text-neutral-900 mb-2 font-heading">🎉 Application Submitted!</h1>
-        <p className="text-lg text-neutral-600 mb-8 font-medium">Your application has been received and is now pending review.</p>
+        <h1 className="text-4xl font-bold text-slate-900 mb-2 font-heading">🎉 Application Submitted!</h1>
+        <p className="text-lg text-slate-600 mb-8 font-medium">Your application has been received and is now pending review.</p>
         
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm max-w-sm w-full mb-8">
-          <p className="text-xs text-neutral-400 font-semibold uppercase tracking-wider font-mono mb-1">Application Number</p>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-sm w-full mb-8">
+          <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider font-mono mb-1">Application Number</p>
           <p className="text-2xl font-mono font-extrabold text-[#27295B]">{successAppNumber}</p>
-          <div className="h-px bg-neutral-100 my-4 w-full" />
+          <div className="h-px bg-slate-100 my-4 w-full" />
           <div className="flex justify-between items-center text-xs">
-            <span className="text-neutral-500 font-medium">Application Fee Paid</span>
+            <span className="text-slate-500 font-medium">Application Fee Paid</span>
             <span className="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full">SGD {feeAmount}.00</span>
           </div>
         </div>
@@ -300,82 +300,90 @@ export default function ApplicationWizard({
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-4 py-6 space-y-8 text-left font-sans">
+    <div className="w-full max-w-5xl mx-auto space-y-6 text-left font-jost pb-12">
       
-      {/* 1. Header Banner & Stepper Bar */}
-      <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs p-6 sm:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-5">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#27295B] bg-[#27295B]/10 px-3 py-1 rounded-full font-mono">
-              Educare Global Academy • Admissions Portal
+      {/* Executive Stepper Header Card */}
+      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-6 sm:p-8 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+          <div className="space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#27295B] bg-[#27295B]/8 px-3 py-1 rounded-full font-mono inline-flex items-center gap-1.5">
+              <Sparkles size={12} className="text-[#ED1C24]" />
+              EDUCARE GLOBAL ACADEMY • ADMISSIONS PORTAL
             </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 mt-2 font-heading tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
               Student Application Form
             </h1>
-            <p className="text-xs sm:text-sm text-neutral-500 mt-1 font-medium">
-              Complete the 5 application sections below to submit your official application.
+            <p className="text-xs sm:text-sm text-slate-500 font-medium">
+              Complete the 5 sections below to submit your official application.
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-slate-50 border border-neutral-200/60 p-3.5 rounded-2xl shrink-0">
+          {/* Clean Progress Pill */}
+          <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-2xl shrink-0">
             <div className="text-right">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Progress</p>
-              <p className="text-sm font-extrabold text-[#27295B]">{Math.round((step / 5) * 100)}% Complete</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Progress</p>
+              <p className="text-xs font-bold text-[#27295B]">Step {step} of 5 • {Math.round((step / 5) * 100)}%</p>
             </div>
-            <div className="h-10 w-10 rounded-full bg-[#27295B] text-white flex items-center justify-center font-bold text-xs font-mono shadow-xs">
+            <div className="h-9 w-9 rounded-xl bg-[#27295B] text-white flex items-center justify-center font-bold text-xs font-mono shadow-2xs">
               {step}/5
             </div>
           </div>
         </div>
 
-        {/* 5-Section Stepper Track */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
-          {SECTIONS.map((sec) => {
-            const isActive = step === sec.id;
-            const isCompleted = step > sec.id;
-            const IconComp = sec.icon;
+        {/* 5-Section Connected Stepper Track */}
+        <div className="no-scrollbar overflow-x-auto py-2">
+          <div className="flex items-center justify-between min-w-[700px] relative">
+            {/* Background Track Line */}
+            <div className="absolute left-6 right-6 top-5 h-0.5 bg-slate-200 -z-0" />
+            <div 
+              className="absolute left-6 top-5 h-0.5 bg-[#27295B] transition-all duration-500 -z-0" 
+              style={{ width: `${((step - 1) / 4) * 94}%` }} 
+            />
 
-            return (
-              <button
-                type="button"
-                key={sec.id}
-                onClick={() => {
-                  if (sec.id <= step || isCompleted) {
-                    setStep(sec.id);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }
-                }}
-                className={cn(
-                  "flex flex-col items-center sm:items-start text-center sm:text-left p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer group relative overflow-hidden",
-                  isActive 
-                    ? "bg-[#27295B] text-white border-[#27295B] shadow-md" 
-                    : isCompleted
-                    ? "bg-emerald-50/80 border-emerald-200 text-emerald-900 hover:bg-emerald-100/70"
-                    : "bg-slate-50/70 border-neutral-200/80 text-neutral-400 hover:bg-slate-100/60"
-                )}
-              >
-                <div className="flex items-center justify-between w-full mb-2">
-                  <div className={cn(
-                    "w-7 h-7 rounded-xl flex items-center justify-center text-xs font-bold font-mono transition-colors",
-                    isActive ? "bg-white/20 text-white" : isCompleted ? "bg-emerald-600 text-white" : "bg-white text-neutral-500 border border-neutral-200"
-                  )}>
-                    {isCompleted ? <Check size={14} strokeWidth={3} /> : sec.id}
+            {SECTIONS.map((sec) => {
+              const isActive = step === sec.id;
+              const isCompleted = step > sec.id;
+              const IconComp = sec.icon;
+
+              return (
+                <button
+                  type="button"
+                  key={sec.id}
+                  onClick={() => {
+                    if (sec.id <= step || isCompleted) {
+                      setStep(sec.id);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                  }}
+                  className="flex flex-col items-center group relative z-10 focus:outline-none"
+                >
+                  <div 
+                    className={cn(
+                      "w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 shadow-2xs",
+                      isActive 
+                        ? "bg-[#27295B] text-white ring-4 ring-[#27295B]/15 scale-110" 
+                        : isCompleted
+                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                        : "bg-white text-slate-400 border border-slate-200 group-hover:border-slate-300"
+                    )}
+                  >
+                    {isCompleted ? <Check size={16} strokeWidth={3} /> : sec.id}
                   </div>
-                  <IconComp size={16} className={cn(isActive ? "text-white/80" : isCompleted ? "text-emerald-600" : "text-neutral-300")} />
-                </div>
-                <p className={cn("text-xs font-bold truncate w-full", isActive ? "text-white" : isCompleted ? "text-emerald-950" : "text-neutral-700")}>
-                  {sec.shortName}
-                </p>
-                <p className={cn("text-[10px] truncate w-full mt-0.5 hidden sm:block", isActive ? "text-white/70" : isCompleted ? "text-emerald-700" : "text-neutral-400")}>
-                  {sec.desc}
-                </p>
-              </button>
-            );
-          })}
+                  
+                  <span className={cn(
+                    "text-xs font-bold mt-2 truncate transition-colors",
+                    isActive ? "text-[#27295B]" : isCompleted ? "text-emerald-950" : "text-slate-500"
+                  )}>
+                    {sec.shortName}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      {/* Top Error Alert Banner */}
+      {/* Error Alert Banner */}
       {formError && (
         <div className="p-4 rounded-2xl bg-rose-600 text-white font-semibold text-xs sm:text-sm flex items-center justify-between shadow-lg animate-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-3">
@@ -388,21 +396,23 @@ export default function ApplicationWizard({
         </div>
       )}
 
-      {/* 2. Main Form Container */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-        <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs p-6 sm:p-10 space-y-8 min-h-[500px]">
+      {/* Main Form Content Container */}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-6 sm:p-10 space-y-8 min-h-[500px]">
           
           {/* STEP 1: Programme Selection & Pre-Course Counselling */}
           {step === 1 && (
             <div className="space-y-8 animate-in fade-in duration-300">
-              <div>
-                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 1 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Programme Selection</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium">Select your university partner, study mode, course type, and target programme.</p>
+              <div className="border-b border-slate-100 pb-4">
+                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                  Section 1 of 5
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Programme Selection</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Select your university partner, study mode, course type, and target programme.</p>
               </div>
 
-              {/* University Partner & Mode of Study */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              {/* Partner & Mode of Study */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-slate-700 font-semibold text-xs">University Partner *</Label>
                   <Controller
@@ -414,7 +424,7 @@ export default function ApplicationWizard({
                         field.onChange(val);
                         setValue("programmeId", "");
                       }} value={field.value || "Educare Global Academy"}>
-                        <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                        <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
                           <SelectValue placeholder="Select University Partner" />
                         </SelectTrigger>
                         <SelectContent>
@@ -436,7 +446,7 @@ export default function ApplicationWizard({
                     defaultValue="Full Time"
                     render={({ field }) => (
                       <Select onValueChange={field.onChange} value={field.value || "Full Time"}>
-                        <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                        <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
                           <SelectValue placeholder="Select Mode of Study" />
                         </SelectTrigger>
                         <SelectContent>
@@ -451,45 +461,50 @@ export default function ApplicationWizard({
               </div>
 
               {/* Course Type: Standalone vs Package */}
-              <div className="space-y-4 pt-4 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
                   Course Type *
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
                     { value: "Standalone Course", title: "Standalone Course", desc: "Single programme selection at your target academic level." },
                     { value: "Package Courses", title: "Package Courses", desc: "Fixed 3-programme package (Foundation → Diploma → Undergraduate)." }
-                  ].map(c => (
-                    <label 
-                      key={c.value}
-                      className={cn(
-                        "p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3",
-                        watchCourseType === c.value ? "border-[#27295B] bg-[#27295B]/5" : "border-neutral-200 hover:border-[#27295B]/30"
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="courseType"
-                        value={c.value}
-                        checked={watchCourseType === c.value}
-                        onChange={() => {
-                          setValue("courseType", c.value, { shouldValidate: true });
-                          setValue("programmeId", "");
-                        }}
-                        className="mt-1 w-4 h-4 text-[#27295B]"
-                      />
-                      <div>
-                        <h4 className="font-bold text-sm text-neutral-900">{c.title}</h4>
-                        <p className="text-xs text-neutral-500 font-medium mt-0.5">{c.desc}</p>
-                      </div>
-                    </label>
-                  ))}
+                  ].map(c => {
+                    const isSelected = watchCourseType === c.value;
+                    return (
+                      <label 
+                        key={c.value}
+                        className={cn(
+                          "p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-start gap-4 relative overflow-hidden",
+                          isSelected 
+                            ? "border-[#27295B] bg-[#27295B]/5 shadow-2xs" 
+                            : "border-slate-200 hover:border-[#27295B]/30 bg-white"
+                        )}
+                      >
+                        <input
+                          type="radio"
+                          name="courseType"
+                          value={c.value}
+                          checked={isSelected}
+                          onChange={() => {
+                            setValue("courseType", c.value, { shouldValidate: true });
+                            setValue("programmeId", "");
+                          }}
+                          className="mt-1 w-4 h-4 text-[#27295B]"
+                        />
+                        <div>
+                          <h4 className="font-bold text-sm text-slate-900">{c.title}</h4>
+                          <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">{c.desc}</p>
+                        </div>
+                      </label>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Standalone Logic vs Package 3-Slot Logic */}
+              {/* Standalone vs Package Logic */}
               {watchCourseType === "Standalone Course" ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-neutral-100">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-slate-100">
                   <div className="space-y-2">
                     <Label className="text-slate-700 font-semibold text-xs">Academic Level *</Label>
                     <Controller
@@ -501,8 +516,8 @@ export default function ApplicationWizard({
                           field.onChange(val);
                           setValue("programmeId", "");
                         }} value={field.value || "Diploma"}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
-                            <SelectValue placeholder="Select Academic Level" />
+                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
+                            <SelectValue placeholder="Select Level" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Preparatory">Preparatory</SelectItem>
@@ -523,7 +538,7 @@ export default function ApplicationWizard({
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
                             <SelectValue placeholder="Select Programme" />
                           </SelectTrigger>
                           <SelectContent>
@@ -552,7 +567,7 @@ export default function ApplicationWizard({
                       defaultValue="January 2026"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} value={field.value || "January 2026"}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
                             <SelectValue placeholder="Select Intake" />
                           </SelectTrigger>
                           <SelectContent>
@@ -575,10 +590,10 @@ export default function ApplicationWizard({
                   </div>
                 </div>
               ) : (
-                /* Package Courses: Mandatory 3 Predefined Slots */
-                <div className="space-y-4 pt-4 border-t border-neutral-100 animate-in fade-in duration-300">
-                  <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                    <h3 className="font-heading font-bold text-base text-neutral-900">
+                /* Package Courses: 3 Predefined Mandatory Slots */
+                <div className="space-y-4 pt-4 border-t border-slate-100 animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 className="font-heading font-bold text-base text-slate-900">
                       Package Programme Slots (All 3 Slots Mandatory) *
                     </h3>
                     <span className="text-xs font-mono font-bold text-[#27295B] bg-[#27295B]/10 px-3 py-1 rounded-full">
@@ -587,15 +602,15 @@ export default function ApplicationWizard({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Slot 1: Foundation */}
-                    <div className="p-4 rounded-2xl border border-neutral-200 bg-slate-50 space-y-3">
+                    {/* Slot 1 */}
+                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Slot 1</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Slot 1</span>
                         <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Foundation Level</span>
                       </div>
-                      <Label className="text-neutral-800 font-bold text-xs">Foundation Programme *</Label>
+                      <Label className="text-slate-800 font-bold text-xs">Foundation Programme *</Label>
                       <Select defaultValue="f1">
-                        <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium text-xs">
+                        <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
                           <SelectValue placeholder="Select Foundation" />
                         </SelectTrigger>
                         <SelectContent>
@@ -605,15 +620,15 @@ export default function ApplicationWizard({
                       </Select>
                     </div>
 
-                    {/* Slot 2: Diploma / Advanced Diploma */}
-                    <div className="p-4 rounded-2xl border border-neutral-200 bg-slate-50 space-y-3">
+                    {/* Slot 2 */}
+                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Slot 2</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Slot 2</span>
                         <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Diploma Family</span>
                       </div>
-                      <Label className="text-neutral-800 font-bold text-xs">Diploma / Advanced Diploma *</Label>
+                      <Label className="text-slate-800 font-bold text-xs">Diploma / Advanced Diploma *</Label>
                       <Select defaultValue="d1">
-                        <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium text-xs">
+                        <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
                           <SelectValue placeholder="Select Diploma" />
                         </SelectTrigger>
                         <SelectContent>
@@ -623,15 +638,15 @@ export default function ApplicationWizard({
                       </Select>
                     </div>
 
-                    {/* Slot 3: Undergraduate */}
-                    <div className="p-4 rounded-2xl border border-neutral-200 bg-slate-50 space-y-3">
+                    {/* Slot 3 */}
+                    <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Slot 3</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Slot 3</span>
                         <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Undergraduate</span>
                       </div>
-                      <Label className="text-neutral-800 font-bold text-xs">Undergraduate Degree *</Label>
+                      <Label className="text-slate-800 font-bold text-xs">Undergraduate Degree *</Label>
                       <Select defaultValue="u1">
-                        <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium text-xs">
+                        <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
                           <SelectValue placeholder="Select Degree" />
                         </SelectTrigger>
                         <SelectContent>
@@ -644,16 +659,16 @@ export default function ApplicationWizard({
                 </div>
               )}
 
-              {/* Pre-Course Counselling Declaration Checklist */}
-              <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-4 pt-4">
+              {/* Pre-Course Counselling Declaration Box */}
+              <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4 pt-4">
                 <div className="flex items-start gap-3">
-                  <Info size={20} className="text-amber-600 mt-0.5 shrink-0" />
+                  <Info size={20} className="text-[#27295B] mt-0.5 shrink-0" />
                   <div>
-                    <h3 className="font-heading font-bold text-sm text-amber-950">
-                      Section 6 — Pre-Course Counselling Declaration *
+                    <h3 className="font-heading font-bold text-sm text-slate-900">
+                      Pre-Course Counselling Declaration *
                     </h3>
-                    <p className="text-xs text-amber-900 font-medium mt-1 leading-relaxed">
-                      To help confirm you have gathered sufficient information regarding your choice of study at {watchPartner}, please review the key points and select your counselling declaration statement below:
+                    <p className="text-xs text-slate-600 font-medium mt-1 leading-relaxed">
+                      Confirm you have gathered sufficient information regarding your choice of study at {watchPartner} by selecting your declaration statement below:
                     </p>
                   </div>
                 </div>
@@ -670,7 +685,7 @@ export default function ApplicationWizard({
                           { val: "read_contacted", label: "I have read sufficient information and, where applicable, I have contacted EGA / EGA Appointed Agents for clarification." },
                           { val: "read_self", label: "I have read sufficient information on my own and confirm that I do not require pre-course counselling by EGA / EGA Appointed Agents." }
                         ].map((opt) => (
-                          <label key={opt.val} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-amber-200/60 cursor-pointer hover:border-amber-400 font-medium text-xs text-amber-950">
+                          <label key={opt.val} className="flex items-center gap-3 p-3.5 rounded-xl bg-white border border-slate-200 cursor-pointer hover:border-[#27295B]/40 font-medium text-xs text-slate-900 transition-all">
                             <input 
                               type="radio" 
                               name="counsellingDeclaration" 
@@ -693,15 +708,17 @@ export default function ApplicationWizard({
           {/* STEP 2: Section 1 (Personal Particulars) & Section 2 (Citizenship & Address) */}
           {step === 2 && (
             <div className="space-y-8 animate-in fade-in duration-300">
-              <div>
-                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 2 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Personal, Passport & Address Details</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium">Provide legal identity information, passport data, and official addresses.</p>
+              <div className="border-b border-slate-100 pb-4">
+                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                  Section 2 of 5
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Personal, Passport & Address Details</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Provide legal identity information, passport data, and official addresses.</p>
               </div>
 
               {/* Personal Particulars */}
               <div className="space-y-4 pt-2">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
                   Personal Particulars
                 </h3>
 
@@ -714,7 +731,7 @@ export default function ApplicationWizard({
                       defaultValue="mr"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} value={field.value || "mr"}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                          <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
                             <SelectValue placeholder="Title" />
                           </SelectTrigger>
                           <SelectContent>
@@ -754,7 +771,7 @@ export default function ApplicationWizard({
                       control={control}
                       defaultValue="male"
                       render={({ field }) => (
-                        <div className="flex h-12 items-center gap-4 bg-white border border-neutral-200 rounded-xl px-4 text-xs font-semibold text-neutral-800">
+                        <div className="flex h-12 items-center gap-4 bg-white border border-slate-200 rounded-xl px-4 text-xs font-semibold text-slate-800">
                           {["male", "female"].map(g => (
                             <label key={g} className="flex items-center gap-1.5 capitalize cursor-pointer">
                               <input type="radio" name="gender" value={g} checked={field.value === g} onChange={() => field.onChange(g)} className="w-4 h-4 text-[#27295B]" />
@@ -774,7 +791,7 @@ export default function ApplicationWizard({
                       defaultValue="Single"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} value={field.value || "Single"}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                          <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
                             <SelectValue placeholder="Status" />
                           </SelectTrigger>
                           <SelectContent>
@@ -797,7 +814,7 @@ export default function ApplicationWizard({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div className="space-y-2">
                     <Label className="text-slate-700 font-semibold text-xs">Email Address (Read Only) *</Label>
-                    <Input {...register("personal.email")} type="email" disabled className="h-12 bg-neutral-100 text-neutral-500 rounded-xl font-medium" />
+                    <Input {...register("personal.email")} type="email" disabled className="h-12 bg-slate-100 text-slate-500 rounded-xl font-medium" />
                   </div>
 
                   <div className="space-y-2">
@@ -810,7 +827,7 @@ export default function ApplicationWizard({
                 </div>
               </div>
 
-              {/* Under-18 Guardian Details (Auto-triggered by DOB) */}
+              {/* Under-18 Guardian Details */}
               {isUnder18 && (
                 <div className="space-y-4 pt-6 border-t border-rose-100 bg-rose-50/40 p-5 rounded-2xl animate-in fade-in duration-300">
                   <div className="flex items-center justify-between border-b border-rose-200/80 pb-3">
@@ -844,9 +861,9 @@ export default function ApplicationWizard({
                 </div>
               )}
 
-              {/* Passport & Visa Details */}
-              <div className="space-y-4 pt-6 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+              {/* Passport Details */}
+              <div className="space-y-4 pt-6 border-t border-slate-100">
+                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
                   Passport & Citizenship Details
                 </h3>
 
@@ -881,8 +898,8 @@ export default function ApplicationWizard({
               </div>
 
               {/* Address Information */}
-              <div className="space-y-4 pt-6 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+              <div className="space-y-4 pt-6 border-t border-slate-100">
+                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
                   Overseas & Permanent Address
                 </h3>
 
@@ -922,16 +939,18 @@ export default function ApplicationWizard({
           {/* STEP 3: Academic Background & English Proficiency */}
           {step === 3 && (
             <div className="space-y-8 animate-in fade-in duration-300">
-              <div>
-                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 3 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Academic Background & English Proficiency</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium">List academic qualifications and English language proficiency details.</p>
+              <div className="border-b border-slate-100 pb-4">
+                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                  Section 3 of 5
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Academic Background & English Proficiency</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">List academic qualifications and English language proficiency details.</p>
               </div>
 
               {/* Academic Qualifications Table */}
               <div className="space-y-4 pt-2">
-                <div className="flex justify-between items-center border-b border-neutral-100 pb-3">
-                  <h3 className="font-heading font-bold text-base text-neutral-900">Academic Qualifications</h3>
+                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <h3 className="font-heading font-bold text-base text-slate-900">Academic Qualifications</h3>
                   <Button 
                     type="button" 
                     onClick={() => {
@@ -959,10 +978,10 @@ export default function ApplicationWizard({
                   </Button>
                 </div>
 
-                <div className="border border-neutral-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
-                      <tr className="bg-slate-50 border-b border-neutral-200 text-neutral-500 font-bold uppercase tracking-wider">
+                      <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
                         <th className="px-5 py-3.5">Qualification</th>
                         <th className="px-5 py-3.5">Awarding Institution</th>
                         <th className="px-5 py-3.5">Specialization</th>
@@ -970,12 +989,12 @@ export default function ApplicationWizard({
                         <th className="px-5 py-3.5 text-center">Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-neutral-100">
+                    <tbody className="divide-y divide-slate-100">
                       {educationList.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50/50 text-neutral-700 font-medium">
-                          <td className="px-5 py-3.5 font-bold text-neutral-900">
+                        <tr key={item.id} className="hover:bg-slate-50/50 text-slate-700 font-medium">
+                          <td className="px-5 py-3.5 font-bold text-slate-900">
                             {item.qualificationTitle}
-                            <span className="block text-[10px] text-neutral-400 font-normal">{item.country || "Singapore"} • {item.modeOfStudy || "Full Time"}</span>
+                            <span className="block text-[10px] text-slate-400 font-normal">{item.country || "Singapore"} • {item.modeOfStudy || "Full Time"}</span>
                           </td>
                           <td className="px-5 py-3.5">{item.institution}</td>
                           <td className="px-5 py-3.5">{item.specialization || "General"}</td>
@@ -1001,19 +1020,19 @@ export default function ApplicationWizard({
               </div>
 
               {/* English Language Test */}
-              <div className="space-y-4 pt-6 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+              <div className="space-y-4 pt-6 border-t border-slate-100">
+                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
                   English Language Proficiency Test
                 </h3>
 
-                <div className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl">
+                <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
                   <input 
                     type="checkbox" 
                     id="hasTakenTest" 
                     {...register("englishTest.hasTakenTest")} 
-                    className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" 
+                    className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" 
                   />
-                  <Label htmlFor="hasTakenTest" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                  <Label htmlFor="hasTakenTest" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
                     I have taken (or registered for) a formal English Language Proficiency Test
                   </Label>
                 </div>
@@ -1027,7 +1046,7 @@ export default function ApplicationWizard({
                       defaultValue="IELTS"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} value={field.value || "IELTS"}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                          <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
                             <SelectValue placeholder="Select Test" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1048,7 +1067,7 @@ export default function ApplicationWizard({
                   </div>
 
                   <div className="space-y-2 flex flex-col justify-end pb-2">
-                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-neutral-700">
+                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-700">
                       <input type="checkbox" {...register("englishTest.isTentativeDate")} className="w-4 h-4 text-[#27295B]" />
                       <span>This is a tentative / upcoming test date</span>
                     </label>
@@ -1061,32 +1080,34 @@ export default function ApplicationWizard({
           {/* STEP 4: Additional Information & Agent Contact */}
           {step === 4 && (
             <div className="space-y-8 animate-in fade-in duration-300">
-              <div>
-                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 4 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Additional Information & Agent Contact</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium">Health conditions, conduct declarations, marketing channel, and agent details.</p>
+              <div className="border-b border-slate-100 pb-4">
+                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                  Section 4 of 5
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Additional Information & Agent Contact</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Health conditions, conduct declarations, marketing channel, and agent details.</p>
               </div>
 
-              {/* Health Conditions & Learning Needs */}
+              {/* Health Conditions */}
               <div className="space-y-2 pt-2">
                 <Label className="text-slate-700 font-semibold text-xs">Health Conditions & Learning Needs *</Label>
-                <p className="text-[11px] text-neutral-400 font-medium">Describe any physical/mental health conditions or learning support requirements. If none, enter NA.</p>
+                <p className="text-[11px] text-slate-400 font-medium">Describe any physical/mental health conditions or learning support requirements. If none, enter NA.</p>
                 <textarea 
                   {...register("additionalInfo.healthConditions")} 
                   rows={3} 
-                  className="w-full p-4 rounded-xl border border-neutral-200 text-xs font-medium focus:ring-2 focus:ring-[#27295B]/20" 
+                  className="w-full p-4 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-[#27295B]/20" 
                   placeholder="Enter NA if not applicable"
                 />
               </div>
 
               {/* Conduct Declarations */}
-              <div className="space-y-4 pt-4 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
                   Conduct Declarations *
                 </h3>
 
-                <div className="space-y-4 text-xs font-medium text-neutral-800">
-                  <div className="p-4 rounded-xl bg-slate-50 border border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-4 text-xs font-medium text-slate-800">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <p className="flex-1">Have you ever been suspended, excluded and/or expelled from a course at a university or educational institution?</p>
                     <div className="flex items-center gap-4 shrink-0 font-bold">
                       <label className="flex items-center gap-1 cursor-pointer">
@@ -1098,7 +1119,7 @@ export default function ApplicationWizard({
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl bg-slate-50 border border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <p className="flex-1">Have you ever been arrested, charged in court, or convicted of an offence in any country?</p>
                     <div className="flex items-center gap-4 shrink-0 font-bold">
                       <label className="flex items-center gap-1 cursor-pointer">
@@ -1113,8 +1134,8 @@ export default function ApplicationWizard({
               </div>
 
               {/* Marketing Channel */}
-              <div className="space-y-4 pt-4 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
                   How did you hear about EGA? *
                 </h3>
 
@@ -1127,7 +1148,7 @@ export default function ApplicationWizard({
                   ].map((ch) => (
                     <label key={ch} className={cn(
                       "p-3 rounded-xl border flex items-center gap-2 cursor-pointer text-xs font-semibold transition-all",
-                      watchMarketingChannel === ch ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]" : "border-neutral-200 hover:border-neutral-300"
+                      watchMarketingChannel === ch ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]" : "border-slate-200 hover:border-slate-300"
                     )}>
                       <input 
                         type="radio" 
@@ -1156,23 +1177,23 @@ export default function ApplicationWizard({
                 )}
               </div>
 
-              {/* EGA Appointed Agent Contact */}
-              <div className="space-y-4 pt-6 border-t border-neutral-100">
-                <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
-                  <h3 className="font-heading font-bold text-base text-neutral-900">
+              {/* Agent Details */}
+              <div className="space-y-4 pt-6 border-t border-slate-100">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <h3 className="font-heading font-bold text-base text-slate-900">
                     EGA Appointed Agent Details
                   </h3>
-                  <span className="text-xs text-neutral-400 font-medium">Fill if represented by an agent</span>
+                  <span className="text-xs text-slate-400 font-medium">Fill if represented by an agent</span>
                 </div>
 
-                <div className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl">
+                <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
                   <input 
                     type="checkbox" 
                     id="isAgentRepresented" 
                     {...register("agent.isAgentRepresented")} 
-                    className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" 
+                    className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" 
                   />
-                  <Label htmlFor="isAgentRepresented" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                  <Label htmlFor="isAgentRepresented" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
                     Are you being represented by an EGA appointed agent for this application?
                   </Label>
                 </div>
@@ -1186,7 +1207,7 @@ export default function ApplicationWizard({
                       defaultValue="Singapore"
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} value={field.value || "Singapore"} disabled={!watchIsAgent}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                          <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
                             <SelectValue placeholder="Select Country" />
                           </SelectTrigger>
                           <SelectContent>
@@ -1224,85 +1245,87 @@ export default function ApplicationWizard({
           {/* STEP 5: Review, Declaration & Application Fee Payment */}
           {step === 5 && (
             <div className="space-y-8 animate-in fade-in duration-300">
-              <div>
-                <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 5 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Review, Declaration & Fee Payment</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium">Review your application summary, accept mandatory consents, and complete application fee payment.</p>
+              <div className="border-b border-slate-100 pb-4">
+                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                  Section 5 of 5
+                </span>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Review, Declaration & Fee Payment</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Review your application summary, accept mandatory consents, and complete application fee payment.</p>
               </div>
 
-              {/* Application Summary Cards */}
+              {/* Summary Cards */}
               <div className="space-y-4 pt-2">
-                <div className="bg-slate-50/80 rounded-2xl border border-neutral-200/80 p-5 space-y-3">
-                  <div className="flex justify-between items-center border-b border-neutral-200/60 pb-3">
-                    <h3 className="font-heading font-bold text-sm text-neutral-900">1. Programme Selection & Pre-Course Counselling</h3>
+                <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                    <h3 className="font-heading font-bold text-sm text-slate-900">1. Programme Selection & Pre-Course Counselling</h3>
                     <Button type="button" variant="ghost" onClick={() => setStep(1)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <div><span className="text-neutral-400 font-medium">Partner:</span> <span className="font-bold text-neutral-800">{watchPartner}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Study Mode:</span> <span className="font-bold text-neutral-800">{watchStudyMode}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Course Type:</span> <span className="font-bold text-neutral-800">{watchCourseType}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Intake:</span> <span className="font-bold text-neutral-800">{getValues("intake")}</span></div>
+                    <div><span className="text-slate-400 font-medium">Partner:</span> <span className="font-bold text-slate-800">{watchPartner}</span></div>
+                    <div><span className="text-slate-400 font-medium">Study Mode:</span> <span className="font-bold text-slate-800">{watchStudyMode}</span></div>
+                    <div><span className="text-slate-400 font-medium">Course Type:</span> <span className="font-bold text-slate-800">{watchCourseType}</span></div>
+                    <div><span className="text-slate-400 font-medium">Intake:</span> <span className="font-bold text-slate-800">{getValues("intake")}</span></div>
                   </div>
                 </div>
 
-                <div className="bg-slate-50/80 rounded-2xl border border-neutral-200/80 p-5 space-y-3">
-                  <div className="flex justify-between items-center border-b border-neutral-200/60 pb-3">
-                    <h3 className="font-heading font-bold text-sm text-neutral-900">2. Personal & Passport Details</h3>
+                <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                    <h3 className="font-heading font-bold text-sm text-slate-900">2. Personal & Passport Details</h3>
                     <Button type="button" variant="ghost" onClick={() => setStep(2)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <div><span className="text-neutral-400 font-medium">Full Name:</span> <span className="font-bold text-neutral-800">{getValues("personal.fullName")}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Passport:</span> <span className="font-bold text-neutral-800">{getValues("passport.passportNumber")}</span></div>
-                    <div><span className="text-neutral-400 font-medium">DOB:</span> <span className="font-bold text-neutral-800">{getValues("personal.dob")}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Phone:</span> <span className="font-bold text-neutral-800">{getValues("personal.phone")}</span></div>
+                    <div><span className="text-slate-400 font-medium">Full Name:</span> <span className="font-bold text-slate-800">{getValues("personal.fullName")}</span></div>
+                    <div><span className="text-slate-400 font-medium">Passport:</span> <span className="font-bold text-slate-800">{getValues("passport.passportNumber")}</span></div>
+                    <div><span className="text-slate-400 font-medium">DOB:</span> <span className="font-bold text-slate-800">{getValues("personal.dob")}</span></div>
+                    <div><span className="text-slate-400 font-medium">Phone:</span> <span className="font-bold text-slate-800">{getValues("personal.phone")}</span></div>
                   </div>
                 </div>
 
-                <div className="bg-slate-50/80 rounded-2xl border border-neutral-200/80 p-5 space-y-3">
-                  <div className="flex justify-between items-center border-b border-neutral-200/60 pb-3">
-                    <h3 className="font-heading font-bold text-sm text-neutral-900">4. Additional Info & Agent Details</h3>
+                <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                  <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                    <h3 className="font-heading font-bold text-sm text-slate-900">4. Additional Info & Agent Details</h3>
                     <Button type="button" variant="ghost" onClick={() => setStep(4)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div><span className="text-neutral-400 font-medium">Marketing Channel:</span> <span className="font-bold text-neutral-800">{watchMarketingChannel || "N/A"}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Agent Represented:</span> <span className="font-bold text-neutral-800">{watchIsAgent ? getValues("agent.agencyName") : "No Agent"}</span></div>
+                    <div><span className="text-slate-400 font-medium">Marketing Channel:</span> <span className="font-bold text-slate-800">{watchMarketingChannel || "N/A"}</span></div>
+                    <div><span className="text-slate-400 font-medium">Agent Represented:</span> <span className="font-bold text-slate-800">{watchIsAgent ? getValues("agent.agencyName") : "No Agent"}</span></div>
                     {watchIsAgent && (
-                      <div><span className="text-neutral-400 font-medium">Counsellor:</span> <span className="font-bold text-neutral-800">{getValues("agent.counsellorName")}</span></div>
+                      <div><span className="text-slate-400 font-medium">Counsellor:</span> <span className="font-bold text-slate-800">{getValues("agent.counsellorName")}</span></div>
                     )}
                   </div>
                 </div>
               </div>
 
               {/* Section 5: Declarations & Consents */}
-              <div className="space-y-4 pt-4 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900">Declarations & Mandatory Consents</h3>
-                <div className="p-4 bg-slate-50 border border-neutral-200 rounded-xl text-xs text-neutral-600 leading-relaxed font-medium">
+              <div className="space-y-4 pt-4 border-t border-slate-100">
+                <h3 className="font-heading font-bold text-base text-slate-900">Declarations & Mandatory Consents</h3>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 leading-relaxed font-medium">
                   I hereby declare that all information provided in this Educare Global Academy application form is complete, true, and correct. I understand that any false statement or omission may lead to rejection of admission or cancellation of enrollment.
                 </div>
                 
                 <div className="space-y-3">
-                  <label className="flex items-center space-x-3 bg-white border border-neutral-200 p-4 rounded-xl cursor-pointer">
-                    <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" />
-                    <span className="text-neutral-900 font-bold text-xs sm:text-sm">
+                  <label className="flex items-center space-x-3 bg-white border border-slate-200 p-4 rounded-xl cursor-pointer">
+                    <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
+                    <span className="text-slate-900 font-bold text-xs sm:text-sm">
                       I accept the data processing consent and applicant declaration *
                     </span>
                   </label>
 
-                  <label className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl cursor-pointer">
-                    <input type="checkbox" {...register("consent.marketingConsent")} className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" />
-                    <span className="text-neutral-700 font-medium text-xs">
+                  <label className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl cursor-pointer">
+                    <input type="checkbox" {...register("consent.marketingConsent")} className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
+                    <span className="text-slate-700 font-medium text-xs">
                       (Optional) I consent to receiving educational updates, promotional communications, and event news from EGA via email/SMS.
                     </span>
                   </label>
                 </div>
               </div>
 
-              {/* Application Fee Payment Calculation */}
-              <div className="space-y-4 pt-4 border-t border-neutral-100">
+              {/* Fee Calculation */}
+              <div className="space-y-4 pt-4 border-t border-slate-100">
                 <div className="flex justify-between items-center bg-[#27295B]/5 p-5 rounded-2xl border border-[#27295B]/20">
                   <div>
-                    <h3 className="font-heading font-bold text-base text-neutral-900">Application Fee Summary</h3>
-                    <p className="text-xs text-neutral-500 mt-0.5 font-medium">
+                    <h3 className="font-heading font-bold text-base text-slate-900">Application Fee Summary</h3>
+                    <p className="text-xs text-slate-500 mt-0.5 font-medium">
                       Partner Rule: {watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC") ? "Partner University Fee (SGD 360)" : "EGA Course Fee (SGD 160)"}
                     </p>
                   </div>
@@ -1315,7 +1338,7 @@ export default function ApplicationWizard({
                     { value: "paypal", label: "PayPal" },
                     { value: "bank", label: "Bank Transfer" }
                   ].map(m => (
-                    <label key={m.value} className="flex items-center gap-3 p-4 bg-white border border-neutral-200 rounded-xl cursor-pointer hover:border-[#27295B]/40 font-semibold text-xs text-neutral-800">
+                    <label key={m.value} className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-[#27295B]/40 font-semibold text-xs text-slate-800">
                       <input type="radio" name="paymentMethod" value={m.value} defaultChecked={m.value === "card"} className="w-4 h-4 text-[#27295B]" />
                       <span>{m.label}</span>
                     </label>
@@ -1326,7 +1349,7 @@ export default function ApplicationWizard({
           )}
         </div>
 
-        {/* Navigation Action Buttons */}
+        {/* Bottom Navigation Actions */}
         <div className="flex items-center justify-between pt-2">
           {step > 1 ? (
             <Button
@@ -1334,7 +1357,7 @@ export default function ApplicationWizard({
               variant="outline"
               onClick={prevStep}
               disabled={isSubmitting}
-              className="h-12 px-6 border-neutral-200 text-neutral-700 rounded-xl font-bold gap-2"
+              className="h-12 px-6 border-slate-200 text-slate-700 rounded-xl font-bold gap-2 bg-white hover:bg-slate-50"
             >
               <ArrowLeft size={16} /> Back
             </Button>
@@ -1355,10 +1378,10 @@ export default function ApplicationWizard({
       {/* Qualification Modal */}
       {isQualModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-2xl p-6 sm:p-8 shadow-2xl relative text-left border border-neutral-200 font-sans">
-            <div className="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
-              <h3 className="text-xl font-bold text-neutral-900 font-heading">Add Academic Qualification</h3>
-              <button type="button" onClick={() => setIsQualModalOpen(false)} className="text-neutral-400 hover:text-neutral-700 text-sm font-bold">✕</button>
+          <div className="bg-white rounded-3xl w-full max-w-2xl p-6 sm:p-8 shadow-2xl relative text-left border border-slate-200 font-jost">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+              <h3 className="text-xl font-bold text-slate-900 font-heading">Add Academic Qualification</h3>
+              <button type="button" onClick={() => setIsQualModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-sm font-bold">✕</button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -1380,7 +1403,7 @@ export default function ApplicationWizard({
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-neutral-100">
+            <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-slate-100">
               <Button variant="outline" type="button" onClick={() => setIsQualModalOpen(false)} className="h-10 px-5 rounded-xl font-bold">Cancel</Button>
               <Button 
                 type="button" 

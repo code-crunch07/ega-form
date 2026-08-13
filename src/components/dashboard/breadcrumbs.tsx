@@ -19,29 +19,29 @@ export function Breadcrumbs({
   return (
     <nav
       aria-label="Breadcrumb"
-      className={cn("mb-6 flex items-center gap-1.5 text-sm", className)}
+      className={cn("mb-6 inline-flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/90 px-4 py-2 text-xs shadow-2xs backdrop-blur-md font-jost", className)}
     >
       <Link
         href="/dashboard"
-        className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-neutral-500 transition-colors hover:text-[#27295B]"
+        className="flex items-center gap-1.5 font-semibold text-slate-500 transition-colors hover:text-[#27295B]"
       >
-        <Home size={14} />
-        <span className="hidden sm:inline">Home</span>
+        <Home size={14} className="text-[#27295B]" />
+        <span>Home</span>
       </Link>
       {items.map((item, index) => {
         const isLast = index === items.length - 1;
         return (
-          <div key={`${item.label}-${index}`} className="flex items-center gap-1.5">
-            <ChevronRight size={14} className="shrink-0 text-neutral-300" />
+          <div key={`${item.label}-${index}`} className="flex items-center gap-2">
+            <ChevronRight size={13} className="shrink-0 text-slate-300" />
             {item.href && !isLast ? (
               <Link
                 href={item.href}
-                className="rounded-md px-1.5 py-0.5 font-medium text-neutral-500 transition-colors hover:text-[#27295B]"
+                className="font-medium text-slate-500 transition-colors hover:text-[#27295B]"
               >
                 {item.label}
               </Link>
             ) : (
-              <span className="px-1.5 py-0.5 font-semibold text-neutral-900">
+              <span className="font-bold text-slate-900 bg-slate-100 px-2.5 py-0.5 rounded-lg text-[11px] border border-slate-200/60">
                 {item.label}
               </span>
             )}
