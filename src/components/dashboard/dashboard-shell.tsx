@@ -34,7 +34,6 @@ import {
   ChevronRight,
   ChevronDown,
   HelpCircle,
-  Headphones,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getUserDisplayName, getUserInitials, getDashboardBreadcrumbs } from "@/lib/dashboard-utils";
@@ -200,26 +199,8 @@ export function DashboardShell({
           </div>
         </div>
 
-        <div className="no-scrollbar flex-1 overflow-y-auto px-3.5 py-6 flex flex-col justify-between">
+        <div className="no-scrollbar flex-1 overflow-y-auto px-3.5 py-6">
           <NavLinks pathname={pathname} />
-
-          <div className="relative mx-1 mt-8 overflow-hidden rounded-2xl border border-white/10 bg-[#131d35] p-4.5 shadow-xs">
-            <div className="relative z-10 flex flex-col items-center text-center">
-              <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-[#ED1C24]/15 text-[#ED1C24]">
-                <Headphones size={16} />
-              </div>
-              <h4 className="text-xs font-bold text-white font-heading">Need Assistance?</h4>
-              <p className="mt-1 mb-3 text-[11px] leading-relaxed text-slate-300 font-medium">
-                Our admissions team is available to assist your application.
-              </p>
-              <Link
-                href="/dashboard/messages"
-                className="inline-flex w-full items-center justify-center rounded-xl border border-[#ED1C24] bg-transparent px-3 py-2 text-[11px] font-bold text-[#ED1C24] transition-all hover:bg-[#ED1C24] hover:text-white"
-              >
-                Contact Support
-              </Link>
-            </div>
-          </div>
         </div>
       </aside>
 
