@@ -25,65 +25,6 @@ const SECTIONS = [
   { id: 5, name: "Review & Payment", shortName: "5. Review & Pay", icon: CreditCard, desc: "Review, fee payment & submit" },
 ];
 
-function AccordionCard({
-  title,
-  subtitle,
-  badge,
-  isOpen,
-  onToggle,
-  children,
-}: {
-  title: string;
-  subtitle?: string;
-  badge?: string;
-  isOpen: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-2xs overflow-hidden transition-all duration-200">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center justify-between p-4 sm:p-5 bg-slate-50/80 hover:bg-slate-100/80 transition-colors text-left focus:outline-none select-none"
-      >
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-xl bg-[#27295B]/10 text-[#27295B] flex items-center justify-center font-bold text-xs shrink-0">
-            <div className={cn("transition-transform duration-200", isOpen && "rotate-90")}>
-              <ChevronRight size={16} />
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-heading font-bold text-sm sm:text-base text-slate-900">{title}</h3>
-              {badge && (
-                <span className="text-[10px] font-bold font-mono text-[#27295B] bg-[#27295B]/10 px-2.5 py-0.5 rounded-full">
-                  {badge}
-                </span>
-              )}
-            </div>
-            {subtitle && <p className="text-xs text-slate-500 font-medium mt-0.5">{subtitle}</p>}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 shrink-0 ml-4">
-          <span className="text-xs font-semibold text-slate-400 hidden sm:inline">
-            {isOpen ? "Collapse" : "Expand"}
-          </span>
-          <div className={cn("transition-transform duration-200 text-slate-400", isOpen && "rotate-180")}>
-            <ChevronDown size={18} />
-          </div>
-        </div>
-      </button>
-
-      {isOpen && (
-        <div className="p-5 sm:p-6 border-t border-slate-100 bg-white animate-in fade-in duration-200 space-y-6">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
 export default function ApplicationWizard({ 
   user, 
   programmes = [], 
@@ -99,29 +40,6 @@ export default function ApplicationWizard({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successAppNumber, setSuccessAppNumber] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-
-  // Accordion Open/Closed State
-  const [openPanels, setOpenPanels] = useState<Record<string, boolean>>({
-    partnerMode: true,
-    courseType: true,
-    counselling: true,
-    personal: true,
-    guardian: true,
-    passport: true,
-    address: true,
-    academics: true,
-    english: true,
-    health: true,
-    conduct: true,
-    marketing: true,
-    agent: true,
-    declarations: true,
-    payment: true,
-  });
-
-  const togglePanel = (key: string) => {
-    setOpenPanels((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
 
   // Qualifications state
   const [educationList, setEducationList] = useState<any[]>([
@@ -249,15 +167,11 @@ export default function ApplicationWizard({
   const watchCourseType = watch("courseType") || "Standalone Course";
   const watchAcademicLevel = watch("academicLevel") || "Diploma";
   const watchProgrammeId = watch("programmeId");
-  const watchPackageSlot1 = watch("packageProgrammes.slot1");
-  const watchPackageSlot2 = watch("packageProgrammes.slot2");
-  const watchPackageSlot3 = watch("packageProgrammes.slot3");
   
   const watchDob = watch("personal.dob");
   const watchHasTakenTest = watch("englishTest.hasTakenTest");
   const watchMarketingChannel = watch("additionalInfo.marketingChannel");
   const watchIsAgent = watch("agent.isAgentRepresented");
-  const watchAgentCountry = watch("agent.agentCountry") || "Singapore";
 
   // Calculate age for under-18 guardian requirement
   const applicantAge = watchDob ? Math.floor((new Date().getTime() - new Date(watchDob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : 22;
@@ -273,8 +187,6 @@ export default function ApplicationWizard({
     }
     return true;
   });
-
-  const selectedProgramme = programmes.find(p => p.id === watchProgrammeId);
 
   useEffect(() => {
     setValue("education", educationList);
@@ -337,7 +249,6 @@ export default function ApplicationWizard({
       return;
     }
     
-    // Validate declaration agreement
     const declarationCheck = (document.getElementById("declareCheck") as HTMLInputElement)?.checked;
     if (!declarationCheck) {
       setFormError("You must accept the application declaration before submitting.");
@@ -389,86 +300,6 @@ export default function ApplicationWizard({
   return (
     <div className="w-full max-w-7xl mx-auto space-y-6 text-left font-jost pb-12">
       
-      {/* Executive Stepper Header Card */}
-      <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-6 sm:p-8 space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
-          <div className="space-y-1">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#27295B] bg-[#27295B]/8 px-3 py-1 rounded-full font-mono inline-flex items-center gap-1.5">
-              <Sparkles size={12} className="text-[#ED1C24]" />
-              EDUCARE GLOBAL ACADEMY • ADMISSIONS PORTAL
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
-              Student Application Form
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              Complete the 5 sections below to submit your official application.
-            </p>
-          </div>
-
-          {/* Clean Progress Pill */}
-          <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-2xl shrink-0">
-            <div className="text-right">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Progress</p>
-              <p className="text-xs font-bold text-[#27295B]">Step {step} of 5 • {Math.round((step / 5) * 100)}%</p>
-            </div>
-            <div className="h-9 w-9 rounded-xl bg-[#27295B] text-white flex items-center justify-center font-bold text-xs font-mono shadow-2xs">
-              {step}/5
-            </div>
-          </div>
-        </div>
-
-        {/* 5-Section Connected Stepper Track */}
-        <div className="no-scrollbar overflow-x-auto py-2">
-          <div className="flex items-center justify-between min-w-[700px] relative">
-            {/* Background Track Line */}
-            <div className="absolute left-6 right-6 top-5 h-0.5 bg-slate-200 -z-0" />
-            <div 
-              className="absolute left-6 top-5 h-0.5 bg-[#27295B] transition-all duration-500 -z-0" 
-              style={{ width: `${((step - 1) / 4) * 94}%` }} 
-            />
-
-            {SECTIONS.map((sec) => {
-              const isActive = step === sec.id;
-              const isCompleted = step > sec.id;
-
-              return (
-                <button
-                  type="button"
-                  key={sec.id}
-                  onClick={() => {
-                    if (sec.id <= step || isCompleted) {
-                      setStep(sec.id);
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
-                    }
-                  }}
-                  className="flex flex-col items-center group relative z-10 focus:outline-none"
-                >
-                  <div 
-                    className={cn(
-                      "w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 shadow-2xs",
-                      isActive 
-                        ? "bg-[#27295B] text-white ring-4 ring-[#27295B]/15 scale-110" 
-                        : isCompleted
-                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                        : "bg-white text-slate-400 border border-slate-200 group-hover:border-slate-300"
-                    )}
-                  >
-                    {isCompleted ? <Check size={16} strokeWidth={3} /> : sec.id}
-                  </div>
-                  
-                  <span className={cn(
-                    "text-xs font-bold mt-2 truncate transition-colors",
-                    isActive ? "text-[#27295B]" : isCompleted ? "text-emerald-950" : "text-slate-500"
-                  )}>
-                    {sec.shortName}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
       {/* Error Alert Banner */}
       {formError && (
         <div className="p-4 rounded-2xl bg-rose-600 text-white font-semibold text-xs sm:text-sm flex items-center justify-between shadow-lg animate-in slide-in-from-top-2 duration-200">
@@ -482,86 +313,163 @@ export default function ApplicationWizard({
         </div>
       )}
 
-      {/* Main Form Content Container */}
+      {/* SINGLE UNIFIED CARD CONTAINER: Header, Stepper Track, and Form Section Merged */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-6 sm:p-10 space-y-6 min-h-[500px]">
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs overflow-hidden">
           
-          {/* STEP 1: Programme Selection & Pre-Course Counselling */}
-          {step === 1 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="border-b border-slate-100 pb-4">
-                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
-                  Section 1 of 5
+          {/* Header & 5-Step Connected Stepper Track */}
+          <div className="p-6 sm:p-8 border-b border-slate-100 bg-slate-50/50 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-5">
+              <div className="space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[#27295B] bg-[#27295B]/8 px-3 py-1 rounded-full font-mono inline-flex items-center gap-1.5">
+                  <Sparkles size={12} className="text-[#ED1C24]" />
+                  EDUCARE GLOBAL ACADEMY • ADMISSIONS PORTAL
                 </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Programme Selection</h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Select your university partner, study mode, course type, and target programme.</p>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+                  Student Application Form
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                  Complete the 5 sections below to submit your official application.
+                </p>
               </div>
 
-              {/* Accordion 1: Partner & Mode */}
-              <AccordionCard
-                title="University Partner & Study Mode"
-                subtitle="Select the institution and study schedule"
-                isOpen={!!openPanels.partnerMode}
-                onToggle={() => togglePanel('partnerMode')}
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">University Partner *</Label>
-                    <Controller
-                      name="universityPartner"
-                      control={control}
-                      defaultValue="Educare Global Academy"
-                      render={({ field }) => (
-                        <Select onValueChange={(val) => {
-                          field.onChange(val);
-                          setValue("programmeId", "");
-                        }} value={field.value || "Educare Global Academy"}>
-                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
-                            <SelectValue placeholder="Select University Partner" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Educare Global Academy">Educare Global Academy (EGA)</SelectItem>
-                            <SelectItem value="Glasgow Caledonian University (UK)">Glasgow Caledonian University (UK)</SelectItem>
-                            <SelectItem value="Kingston University (UK)">Kingston University (UK)</SelectItem>
-                            <SelectItem value="NCC">NCC Education</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                  </div>
+              {/* Progress Badge Pill */}
+              <div className="flex items-center gap-3 bg-white border border-slate-200/80 px-4 py-2.5 rounded-2xl shrink-0 shadow-2xs">
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Progress</p>
+                  <p className="text-xs font-bold text-[#27295B]">Step {step} of 5 • {Math.round((step / 5) * 100)}%</p>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-[#27295B] text-white flex items-center justify-center font-bold text-xs font-mono shadow-2xs">
+                  {step}/5
+                </div>
+              </div>
+            </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
-                    <Controller
-                      name="studyMode"
-                      control={control}
-                      defaultValue="Full Time"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || "Full Time"}>
-                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
-                            <SelectValue placeholder="Select Mode of Study" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Full Time">Full Time</SelectItem>
-                            <SelectItem value="Part Time">Part Time</SelectItem>
-                            <SelectItem value="E-Learning">E-Learning</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
+            {/* 5-Section Connected Stepper Track */}
+            <div className="no-scrollbar overflow-x-auto py-2">
+              <div className="flex items-center justify-between min-w-[700px] relative">
+                {/* Background Track Line */}
+                <div className="absolute left-6 right-6 top-5 h-0.5 bg-slate-200 -z-0" />
+                <div 
+                  className="absolute left-6 top-5 h-0.5 bg-[#27295B] transition-all duration-500 -z-0" 
+                  style={{ width: `${((step - 1) / 4) * 94}%` }} 
+                />
+
+                {SECTIONS.map((sec) => {
+                  const isActive = step === sec.id;
+                  const isCompleted = step > sec.id;
+
+                  return (
+                    <button
+                      type="button"
+                      key={sec.id}
+                      onClick={() => {
+                        if (sec.id <= step || isCompleted) {
+                          setStep(sec.id);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }
+                      }}
+                      className="flex flex-col items-center group relative z-10 focus:outline-none"
+                    >
+                      <div 
+                        className={cn(
+                          "w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 shadow-2xs",
+                          isActive 
+                            ? "bg-[#27295B] text-white ring-4 ring-[#27295B]/15 scale-110" 
+                            : isCompleted
+                            ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                            : "bg-white text-slate-400 border border-slate-200 group-hover:border-slate-300"
+                        )}
+                      >
+                        {isCompleted ? <Check size={16} strokeWidth={3} /> : sec.id}
+                      </div>
+                      
+                      <span className={cn(
+                        "text-xs font-bold mt-2 truncate transition-colors",
+                        isActive ? "text-[#27295B]" : isCompleted ? "text-emerald-950" : "text-slate-500"
+                      )}>
+                        {sec.shortName}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Active Step Form Content Area */}
+          <div className="p-6 sm:p-10 space-y-8 min-h-[500px]">
+            
+            {/* STEP 1: Programme Selection & Pre-Course Counselling */}
+            {step === 1 && (
+              <div className="space-y-8 animate-in fade-in duration-300">
+                <div>
+                  <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                    Section 1 of 5
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Programme Selection</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Select your university partner, study mode, course type, and target programme.</p>
+                </div>
+
+                {/* Sub-section 1: Partner & Mode */}
+                <div className="space-y-4">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    1. University Partner & Study Mode
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">University Partner *</Label>
+                      <Controller
+                        name="universityPartner"
+                        control={control}
+                        defaultValue="Educare Global Academy"
+                        render={({ field }) => (
+                          <Select onValueChange={(val) => {
+                            field.onChange(val);
+                            setValue("programmeId", "");
+                          }} value={field.value || "Educare Global Academy"}>
+                            <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
+                              <SelectValue placeholder="Select University Partner" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Educare Global Academy">Educare Global Academy (EGA)</SelectItem>
+                              <SelectItem value="Glasgow Caledonian University (UK)">Glasgow Caledonian University (UK)</SelectItem>
+                              <SelectItem value="Kingston University (UK)">Kingston University (UK)</SelectItem>
+                              <SelectItem value="NCC">NCC Education</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
+                      <Controller
+                        name="studyMode"
+                        control={control}
+                        defaultValue="Full Time"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value || "Full Time"}>
+                            <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/15">
+                              <SelectValue placeholder="Select Mode of Study" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Full Time">Full Time</SelectItem>
+                              <SelectItem value="Part Time">Part Time</SelectItem>
+                              <SelectItem value="E-Learning">E-Learning</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
-              </AccordionCard>
 
-              {/* Accordion 2: Course Type */}
-              <AccordionCard
-                title="Course Type & Target Programme"
-                subtitle="Choose Standalone Course or 3-Level Package Pathway"
-                badge="Mandatory"
-                isOpen={!!openPanels.courseType}
-                onToggle={() => togglePanel('courseType')}
-              >
-                <div className="space-y-6">
+                {/* Sub-section 2: Course Type & Programme Selection */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    2. Course Type & Target Programme *
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
                       { value: "Standalone Course", title: "Standalone Course", desc: "Single programme selection at your target academic level." },
@@ -764,17 +672,12 @@ export default function ApplicationWizard({
                     </div>
                   )}
                 </div>
-              </AccordionCard>
 
-              {/* Accordion 3: Counselling */}
-              <AccordionCard
-                title="Pre-Course Counselling Declaration"
-                subtitle="Confirm pre-course information and advisory counselling"
-                badge="Mandatory"
-                isOpen={!!openPanels.counselling}
-                onToggle={() => togglePanel('counselling')}
-              >
-                <div className="space-y-4">
+                {/* Sub-section 3: Pre-Course Counselling */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    3. Pre-Course Counselling Declaration *
+                  </h3>
                   <p className="text-xs text-slate-600 font-medium leading-relaxed">
                     Confirm you have gathered sufficient information regarding your choice of study at {watchPartner} by selecting your declaration statement below:
                   </p>
@@ -806,30 +709,25 @@ export default function ApplicationWizard({
                     )}
                   />
                 </div>
-              </AccordionCard>
-            </div>
-          )}
-
-          {/* STEP 2: Section 1 (Personal Particulars) & Section 2 (Citizenship & Address) */}
-          {step === 2 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="border-b border-slate-100 pb-4">
-                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
-                  Section 2 of 5
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Personal, Passport & Address Details</h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Provide legal identity information, passport data, and official addresses.</p>
               </div>
+            )}
 
-              {/* Accordion 1: Personal Particulars */}
-              <AccordionCard
-                title="Personal Particulars"
-                subtitle="Full legal name, contact details, date of birth, and nationality"
-                badge="Mandatory"
-                isOpen={!!openPanels.personal}
-                onToggle={() => togglePanel('personal')}
-              >
+            {/* STEP 2: Section 1 (Personal Particulars) & Section 2 (Citizenship & Address) */}
+            {step === 2 && (
+              <div className="space-y-8 animate-in fade-in duration-300">
+                <div>
+                  <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                    Section 2 of 5
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Personal, Passport & Address Details</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Provide legal identity information, passport data, and official addresses.</p>
+                </div>
+
+                {/* Sub-section 1: Personal Particulars */}
                 <div className="space-y-4">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    1. Personal Particulars *
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Title *</Label>
@@ -934,18 +832,18 @@ export default function ApplicationWizard({
                     </div>
                   </div>
                 </div>
-              </AccordionCard>
 
-              {/* Accordion 2: Under-18 Guardian (Conditional) */}
-              {isUnder18 && (
-                <AccordionCard
-                  title="Parent / Legal Guardian Details"
-                  subtitle="Required for applicants under 18 years of age"
-                  badge={`Age: ${applicantAge} Years`}
-                  isOpen={!!openPanels.guardian}
-                  onToggle={() => togglePanel('guardian')}
-                >
-                  <div className="space-y-4">
+                {/* Sub-section 2: Under-18 Guardian (Conditional) */}
+                {isUnder18 && (
+                  <div className="space-y-4 pt-4 border-t border-slate-100">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <h3 className="font-heading font-bold text-base text-slate-900">
+                        2. Parent / Legal Guardian Details *
+                      </h3>
+                      <span className="text-xs font-mono font-bold text-[#27295B] bg-[#27295B]/10 px-3 py-1 rounded-full">
+                        Required (Age: {applicantAge} Years)
+                      </span>
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="text-slate-700 font-semibold text-xs">Guardian Full Name (as in ID) *</Label>
@@ -966,18 +864,13 @@ export default function ApplicationWizard({
                       </div>
                     </div>
                   </div>
-                </AccordionCard>
-              )}
+                )}
 
-              {/* Accordion 3: Passport & Citizenship */}
-              <AccordionCard
-                title="Passport & Citizenship Details"
-                subtitle="Official passport number, country of issue, and validity dates"
-                badge="Mandatory"
-                isOpen={!!openPanels.passport}
-                onToggle={() => togglePanel('passport')}
-              >
-                <div className="space-y-4">
+                {/* Sub-section 3: Passport & Citizenship */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    3. Passport & Citizenship Details *
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Passport Number *</Label>
@@ -1007,17 +900,12 @@ export default function ApplicationWizard({
                     </div>
                   </div>
                 </div>
-              </AccordionCard>
 
-              {/* Accordion 4: Overseas & Permanent Address */}
-              <AccordionCard
-                title="Overseas & Permanent Address"
-                subtitle="Official permanent residential address details"
-                badge="Mandatory"
-                isOpen={!!openPanels.address}
-                onToggle={() => togglePanel('address')}
-              >
-                <div className="space-y-4">
+                {/* Sub-section 4: Overseas & Permanent Address */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    4. Overseas & Permanent Address *
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Country *</Label>
@@ -1048,31 +936,26 @@ export default function ApplicationWizard({
                     </div>
                   </div>
                 </div>
-              </AccordionCard>
-            </div>
-          )}
-
-          {/* STEP 3: Academic Background & English Proficiency */}
-          {step === 3 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="border-b border-slate-100 pb-4">
-                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
-                  Section 3 of 5
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Academic Background & English Proficiency</h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">List academic qualifications and English language proficiency details.</p>
               </div>
+            )}
 
-              {/* Accordion 1: Qualifications */}
-              <AccordionCard
-                title="Academic Qualifications"
-                subtitle="List prior diplomas, degrees, or secondary school qualifications"
-                isOpen={!!openPanels.academics}
-                onToggle={() => togglePanel('academics')}
-              >
+            {/* STEP 3: Academic Background & English Proficiency */}
+            {step === 3 && (
+              <div className="space-y-8 animate-in fade-in duration-300">
+                <div>
+                  <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                    Section 3 of 5
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Academic Background & English Proficiency</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">List academic qualifications and English language proficiency details.</p>
+                </div>
+
+                {/* Sub-section 1: Qualifications */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                    <span className="text-xs text-slate-500 font-medium">Recorded Educational History</span>
+                    <h3 className="font-heading font-bold text-base text-slate-900">
+                      1. Academic Qualifications
+                    </h3>
                     <Button 
                       type="button" 
                       onClick={() => {
@@ -1138,16 +1021,12 @@ export default function ApplicationWizard({
                     </table>
                   </div>
                 </div>
-              </AccordionCard>
 
-              {/* Accordion 2: English Test */}
-              <AccordionCard
-                title="English Language Proficiency Test"
-                subtitle="IELTS, TOEFL, PTE, Duolingo, or other official test scores"
-                isOpen={!!openPanels.english}
-                onToggle={() => togglePanel('english')}
-              >
-                <div className="space-y-4">
+                {/* Sub-section 2: English Test */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    2. English Language Proficiency Test
+                  </h3>
                   <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
                     <input 
                       type="checkbox" 
@@ -1197,30 +1076,25 @@ export default function ApplicationWizard({
                     </div>
                   </div>
                 </div>
-              </AccordionCard>
-            </div>
-          )}
-
-          {/* STEP 4: Additional Information & Agent Contact */}
-          {step === 4 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="border-b border-slate-100 pb-4">
-                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
-                  Section 4 of 5
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Additional Information & Agent Contact</h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Health conditions, conduct declarations, marketing channel, and agent details.</p>
               </div>
+            )}
 
-              {/* Accordion 1: Health Conditions */}
-              <AccordionCard
-                title="Health Conditions & Learning Needs"
-                subtitle="Describe special physical, medical, or learning support requirements"
-                isOpen={!!openPanels.health}
-                onToggle={() => togglePanel('health')}
-              >
+            {/* STEP 4: Additional Information & Agent Contact */}
+            {step === 4 && (
+              <div className="space-y-8 animate-in fade-in duration-300">
+                <div>
+                  <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                    Section 4 of 5
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Additional Information & Agent Contact</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Health conditions, conduct declarations, marketing channel, and agent details.</p>
+                </div>
+
+                {/* Sub-section 1: Health Conditions */}
                 <div className="space-y-2">
-                  <Label className="text-slate-700 font-semibold text-xs">Health Conditions & Learning Needs *</Label>
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    1. Health Conditions & Learning Needs *
+                  </h3>
                   <p className="text-[11px] text-slate-400 font-medium">Describe any physical/mental health conditions or learning support requirements. If none, enter NA.</p>
                   <textarea 
                     {...register("additionalInfo.healthConditions")} 
@@ -1229,279 +1103,270 @@ export default function ApplicationWizard({
                     placeholder="Enter NA if not applicable"
                   />
                 </div>
-              </AccordionCard>
 
-              {/* Accordion 2: Conduct Declarations */}
-              <AccordionCard
-                title="Conduct Declarations"
-                subtitle="Academic suspension/exclusion and legal conduct disclosures"
-                badge="Mandatory"
-                isOpen={!!openPanels.conduct}
-                onToggle={() => togglePanel('conduct')}
-              >
-                <div className="space-y-4 text-xs font-medium text-slate-800">
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <p className="flex-1">Have you ever been suspended, excluded and/or expelled from a course at a university or educational institution?</p>
-                    <div className="flex items-center gap-4 shrink-0 font-bold">
-                      <label className="flex items-center gap-1 cursor-pointer">
-                        <input type="radio" value="yes" {...register("additionalInfo.conductSuspended")} className="w-4 h-4 text-[#27295B]" /> Yes
-                      </label>
-                      <label className="flex items-center gap-1 cursor-pointer">
-                        <input type="radio" value="no" defaultChecked {...register("additionalInfo.conductSuspended")} className="w-4 h-4 text-[#27295B]" /> No
-                      </label>
+                {/* Sub-section 2: Conduct Declarations */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    2. Conduct Declarations *
+                  </h3>
+                  <div className="space-y-4 text-xs font-medium text-slate-800">
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <p className="flex-1">Have you ever been suspended, excluded and/or expelled from a course at a university or educational institution?</p>
+                      <div className="flex items-center gap-4 shrink-0 font-bold">
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input type="radio" value="yes" {...register("additionalInfo.conductSuspended")} className="w-4 h-4 text-[#27295B]" /> Yes
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input type="radio" value="no" defaultChecked {...register("additionalInfo.conductSuspended")} className="w-4 h-4 text-[#27295B]" /> No
+                        </label>
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <p className="flex-1">Have you ever been arrested, charged in court, or convicted of an offence in any country?</p>
-                    <div className="flex items-center gap-4 shrink-0 font-bold">
-                      <label className="flex items-center gap-1 cursor-pointer">
-                        <input type="radio" value="yes" {...register("additionalInfo.conductConvicted")} className="w-4 h-4 text-[#27295B]" /> Yes
-                      </label>
-                      <label className="flex items-center gap-1 cursor-pointer">
-                        <input type="radio" value="no" defaultChecked {...register("additionalInfo.conductConvicted")} className="w-4 h-4 text-[#27295B]" /> No
-                      </label>
+                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <p className="flex-1">Have you ever been arrested, charged in court, or convicted of an offence in any country?</p>
+                      <div className="flex items-center gap-4 shrink-0 font-bold">
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input type="radio" value="yes" {...register("additionalInfo.conductConvicted")} className="w-4 h-4 text-[#27295B]" /> Yes
+                        </label>
+                        <label className="flex items-center gap-1 cursor-pointer">
+                          <input type="radio" value="no" defaultChecked {...register("additionalInfo.conductConvicted")} className="w-4 h-4 text-[#27295B]" /> No
+                        </label>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </AccordionCard>
 
-              {/* Accordion 3: Marketing Channel */}
-              <AccordionCard
-                title="How did you hear about EGA?"
-                subtitle="Referral and marketing discovery channel"
-                badge="Mandatory"
-                isOpen={!!openPanels.marketing}
-                onToggle={() => togglePanel('marketing')}
-              >
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                    {[
-                      "EGA Website", "Print Advertising", "Online Advertising", 
-                      "Out-of-Home Advertising", "EGA Open House", "School Education Fair", 
-                      "Exhibition", "EGA Seminar", "Recruitment Agents", 
-                      "Recommendations by others", "Website: E-learning", "Referred by EGA Student/Alumni", "Other"
-                    ].map((ch) => (
-                      <label key={ch} className={cn(
-                        "p-3 rounded-xl border flex items-center gap-2 cursor-pointer text-xs font-semibold transition-all",
-                        watchMarketingChannel === ch ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]" : "border-slate-200 hover:border-slate-300"
-                      )}>
-                        <input 
-                          type="radio" 
-                          name="marketingChannel" 
-                          value={ch} 
-                          checked={watchMarketingChannel === ch} 
-                          onChange={() => setValue("additionalInfo.marketingChannel", ch)} 
-                          className="w-4 h-4 text-[#27295B]" 
-                        />
-                        <span>{ch}</span>
-                      </label>
-                    ))}
-                  </div>
-
-                  {watchMarketingChannel === "Other" && (
-                    <div className="pt-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Specify Other Channel *</Label>
-                      <Input {...register("additionalInfo.marketingOtherText")} placeholder="Please describe" className="h-11 rounded-xl mt-1" />
-                    </div>
-                  )}
-                  {watchMarketingChannel === "Referred by EGA Student/Alumni" && (
-                    <div className="pt-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Referrer Name / Student ID *</Label>
-                      <Input {...register("additionalInfo.referrerName")} placeholder="Enter Referrer Full Name" className="h-11 rounded-xl mt-1" />
-                    </div>
-                  )}
-                </div>
-              </AccordionCard>
-
-              {/* Accordion 4: Agent Details */}
-              <AccordionCard
-                title="EGA Appointed Agent Details"
-                subtitle="Specify education recruitment agency details if represented"
-                isOpen={!!openPanels.agent}
-                onToggle={() => togglePanel('agent')}
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
-                    <input 
-                      type="checkbox" 
-                      id="isAgentRepresented" 
-                      {...register("agent.isAgentRepresented")} 
-                      className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" 
-                    />
-                    <Label htmlFor="isAgentRepresented" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
-                      Are you being represented by an EGA appointed agent for this application?
-                    </Label>
-                  </div>
-
-                  <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 transition-opacity duration-300", !watchIsAgent && "opacity-40 pointer-events-none")}>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Agent Country *</Label>
-                      <Controller
-                        name="agent.agentCountry"
-                        control={control}
-                        defaultValue="Singapore"
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value || "Singapore"} disabled={!watchIsAgent}>
-                            <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
-                              <SelectValue placeholder="Select Country" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Singapore">Singapore</SelectItem>
-                              <SelectItem value="Malaysia">Malaysia</SelectItem>
-                              <SelectItem value="Indonesia">Indonesia</SelectItem>
-                              <SelectItem value="China">China</SelectItem>
-                              <SelectItem value="India">India</SelectItem>
-                              <SelectItem value="Vietnam">Vietnam</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
+                {/* Sub-section 3: Marketing Channel */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    3. How did you hear about EGA? *
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                      {[
+                        "EGA Website", "Print Advertising", "Online Advertising", 
+                        "Out-of-Home Advertising", "EGA Open House", "School Education Fair", 
+                        "Exhibition", "EGA Seminar", "Recruitment Agents", 
+                        "Recommendations by others", "Website: E-learning", "Referred by EGA Student/Alumni", "Other"
+                      ].map((ch) => (
+                        <label key={ch} className={cn(
+                          "p-3 rounded-xl border flex items-center gap-2 cursor-pointer text-xs font-semibold transition-all",
+                          watchMarketingChannel === ch ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]" : "border-slate-200 hover:border-slate-300"
+                        )}>
+                          <input 
+                            type="radio" 
+                            name="marketingChannel" 
+                            value={ch} 
+                            checked={watchMarketingChannel === ch} 
+                            onChange={() => setValue("additionalInfo.marketingChannel", ch)} 
+                            className="w-4 h-4 text-[#27295B]" 
+                          />
+                          <span>{ch}</span>
+                        </label>
+                      ))}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Agency Name *</Label>
-                      <Input {...register("agent.agencyName")} placeholder="e.g. Global Education Agency" disabled={!watchIsAgent} className="h-12 rounded-xl" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Counsellor Name *</Label>
-                      <Input {...register("agent.counsellorName")} placeholder="e.g. Jane Smith" disabled={!watchIsAgent} className="h-12 rounded-xl" />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Counsellor Email *</Label>
-                      <Input {...register("agent.counsellorEmail")} type="email" placeholder="e.g. counsellor@agency.com" disabled={!watchIsAgent} className="h-12 rounded-xl" />
-                    </div>
-                  </div>
-                </div>
-              </AccordionCard>
-            </div>
-          )}
-
-          {/* STEP 5: Review, Declaration & Application Fee Payment */}
-          {step === 5 && (
-            <div className="space-y-6 animate-in fade-in duration-300">
-              <div className="border-b border-slate-100 pb-4">
-                <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
-                  Section 5 of 5
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Review, Declaration & Fee Payment</h2>
-                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Review your application summary, accept mandatory consents, and complete application fee payment.</p>
-              </div>
-
-              {/* Summary Cards */}
-              <div className="space-y-4 pt-2">
-                <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
-                    <h3 className="font-heading font-bold text-sm text-slate-900">1. Programme Selection & Pre-Course Counselling</h3>
-                    <Button type="button" variant="ghost" onClick={() => setStep(1)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <div><span className="text-slate-400 font-medium">Partner:</span> <span className="font-bold text-slate-800">{watchPartner}</span></div>
-                    <div><span className="text-slate-400 font-medium">Study Mode:</span> <span className="font-bold text-slate-800">{watchStudyMode}</span></div>
-                    <div><span className="text-slate-400 font-medium">Course Type:</span> <span className="font-bold text-slate-800">{watchCourseType}</span></div>
-                    <div><span className="text-slate-400 font-medium">Intake:</span> <span className="font-bold text-slate-800">{getValues("intake")}</span></div>
-                  </div>
-                </div>
-
-                <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
-                    <h3 className="font-heading font-bold text-sm text-slate-900">2. Personal & Passport Details</h3>
-                    <Button type="button" variant="ghost" onClick={() => setStep(2)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <div><span className="text-slate-400 font-medium">Full Name:</span> <span className="font-bold text-slate-800">{getValues("personal.fullName")}</span></div>
-                    <div><span className="text-slate-400 font-medium">Passport:</span> <span className="font-bold text-slate-800">{getValues("passport.passportNumber")}</span></div>
-                    <div><span className="text-slate-400 font-medium">DOB:</span> <span className="font-bold text-slate-800">{getValues("personal.dob")}</span></div>
-                    <div><span className="text-slate-400 font-medium">Phone:</span> <span className="font-bold text-slate-800">{getValues("personal.phone")}</span></div>
-                  </div>
-                </div>
-
-                <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
-                  <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
-                    <h3 className="font-heading font-bold text-sm text-slate-900">4. Additional Info & Agent Details</h3>
-                    <Button type="button" variant="ghost" onClick={() => setStep(4)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div><span className="text-slate-400 font-medium">Marketing Channel:</span> <span className="font-bold text-slate-800">{watchMarketingChannel || "N/A"}</span></div>
-                    <div><span className="text-slate-400 font-medium">Agent Represented:</span> <span className="font-bold text-slate-800">{watchIsAgent ? getValues("agent.agencyName") : "No Agent"}</span></div>
-                    {watchIsAgent && (
-                      <div><span className="text-slate-400 font-medium">Counsellor:</span> <span className="font-bold text-slate-800">{getValues("agent.counsellorName")}</span></div>
+                    {watchMarketingChannel === "Other" && (
+                      <div className="pt-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Specify Other Channel *</Label>
+                        <Input {...register("additionalInfo.marketingOtherText")} placeholder="Please describe" className="h-11 rounded-xl mt-1" />
+                      </div>
+                    )}
+                    {watchMarketingChannel === "Referred by EGA Student/Alumni" && (
+                      <div className="pt-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Referrer Name / Student ID *</Label>
+                        <Input {...register("additionalInfo.referrerName")} placeholder="Enter Referrer Full Name" className="h-11 rounded-xl mt-1" />
+                      </div>
                     )}
                   </div>
                 </div>
-              </div>
 
-              {/* Accordion: Declarations & Consents */}
-              <AccordionCard
-                title="Declarations & Mandatory Consents"
-                subtitle="Review applicant terms and data processing consent"
-                badge="Mandatory"
-                isOpen={!!openPanels.declarations}
-                onToggle={() => togglePanel('declarations')}
-              >
-                <div className="space-y-4">
-                  <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 leading-relaxed font-medium">
-                    I hereby declare that all information provided in this Educare Global Academy application form is complete, true, and correct. I understand that any false statement or omission may lead to rejection of admission or cancellation of enrollment.
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <label className="flex items-center space-x-3 bg-white border border-slate-200 p-4 rounded-xl cursor-pointer">
-                      <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
-                      <span className="text-slate-900 font-bold text-xs sm:text-sm">
-                        I accept the data processing consent and applicant declaration *
-                      </span>
-                    </label>
-
-                    <label className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl cursor-pointer">
-                      <input type="checkbox" {...register("consent.marketingConsent")} className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
-                      <span className="text-slate-700 font-medium text-xs">
-                        (Optional) I consent to receiving educational updates, promotional communications, and event news from EGA via email/SMS.
-                      </span>
-                    </label>
-                  </div>
-                </div>
-              </AccordionCard>
-
-              {/* Accordion: Payment Summary */}
-              <AccordionCard
-                title="Application Fee Payment Summary"
-                subtitle="Server-calculated fee and payment method selection"
-                badge={`SGD ${feeAmount}.00`}
-                isOpen={!!openPanels.payment}
-                onToggle={() => togglePanel('payment')}
-              >
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center bg-[#27295B]/5 p-5 rounded-2xl border border-[#27295B]/20">
-                    <div>
-                      <h3 className="font-heading font-bold text-base text-slate-900">Application Fee Summary</h3>
-                      <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                        Partner Rule: {watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC") ? "Partner University Fee (SGD 360)" : "EGA Course Fee (SGD 160)"}
-                      </p>
+                {/* Sub-section 4: Agent Details */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    4. EGA Appointed Agent Details
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                      <input 
+                        type="checkbox" 
+                        id="isAgentRepresented" 
+                        {...register("agent.isAgentRepresented")} 
+                        className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" 
+                      />
+                      <Label htmlFor="isAgentRepresented" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                        Are you being represented by an EGA appointed agent for this application?
+                      </Label>
                     </div>
-                    <span className="text-2xl font-mono font-extrabold text-[#27295B]">SGD {feeAmount}.00</span>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                    {[
-                      { value: "card", label: "Credit / Debit Card" },
-                      { value: "paypal", label: "PayPal" },
-                      { value: "bank", label: "Bank Transfer" }
-                    ].map(m => (
-                      <label key={m.value} className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-[#27295B]/40 font-semibold text-xs text-slate-800">
-                        <input type="radio" name="paymentMethod" value={m.value} defaultChecked={m.value === "card"} className="w-4 h-4 text-[#27295B]" />
-                        <span>{m.label}</span>
-                      </label>
-                    ))}
+                    <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 transition-opacity duration-300", !watchIsAgent && "opacity-40 pointer-events-none")}>
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Agent Country *</Label>
+                        <Controller
+                          name="agent.agentCountry"
+                          control={control}
+                          defaultValue="Singapore"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value || "Singapore"} disabled={!watchIsAgent}>
+                              <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                                <SelectValue placeholder="Select Country" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Singapore">Singapore</SelectItem>
+                                <SelectItem value="Malaysia">Malaysia</SelectItem>
+                                <SelectItem value="Indonesia">Indonesia</SelectItem>
+                                <SelectItem value="China">China</SelectItem>
+                                <SelectItem value="India">India</SelectItem>
+                                <SelectItem value="Vietnam">Vietnam</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Agency Name *</Label>
+                        <Input {...register("agent.agencyName")} placeholder="e.g. Global Education Agency" disabled={!watchIsAgent} className="h-12 rounded-xl" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Counsellor Name *</Label>
+                        <Input {...register("agent.counsellorName")} placeholder="e.g. Jane Smith" disabled={!watchIsAgent} className="h-12 rounded-xl" />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Counsellor Email *</Label>
+                        <Input {...register("agent.counsellorEmail")} type="email" placeholder="e.g. counsellor@agency.com" disabled={!watchIsAgent} className="h-12 rounded-xl" />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </AccordionCard>
-            </div>
-          )}
+              </div>
+            )}
+
+            {/* STEP 5: Review, Declaration & Application Fee Payment */}
+            {step === 5 && (
+              <div className="space-y-8 animate-in fade-in duration-300">
+                <div>
+                  <span className="text-[10px] font-bold text-[#27295B] uppercase tracking-wider font-mono bg-[#27295B]/8 px-2.5 py-1 rounded-md">
+                    Section 5 of 5
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Review, Declaration & Fee Payment</h2>
+                  <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Review your application summary, accept mandatory consents, and complete application fee payment.</p>
+                </div>
+
+                {/* Summary Cards */}
+                <div className="space-y-4">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    1. Application Overview Summary
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                      <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                        <h4 className="font-heading font-bold text-sm text-slate-900">Programme Selection</h4>
+                        <Button type="button" variant="ghost" onClick={() => setStep(1)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div><span className="text-slate-400 font-medium">Partner:</span> <span className="font-bold text-slate-800">{watchPartner}</span></div>
+                        <div><span className="text-slate-400 font-medium">Study Mode:</span> <span className="font-bold text-slate-800">{watchStudyMode}</span></div>
+                        <div><span className="text-slate-400 font-medium">Course Type:</span> <span className="font-bold text-slate-800">{watchCourseType}</span></div>
+                        <div><span className="text-slate-400 font-medium">Intake:</span> <span className="font-bold text-slate-800">{getValues("intake")}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                      <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                        <h4 className="font-heading font-bold text-sm text-slate-900">Personal & Passport Details</h4>
+                        <Button type="button" variant="ghost" onClick={() => setStep(2)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div><span className="text-slate-400 font-medium">Full Name:</span> <span className="font-bold text-slate-800">{getValues("personal.fullName")}</span></div>
+                        <div><span className="text-slate-400 font-medium">Passport:</span> <span className="font-bold text-slate-800">{getValues("passport.passportNumber")}</span></div>
+                        <div><span className="text-slate-400 font-medium">DOB:</span> <span className="font-bold text-slate-800">{getValues("personal.dob")}</span></div>
+                        <div><span className="text-slate-400 font-medium">Phone:</span> <span className="font-bold text-slate-800">{getValues("personal.phone")}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                      <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                        <h4 className="font-heading font-bold text-sm text-slate-900">Additional Info & Agent Details</h4>
+                        <Button type="button" variant="ghost" onClick={() => setStep(4)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div><span className="text-slate-400 font-medium">Marketing Channel:</span> <span className="font-bold text-slate-800">{watchMarketingChannel || "N/A"}</span></div>
+                        <div><span className="text-slate-400 font-medium">Agent Represented:</span> <span className="font-bold text-slate-800">{watchIsAgent ? getValues("agent.agencyName") : "No Agent"}</span></div>
+                        {watchIsAgent && (
+                          <div><span className="text-slate-400 font-medium">Counsellor:</span> <span className="font-bold text-slate-800">{getValues("agent.counsellorName")}</span></div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Declarations & Consents */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    2. Declarations & Mandatory Consents *
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 leading-relaxed font-medium">
+                      I hereby declare that all information provided in this Educare Global Academy application form is complete, true, and correct. I understand that any false statement or omission may lead to rejection of admission or cancellation of enrollment.
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <label className="flex items-center space-x-3 bg-white border border-slate-200 p-4 rounded-xl cursor-pointer">
+                        <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
+                        <span className="text-slate-900 font-bold text-xs sm:text-sm">
+                          I accept the data processing consent and applicant declaration *
+                        </span>
+                      </label>
+
+                      <label className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl cursor-pointer">
+                        <input type="checkbox" {...register("consent.marketingConsent")} className="w-4 h-4 text-[#27295B] border-slate-300 rounded focus:ring-[#27295B]" />
+                        <span className="text-slate-700 font-medium text-xs">
+                          (Optional) I consent to receiving educational updates, promotional communications, and event news from EGA via email/SMS.
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Summary */}
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <h3 className="font-heading font-bold text-base text-slate-900 border-b border-slate-100 pb-3">
+                    3. Application Fee Payment Summary *
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center bg-[#27295B]/5 p-5 rounded-2xl border border-[#27295B]/20">
+                      <div>
+                        <h4 className="font-heading font-bold text-base text-slate-900">Application Fee Summary</h4>
+                        <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                          Partner Rule: {watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC") ? "Partner University Fee (SGD 360)" : "EGA Course Fee (SGD 160)"}
+                        </p>
+                      </div>
+                      <span className="text-2xl font-mono font-extrabold text-[#27295B]">SGD {feeAmount}.00</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                      {[
+                        { value: "card", label: "Credit / Debit Card" },
+                        { value: "paypal", label: "PayPal" },
+                        { value: "bank", label: "Bank Transfer" }
+                      ].map(m => (
+                        <label key={m.value} className="flex items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-[#27295B]/40 font-semibold text-xs text-slate-800">
+                          <input type="radio" name="paymentMethod" value={m.value} defaultChecked={m.value === "card"} className="w-4 h-4 text-[#27295B]" />
+                          <span>{m.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Bottom Navigation Actions */}
+        {/* Bottom Navigation Action Buttons */}
         <div className="flex items-center justify-between pt-2">
           {step > 1 ? (
             <Button
