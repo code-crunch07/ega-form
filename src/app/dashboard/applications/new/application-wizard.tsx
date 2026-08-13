@@ -321,10 +321,6 @@ export default function ApplicationWizard({
           <div className="p-6 sm:p-8 border-b border-slate-100 bg-slate-50/50 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/60 pb-5">
               <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[#27295B] bg-[#27295B]/8 px-3 py-1 rounded-full font-mono inline-flex items-center gap-1.5">
-                  <Sparkles size={12} className="text-[#ED1C24]" />
-                  EDUCARE GLOBAL ACADEMY • ADMISSIONS PORTAL
-                </span>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
                   Student Application Form
                 </h1>

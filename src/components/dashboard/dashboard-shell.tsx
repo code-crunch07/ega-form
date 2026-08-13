@@ -339,9 +339,6 @@ export function DashboardShell({
         {/* Scrollable Main Workspace */}
         <div className="no-scrollbar relative flex-1 overflow-auto p-4 sm:p-6 md:p-8 bg-[#f8fafc]">
           <div className={cn("mx-auto w-full", isWizard ? "max-w-7xl" : "max-w-[1440px]")}>
-            {breadcrumbs.length > 0 && (
-              <Breadcrumbs items={breadcrumbs} />
-            )}
             {children}
           </div>
         </div>
