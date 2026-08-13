@@ -318,7 +318,7 @@ export default function ApplicationWizard({
         <div className="bg-white rounded-3xl border-none shadow-2xs overflow-hidden">
           
           {/* Header & 5-Step Connected Stepper Track */}
-          <div className="p-6 sm:p-8 bg-slate-50/30 space-y-6">
+          <div className="p-8 sm:p-10 lg:p-12 bg-slate-50/30 space-y-8">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
               <div className="space-y-1">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
@@ -394,7 +394,7 @@ export default function ApplicationWizard({
           </div>
 
           {/* Active Step Form Content Area */}
-          <div className="p-6 sm:p-10 space-y-8 min-h-[500px]">
+          <div className="p-8 sm:p-10 lg:p-12 space-y-10 min-h-[500px]">
             
             {/* STEP 1: Programme Selection & Pre-Course Counselling */}
             {step === 1 && (
