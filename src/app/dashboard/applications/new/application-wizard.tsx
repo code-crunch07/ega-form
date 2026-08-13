@@ -300,7 +300,7 @@ export default function ApplicationWizard({
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6 text-left font-jost pb-12">
+    <div className="w-full max-w-7xl mx-auto space-y-6 text-left font-jost pb-12">
       
       {/* Executive Stepper Header Card */}
       <div className="bg-white rounded-3xl border border-slate-200/90 shadow-2xs p-6 sm:p-8 space-y-6">
