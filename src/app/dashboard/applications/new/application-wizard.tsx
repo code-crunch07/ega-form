@@ -400,10 +400,7 @@ export default function ApplicationWizard({
             {step === 1 && (
               <div className="space-y-8 animate-in fade-in duration-300">
                 <div>
-                  <span className="text-[10px] font-bold text-[#3A57E8] uppercase tracking-wider font-mono bg-[#3A57E8]/8 px-2.5 py-1 rounded-md">
-                    Section 1 of 5
-                  </span>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Programme Selection</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-heading">Programme Selection</h2>
                   <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Select your university partner, study mode, course type, and target programme.</p>
                 </div>
 
@@ -712,10 +709,7 @@ export default function ApplicationWizard({
             {step === 2 && (
               <div className="space-y-8 animate-in fade-in duration-300">
                 <div>
-                  <span className="text-[10px] font-bold text-[#3A57E8] uppercase tracking-wider font-mono bg-[#3A57E8]/8 px-2.5 py-1 rounded-md">
-                    Section 2 of 5
-                  </span>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Personal, Passport & Address Details</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-heading">Personal, Passport & Address Details</h2>
                   <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Provide legal identity information, passport data, and official addresses.</p>
                 </div>
 
@@ -939,10 +933,7 @@ export default function ApplicationWizard({
             {step === 3 && (
               <div className="space-y-8 animate-in fade-in duration-300">
                 <div>
-                  <span className="text-[10px] font-bold text-[#3A57E8] uppercase tracking-wider font-mono bg-[#3A57E8]/8 px-2.5 py-1 rounded-md">
-                    Section 3 of 5
-                  </span>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Academic Background & English Proficiency</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-heading">Academic Background & English Proficiency</h2>
                   <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">List academic qualifications and English language proficiency details.</p>
                 </div>
 
@@ -1079,10 +1070,7 @@ export default function ApplicationWizard({
             {step === 4 && (
               <div className="space-y-8 animate-in fade-in duration-300">
                 <div>
-                  <span className="text-[10px] font-bold text-[#3A57E8] uppercase tracking-wider font-mono bg-[#3A57E8]/8 px-2.5 py-1 rounded-md">
-                    Section 4 of 5
-                  </span>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Additional Information & Agent Contact</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-heading">Additional Information & Agent Contact</h2>
                   <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Health conditions, conduct declarations, marketing channel, and agent details.</p>
                 </div>
 
@@ -1244,10 +1232,7 @@ export default function ApplicationWizard({
             {step === 5 && (
               <div className="space-y-8 animate-in fade-in duration-300">
                 <div>
-                  <span className="text-[10px] font-bold text-[#3A57E8] uppercase tracking-wider font-mono bg-[#3A57E8]/8 px-2.5 py-1 rounded-md">
-                    Section 5 of 5
-                  </span>
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mt-2 font-heading">Review, Declaration & Fee Payment</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-heading">Review, Declaration & Fee Payment</h2>
                   <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">Review your application summary, accept mandatory consents, and complete application fee payment.</p>
                 </div>
 

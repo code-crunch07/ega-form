@@ -112,7 +112,7 @@ function NavLinks({
     <div className="space-y-6">
       {NAV_SECTIONS.map((section) => (
         <div key={section.label} className="space-y-1">
-          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+          <p className="mb-2 px-3.5 text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">
             {section.label}
           </p>
           {section.items.map((item) => {
@@ -128,31 +128,31 @@ function NavLinks({
                 href={item.href}
                 onClick={onNavigate}
                 className={cn(
-                  "group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-[13px] font-medium transition-all duration-200 relative overflow-hidden",
+                  "group flex items-center gap-3.5 rounded-xl px-4 py-3 text-[15px] font-medium transition-all duration-200 relative overflow-hidden",
                   isActive
-                    ? "bg-[#3A57E8] text-white shadow-md shadow-[#3A57E8]/25 font-semibold"
+                    ? "bg-[#3A57E8] text-white shadow-md shadow-[#3A57E8]/25 font-bold"
                     : "text-slate-600 hover:bg-slate-100 hover:text-[#3A57E8]"
                 )}
               >
                 <item.icon
-                  size={17}
+                  size={19}
                   className={cn(
                     "shrink-0 transition-transform duration-200 group-hover:scale-110",
                     isActive ? "text-white" : "text-slate-400 group-hover:text-[#3A57E8]"
                   )}
                 />
-                <span className={cn("flex-1 transition-colors duration-200 truncate", isActive && "font-semibold")}>
+                <span className={cn("flex-1 transition-colors duration-200 truncate", isActive ? "font-bold" : "font-semibold")}>
                   {item.label}
                 </span>
                 {hasBadge && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ED1C24] text-[10px] font-bold text-white shrink-0 px-1.5 border border-white/20">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#ED1C24] text-xs font-bold text-white shrink-0 px-1.5 border border-white/20">
                     2
                   </span>
                 )}
                 {isActive ? (
-                  <ChevronRight size={14} className="opacity-90 transition-transform duration-200 ml-auto" />
+                  <ChevronRight size={16} className="opacity-90 transition-transform duration-200 ml-auto" />
                 ) : (
-                  <ChevronRight size={14} className="opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all duration-200 text-slate-400 ml-auto" />
+                  <ChevronRight size={16} className="opacity-0 -translate-x-1 group-hover:opacity-60 group-hover:translate-x-0 transition-all duration-200 text-slate-400 ml-auto" />
                 )}
               </Link>
             );
@@ -192,11 +192,9 @@ export function DashboardShell({
   return (
     <div className="flex min-h-screen bg-[#f3f3fa] font-jost selection:bg-[#3A57E8]/20">
       {/* Desktop Sidebar */}
-      <aside className="z-20 hidden w-[270px] shrink-0 flex-col border-r border-slate-200/80 bg-white text-slate-900 md:flex">
-        <div className="flex h-16 items-center border-b border-slate-200/80 px-5 bg-white">
-          <div className="bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60 flex items-center justify-center w-full">
-            <Logo href="/dashboard" iconSize={125} />
-          </div>
+      <aside className="z-20 hidden w-[270px] shrink-0 flex-col bg-white text-slate-900 md:flex">
+        <div className="flex h-16 items-center px-5 bg-white">
+          <Logo href="/dashboard" iconSize={125} />
         </div>
 
         <div className="no-scrollbar flex-1 overflow-y-auto px-3.5 py-6">
