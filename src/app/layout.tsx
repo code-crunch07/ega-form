@@ -31,9 +31,9 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${onest.variable} ${jost.variable} ${onest.className} font-sans h-full antialiased`}
+      className={`${jost.variable} ${jost.className} font-sans h-full antialiased`}
     >
-      <body className={`${onest.className} min-h-full flex flex-col text-sm`}>
+      <body className={`${jost.className} min-h-full flex flex-col text-sm`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
