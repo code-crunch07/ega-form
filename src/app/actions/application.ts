@@ -5,11 +5,26 @@ import { getMockSessionUser } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { applicationSchema } from "@/lib/application-schema";
 
+export async function calculateApplicationFee(universityPartner: string): Promise<number> {
+  const partnerUpper = (universityPartner || "").toUpperCase();
+  if (
+    partnerUpper.includes("GLASGOW") ||
+    partnerUpper.includes("KINGSTON") ||
+    partnerUpper.includes("NCC")
+  ) {
+    return 360;
+  }
+  return 160;
+}
+
 export async function submitApplication(data: any) {
   const user = await getMockSessionUser();
 
   try {
     const validatedData = applicationSchema.parse(data);
+    
+    // Server-calculated application fee based on University Partner
+    const feeAmount = await calculateApplicationFee(data.universityPartner || "Educare Global Academy");
     
     // Generate a mock application number
     const appNumber = `APP${new Date().getFullYear()}${Math.floor(10000 + Math.random() * 90000)}`;
@@ -22,80 +37,65 @@ export async function submitApplication(data: any) {
         applicantType: data.applicantType || "Local",
         
         // Programme Selection
-        campus: data.campus,
-        programmeLevel: data.programmeLevel,
-        programmeId: data.programmeId,
-        intake: data.intake,
-        studyMode: data.studyMode,
-        scholarshipApply: data.scholarshipApply === "yes",
+        campus: "Singapore Campus",
+        school: data.universityPartner || "Educare Global Academy",
+        programmeLevel: data.academicLevel || (data.courseType === "Package Courses" ? "Package (Foundation + Diploma + Degree)" : "Diploma"),
+        programmeId: data.programmeId || "default-prog",
+        intake: data.intake || "January 2026",
+        studyMode: data.studyMode || "Full Time",
+        scholarshipApply: false,
         
         // Declaration
         termsAccepted: true,
         privacyAccepted: true,
-        digitalSignature: data.digitalSignature || user.name,
+        digitalSignature: data.personal?.fullName || user.name || "Applicant",
         submittedAt: new Date(),
         
         // Nested Relations: Education
         educationHistory: {
           create: data.education?.map((ed: any) => ({
-            qualification: ed.qualification || "Unknown",
-            institution: ed.institution || "Unknown",
-            country: ed.country || "Unknown",
-            board: ed.board,
-            major: ed.major,
-            startDate: ed.startDate ? new Date(ed.startDate) : undefined,
-            endDate: ed.endDate ? new Date(ed.endDate) : undefined,
-            grade: ed.cgpa || ed.percentage,
-          })) || []
-        },
-
-        // Nested Relations: Employment
-        employmentHistory: {
-          create: data.employment?.map((emp: any) => ({
-            currentlyEmployed: false,
-            employer: emp.employer,
-            position: emp.position,
-            industry: emp.industry,
-            yearsExperience: emp.yearsExperience ? parseInt(emp.yearsExperience) : undefined,
+            qualification: ed.qualificationTitle || "Qualification",
+            institution: ed.institution || "Institution",
+            country: ed.country || "Singapore",
+            major: ed.specialization || "General",
+            grade: ed.gpa || ed.classification || "Pass",
           })) || []
         },
 
         // Nested Relations: English Tests
         englishTests: {
-          create: data.englishTest && data.englishTest.testName !== "None" ? [{
-            testName: data.englishTest.testName,
-            score: data.englishTest.overallScore || "0",
+          create: data.englishTest && data.englishTest.hasTakenTest ? [{
+            testName: data.englishTest.testType || "IELTS",
+            score: "Passed",
             testDate: data.englishTest.testDate ? new Date(data.englishTest.testDate) : undefined,
           }] : []
         },
-
-        // We can optionally create Document models here if we have mock URLs
       }
     });
 
-    // Also update their profile with any changes from Steps 3, 4, 5
-    if (data.personal || data.contact || data.family) {
+    // Update applicant profile with latest information
+    if (data.personal) {
       await prisma.profile.update({
         where: { userId: user.id },
         data: {
-          title: data.personal?.title,
-          firstName: data.personal?.firstName,
-          lastName: data.personal?.lastName,
-          gender: data.personal?.gender,
-          dob: data.personal?.dob ? new Date(data.personal?.dob) : undefined,
-          nationality: data.personal?.nationality,
-          passportNumber: data.personal?.passportNumber,
+          title: data.personal.title,
+          firstName: data.personal.fullName,
+          lastName: data.personal.surname,
+          gender: data.personal.gender,
+          dob: data.personal.dob ? new Date(data.personal.dob) : undefined,
+          nationality: data.personal.nationality,
+          passportNumber: data.passport?.passportNumber,
           
-          phone: data.contact?.phone,
-          address: data.contact?.addressLine1,
-          city: data.contact?.city,
-          state: data.contact?.state,
-          postalCode: data.contact?.postalCode,
-          country: data.contact?.country,
+          phone: data.personal.phone,
+          address: data.overseasAddress?.addressLine1,
+          city: data.overseasAddress?.city,
+          state: data.overseasAddress?.state,
+          postalCode: data.overseasAddress?.postalCode,
+          country: data.overseasAddress?.country,
           
-          emergencyContactName: data.family?.fatherName,
-          emergencyContactRelation: data.family?.fatherRelationship || "Parent / Guardian",
-          emergencyContactPhone: data.family?.fatherPhone,
+          emergencyContactName: data.guardian?.fullName || data.personal.fullName,
+          emergencyContactRelation: data.guardian?.isUnder18 ? "Parent / Guardian" : "Self",
+          emergencyContactPhone: data.guardian?.phone || data.personal.phone,
         }
       });
     }
@@ -103,7 +103,7 @@ export async function submitApplication(data: any) {
     revalidatePath("/dashboard");
     revalidatePath("/admin/applications");
     
-    return { success: true, appNumber };
+    return { success: true, appNumber, feeAmount };
   } catch (error: any) {
     console.error("Failed to submit application", error);
     return { error: error.message || "Failed to submit application" };

@@ -3,126 +3,191 @@
 import { useState, useEffect } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { Check, ChevronRight, Upload, Plus, FileText, Globe, MapPin, Building2, UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, ScrollText, CreditCard, Phone, Mail, Clock, ArrowLeft } from "lucide-react";
+import { 
+  Check, ChevronRight, Upload, Plus, FileText, Globe, MapPin, Building2, 
+  UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, 
+  ScrollText, CreditCard, Phone, Mail, Clock, ArrowLeft, AlertCircle, Info, ShieldCheck
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-import { submitApplication } from "@/app/actions/application";
+import { submitApplication, calculateApplicationFee } from "@/app/actions/application";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { applicationSchema } from "@/lib/application-schema";
 
 const SECTIONS = [
-  { id: 1, name: "Programme & Residency", shortName: "1. Programme", icon: Building2, desc: "Residency & programme choice" },
-  { id: 2, name: "Personal & Contact Details", shortName: "2. Personal & Contact", icon: UserCircle2, desc: "Identity, address & emergency contact" },
-  { id: 3, name: "Education & Qualifications", shortName: "3. Education", icon: GraduationCap, desc: "Academic history & English test" },
-  { id: 4, name: "Employment & Documents", shortName: "4. Employment & Docs", icon: Briefcase, desc: "Work history & document uploads" },
-  { id: 5, name: "Review & Payment", shortName: "5. Review & Pay", icon: CreditCard, desc: "Review summary, terms & payment" },
+  { id: 1, name: "Programme Selection", shortName: "1. Programme", icon: Building2, desc: "Partner, mode & package selection" },
+  { id: 2, name: "Personal, Passport & Address", shortName: "2. Personal & Address", icon: UserCircle2, desc: "Identity, guardian & residence" },
+  { id: 3, name: "Academic & English Test", shortName: "3. Academic History", icon: GraduationCap, desc: "Qualifications & test scores" },
+  { id: 4, name: "Additional Info & Agent", shortName: "4. Additional & Agent", icon: Briefcase, desc: "Declarations, channel & agent" },
+  { id: 5, name: "Review & Payment", shortName: "5. Review & Pay", icon: CreditCard, desc: "Review, fee payment & submit" },
 ];
 
-export default function ApplicationWizard({ user, programmes, intakes, schools = [] }: { user: any, programmes: any[], intakes: any[], schools?: any[] }) {
+export default function ApplicationWizard({ 
+  user, 
+  programmes = [], 
+  intakes = [], 
+  schools = [] 
+}: { 
+  user: any, 
+  programmes: any[], 
+  intakes: any[], 
+  schools?: any[] 
+}) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successAppNumber, setSuccessAppNumber] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const [editingQualId, setEditingQualId] = useState<number | null>(null);
+  
+  // Qualifications state
   const [educationList, setEducationList] = useState<any[]>([
-    { id: 1, qualification: "Bachelor's Degree", institution: "National University of Singapore", major: "Business Administration", year: "2020-2024", country: "Singapore", modeOfStudy: "Full Time", completionStatus: "Completed", language: "English" },
-    { id: 2, qualification: "Higher Secondary", institution: "Singapore Polytechnic", major: "Business", year: "2016-2019", country: "Singapore", modeOfStudy: "Full Time", completionStatus: "Completed", language: "English" },
-    { id: 3, qualification: "Secondary School", institution: "St. Andrew's School", major: "General", year: "2012-2016", country: "Singapore", modeOfStudy: "Full Time", completionStatus: "Completed", language: "English" }
+    { id: 1, qualificationTitle: "Bachelor's Degree", institution: "National University of Singapore", schoolAttended: "NUS Business School", specialization: "Business Administration", studyPeriodStart: "2020-08", studyPeriodEnd: "2024-05", modeOfStudy: "Full Time", completionStatus: "Completed", languageOfInstruction: "English" },
   ]);
   const [isQualModalOpen, setIsQualModalOpen] = useState(false);
-  const [qualForm, setQualForm] = useState<{
-    country: string;
-    qualification: string;
-    institution: string;
-    school: string;
-    major: string;
-    startYear: string;
-    endYear: string;
-    modeOfStudy: string;
-    completionStatus: string;
-    language: string;
-    gpa: string;
-    classification: string;
-  }>({
+  const [editingQualId, setEditingQualId] = useState<number | null>(null);
+  const [qualForm, setQualForm] = useState<any>({
     country: "Singapore",
-    qualification: "Bachelor's Degree",
     institution: "",
-    school: "",
-    major: "",
-    startYear: "2020",
-    endYear: "2024",
+    qualificationTitle: "Bachelor's Degree",
+    schoolAttended: "",
+    specialization: "",
+    studyPeriodStart: "2020-08",
+    studyPeriodEnd: "2024-05",
     modeOfStudy: "Full Time",
     completionStatus: "Completed",
-    language: "English",
-    gpa: "",
+    languageOfInstruction: "English",
+    dateAwarded: "2024-06-15",
+    gpa: "3.8 / 4.0",
     classification: "Pass With Merit"
   });
+
   const router = useRouter();
 
   const { register, handleSubmit, control, watch, setValue, getValues, trigger, formState: { errors } } = useForm<any>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
       applicantType: "Local Student",
+      universityPartner: "Educare Global Academy",
+      studyMode: "Full Time",
       courseType: "Standalone Course",
-      courseLevel: "",
-      progressionOption: "",
+      academicLevel: "Diploma",
+      programmeId: "",
+      packageProgrammes: { slot1: "", slot2: "", slot3: "" },
+      intake: "January 2026",
+
+      counsellingDeclaration: "counselled",
+
       personal: {
         title: user.profile?.title || "mr",
-        firstName: user.profile?.firstName || "",
-        lastName: user.profile?.lastName || "",
+        fullName: user.profile?.firstName ? `${user.profile.firstName} ${user.profile.lastName || ''}`.trim() : "",
+        surname: user.profile?.lastName || ".",
         gender: user.profile?.gender || "male",
-        dob: user.profile?.dob ? new Date(user.profile.dob).toISOString().split('T')[0] : "",
+        dob: user.profile?.dob ? new Date(user.profile.dob).toISOString().split('T')[0] : "2002-05-15",
+        maritalStatus: "Single",
         nationality: user.profile?.nationality || "Singaporean",
-        passportNumber: user.profile?.passportNumber || "",
-      },
-      contact: {
         email: user.email,
+        phoneCountryCode: "+65",
         phone: user.profile?.phone || "",
-        addressLine1: user.profile?.address || "",
-        city: user.profile?.city || "Singapore",
-        state: user.profile?.state || "",
-        postalCode: user.profile?.postalCode || "",
-        country: user.profile?.country || "Singapore",
       },
-      family: {
-        fatherName: user.profile?.emergencyContactName || "",
-        fatherPhone: user.profile?.emergencyContactPhone || "",
-        fatherEmail: "",
-        fatherRelationship: "Father",
+
+      guardian: {
+        isUnder18: false,
+        fullName: "",
+        email: "",
+        countryCode: "+65",
+        phone: "",
       },
-      marketingSource: "Online Search",
+
+      passport: {
+        passportNumber: user.profile?.passportNumber || "S1234567A",
+        countryOfIssue: "Singapore",
+        issueDate: "2020-01-01",
+        expiryDate: "2030-01-01",
+        countryOfBirth: "Singapore",
+      },
+
+      overseasAddress: {
+        country: "Singapore",
+        state: "Singapore",
+        city: "Singapore",
+        postalCode: "238845",
+        addressLine1: user.profile?.address || "123 Orchard Road",
+        addressLine2: "",
+        unitNo: "#05-01",
+      },
+
+      localAddress: {
+        country: "Singapore",
+        postalCode: "238845",
+        addressLine1: "123 Orchard Road",
+        addressLine2: "",
+        unitNo: "#05-01",
+      },
+
+      education: educationList,
+
+      englishTest: {
+        hasTakenTest: true,
+        testType: "IELTS",
+        testDate: "2025-06-10",
+        isTentativeDate: false,
+      },
+
+      additionalInfo: {
+        healthConditions: "NA",
+        conductSuspended: false,
+        conductConvicted: false,
+        marketingChannel: "Online Search (Google / Baidu)",
+        marketingOtherText: "",
+        referrerName: "",
+      },
+
       agent: {
-        isAgentSubmitted: false,
-        agentCompanyName: "",
+        isAgentRepresented: false,
+        agentCountry: "Singapore",
+        agencyName: "",
         counsellorName: "",
-        agentEmail: "",
+        counsellorEmail: "",
       },
-      education: [{}],
-      employment: [{}],
-      englishTest: { testName: "None" }
+
+      consent: {
+        dataProcessingConsent: true,
+        partnerConsent: true,
+        applicantDeclaration: true,
+        marketingConsent: false,
+      }
     }
   });
 
-  const watchApplicantType = watch("applicantType");
+  // Watchers
+  const watchPartner = watch("universityPartner") || "Educare Global Academy";
+  const watchStudyMode = watch("studyMode") || "Full Time";
   const watchCourseType = watch("courseType") || "Standalone Course";
-  const watchCourseLevel = watch("courseLevel");
-  const watchProgressionOption = watch("progressionOption");
+  const watchAcademicLevel = watch("academicLevel") || "Diploma";
   const watchProgrammeId = watch("programmeId");
-  const watchEnglishTest = watch("englishTest.testName");
-  const watchEmployed = watch("isEmployed");
-  const watchIntake = watch("intake");
-  const watchSchool = watch("school");
-  const watchMarketingSource = watch("marketingSource");
-  const watchIsAgent = watch("agent.isAgentSubmitted");
+  const watchPackageSlot1 = watch("packageProgrammes.slot1");
+  const watchPackageSlot2 = watch("packageProgrammes.slot2");
+  const watchPackageSlot3 = watch("packageProgrammes.slot3");
+  
+  const watchDob = watch("personal.dob");
+  const watchHasTakenTest = watch("englishTest.hasTakenTest");
+  const watchMarketingChannel = watch("additionalInfo.marketingChannel");
+  const watchIsAgent = watch("agent.isAgentRepresented");
+  const watchAgentCountry = watch("agent.agentCountry") || "Singapore";
 
+  // Calculate age for under-18 guardian requirement
+  const applicantAge = watchDob ? Math.floor((new Date().getTime() - new Date(watchDob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : 22;
+  const isUnder18 = applicantAge < 18;
+
+  // Calculate server-aligned fee amount
+  const feeAmount = (watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC")) ? 360 : 160;
+
+  // Filter programmes
   const filteredProgrammes = programmes.filter(p => {
-    if (watchSchool && p.schoolId !== watchSchool && p.school?.name !== watchSchool) return false;
-    if (watchCourseLevel && watchCourseLevel !== "All Levels" && watchCourseLevel !== "") {
-      return p.level?.toLowerCase().includes(watchCourseLevel.toLowerCase()) || p.name?.toLowerCase().includes(watchCourseLevel.toLowerCase());
+    if (watchAcademicLevel && watchAcademicLevel !== "All Levels") {
+      return p.level?.toLowerCase().includes(watchAcademicLevel.toLowerCase()) || p.name?.toLowerCase().includes(watchAcademicLevel.toLowerCase());
     }
     return true;
   });
@@ -137,10 +202,27 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
     if (step < 5) {
       let fieldsToValidate: string[] = [];
       switch (step) {
-        case 1: fieldsToValidate = ['applicantType', 'contact.country', 'programmeId', 'intake']; break;
-        case 2: fieldsToValidate = ['personal.firstName', 'personal.dob', 'personal.gender', 'personal.nationality', 'personal.passportNumber', 'contact.email', 'contact.phone', 'contact.addressLine1', 'contact.city', 'contact.postalCode', 'family.fatherName', 'family.fatherPhone']; break;
-        case 3: fieldsToValidate = ['education']; break;
-        case 4: fieldsToValidate = []; break;
+        case 1:
+          fieldsToValidate = ['universityPartner', 'studyMode', 'courseType', 'intake'];
+          if (watchCourseType === "Standalone Course") {
+            fieldsToValidate.push('programmeId');
+          }
+          break;
+        case 2:
+          fieldsToValidate = ['personal.fullName', 'personal.surname', 'personal.dob', 'personal.gender', 'personal.maritalStatus', 'passport.passportNumber', 'overseasAddress.country', 'overseasAddress.addressLine1', 'overseasAddress.postalCode'];
+          if (isUnder18) {
+            fieldsToValidate.push('guardian.fullName', 'guardian.email', 'guardian.phone');
+          }
+          break;
+        case 3:
+          fieldsToValidate = [];
+          break;
+        case 4:
+          fieldsToValidate = ['additionalInfo.healthConditions'];
+          if (watchIsAgent) {
+            fieldsToValidate.push('agent.agencyName', 'agent.counsellorName', 'agent.counsellorEmail');
+          }
+          break;
       }
       
       const isStepValid = fieldsToValidate.length > 0 ? await trigger(fieldsToValidate as any) : true;
@@ -150,7 +232,7 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
         setStep(step + 1);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        setFormError("There are incomplete required fields in this section. Please fill all fields marked with *.");
+        setFormError("There are incomplete required fields in this section. Please review all fields marked with *.");
       }
     }
   };
@@ -171,11 +253,10 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
     // Validate declaration agreement
     const declarationCheck = (document.getElementById("declareCheck") as HTMLInputElement)?.checked;
     if (!declarationCheck) {
-      setFormError("You must accept the declaration agreement before submitting.");
+      setFormError("You must accept the application declaration before submitting.");
       return;
     }
 
-    // Final Submit
     setIsSubmitting(true);
     const result = await submitApplication(data);
     setIsSubmitting(false);
@@ -193,16 +274,16 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
         <div className="w-24 h-24 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-6 shadow-sm">
           <Check size={48} strokeWidth={3} />
         </div>
-        <h1 className="text-4xl font-bold text-neutral-900 mb-2 font-heading">🎉 Congratulations!</h1>
-        <p className="text-lg text-neutral-600 mb-8 font-medium">Your application has been submitted successfully.</p>
+        <h1 className="text-4xl font-bold text-neutral-900 mb-2 font-heading">🎉 Application Submitted!</h1>
+        <p className="text-lg text-neutral-600 mb-8 font-medium">Your application has been received and is now pending review.</p>
         
         <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm max-w-sm w-full mb-8">
           <p className="text-xs text-neutral-400 font-semibold uppercase tracking-wider font-mono mb-1">Application Number</p>
           <p className="text-2xl font-mono font-extrabold text-[#27295B]">{successAppNumber}</p>
           <div className="h-px bg-neutral-100 my-4 w-full" />
           <div className="flex justify-between items-center text-xs">
-            <span className="text-neutral-500 font-medium">Status</span>
-            <span className="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full">Submitted</span>
+            <span className="text-neutral-500 font-medium">Application Fee Paid</span>
+            <span className="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full">SGD {feeAmount}.00</span>
           </div>
         </div>
 
@@ -221,18 +302,18 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
   return (
     <div className="w-full max-w-5xl mx-auto px-4 py-6 space-y-8 text-left font-sans">
       
-      {/* 1. Header Banner & Section Navigation Bar */}
+      {/* 1. Header Banner & Stepper Bar */}
       <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs p-6 sm:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-5">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#27295B] bg-[#27295B]/10 px-3 py-1 rounded-full font-mono">
-              EGA Admissions Portal
+              Educare Global Academy • Admissions Portal
             </span>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-900 mt-2 font-heading tracking-tight">
               Student Application Form
             </h1>
             <p className="text-xs sm:text-sm text-neutral-500 mt-1 font-medium">
-              Complete the 5 application sections below to submit your application.
+              Complete the 5 application sections below to submit your official application.
             </p>
           </div>
 
@@ -298,9 +379,7 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
       {formError && (
         <div className="p-4 rounded-2xl bg-rose-600 text-white font-semibold text-xs sm:text-sm flex items-center justify-between shadow-lg animate-in slide-in-from-top-2 duration-200">
           <div className="flex items-center gap-3">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-white font-bold text-xs">
-              ✕
-            </div>
+            <AlertCircle size={20} className="shrink-0" />
             <span>{formError}</span>
           </div>
           <button type="button" onClick={() => setFormError(null)} className="text-white/80 hover:text-white text-xs font-mono font-bold ml-4 shrink-0">
@@ -309,87 +388,82 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
         </div>
       )}
 
-      {/* 2. Main Section Form Container */}
+      {/* 2. Main Form Container */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-xs p-6 sm:p-10 space-y-8 min-h-[500px]">
           
-          {/* SECTION 1: Programme & Residency Selection */}
+          {/* STEP 1: Programme Selection & Pre-Course Counselling */}
           {step === 1 && (
             <div className="space-y-8 animate-in fade-in duration-300">
               <div>
                 <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 1 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Programme & Residency Selection</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium">Select your residency status and target program for admission.</p>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Programme Selection</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium">Select your university partner, study mode, course type, and target programme.</p>
               </div>
 
-              {/* Sub-card 1: Residency Status */}
-              <div className="space-y-4 pt-2">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
-                  Residency Status *
-                </h3>
+              {/* University Partner & Mode of Study */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-semibold text-xs">University Partner *</Label>
+                  <Controller
+                    name="universityPartner"
+                    control={control}
+                    defaultValue="Educare Global Academy"
+                    render={({ field }) => (
+                      <Select onValueChange={(val) => {
+                        field.onChange(val);
+                        setValue("programmeId", "");
+                      }} value={field.value || "Educare Global Academy"}>
+                        <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                          <SelectValue placeholder="Select University Partner" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Educare Global Academy">Educare Global Academy (EGA)</SelectItem>
+                          <SelectItem value="Glasgow Caledonian University (UK)">Glasgow Caledonian University (UK)</SelectItem>
+                          <SelectItem value="Kingston University (UK)">Kingston University (UK)</SelectItem>
+                          <SelectItem value="NCC">NCC Education</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { type: "Local Student", icon: MapPin, title: "Local Student", desc: "Citizen or resident of Singapore" },
-                    { type: "Permanent Resident", icon: Building2, title: "Permanent Resident", desc: "Singapore PR pass holder" },
-                    { type: "International Student", icon: Globe, title: "International Student", desc: "Overseas applicant requiring Student Pass" }
-                  ].map(({ type, icon: IconComp, title, desc }) => {
-                    const isSelected = watchApplicantType === type;
-                    return (
-                      <div 
-                        key={type}
-                        onClick={() => {
-                          setValue("applicantType", type, { shouldValidate: true });
-                          if (type === "Local Student" || type === "Permanent Resident") {
-                            setValue("contact.country", "Singapore", { shouldValidate: true });
-                          }
-                        }}
-                        className={cn(
-                          "relative p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between group min-h-[140px]",
-                          isSelected 
-                            ? "border-[#27295B] bg-[#27295B]/5 shadow-xs" 
-                            : "border-neutral-200 hover:border-[#27295B]/40 hover:bg-slate-50/50"
-                        )}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className={cn(
-                            "w-10 h-10 rounded-xl flex items-center justify-center transition-all",
-                            isSelected ? "bg-[#27295B] text-white" : "bg-slate-100 text-neutral-500 group-hover:bg-[#27295B]/10 group-hover:text-[#27295B]"
-                          )}>
-                            <IconComp size={20} />
-                          </div>
-                          <div className={cn(
-                            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all mt-0.5",
-                            isSelected ? "border-[#27295B] bg-[#27295B]" : "border-neutral-300"
-                          )}>
-                            {isSelected && <Check size={12} className="text-white" strokeWidth={3} />}
-                          </div>
-                        </div>
-
-                        <div className="mt-3">
-                          <h4 className="font-bold text-sm text-neutral-900 group-hover:text-[#27295B]">{title}</h4>
-                          <p className="mt-1 text-xs text-neutral-500 leading-normal font-medium">{desc}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
+                  <Controller
+                    name="studyMode"
+                    control={control}
+                    defaultValue="Full Time"
+                    render={({ field }) => (
+                      <Select onValueChange={field.onChange} value={field.value || "Full Time"}>
+                        <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                          <SelectValue placeholder="Select Mode of Study" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Full Time">Full Time</SelectItem>
+                          <SelectItem value="Part Time">Part Time</SelectItem>
+                          <SelectItem value="E-Learning">E-Learning</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
               </div>
 
-              {/* Sub-card 2: Course Selection Type (Standalone vs Package) */}
+              {/* Course Type: Standalone vs Package */}
               <div className="space-y-4 pt-4 border-t border-neutral-100">
                 <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
-                  Course Selection Type *
+                  Course Type *
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    { value: "Standalone Course", title: "Standalone Course", desc: "Select a single course level and program" },
-                    { value: "Package Course", title: "Package Course", desc: "Select course level, course, and progression / package options" }
+                    { value: "Standalone Course", title: "Standalone Course", desc: "Single programme selection at your target academic level." },
+                    { value: "Package Courses", title: "Package Courses", desc: "Fixed 3-programme package (Foundation → Diploma → Undergraduate)." }
                   ].map(c => (
                     <label 
                       key={c.value}
                       className={cn(
-                        "p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3",
+                        "p-5 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3",
                         watchCourseType === c.value ? "border-[#27295B] bg-[#27295B]/5" : "border-neutral-200 hover:border-[#27295B]/30"
                       )}
                     >
@@ -400,7 +474,7 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                         checked={watchCourseType === c.value}
                         onChange={() => {
                           setValue("courseType", c.value, { shouldValidate: true });
-                          setValue("progressionOption", "");
+                          setValue("programmeId", "");
                         }}
                         className="mt-1 w-4 h-4 text-[#27295B]"
                       />
@@ -413,204 +487,216 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                 </div>
               </div>
 
-              {/* Sub-card 3: Country of Residence & School */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-neutral-100">
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-semibold text-xs">Country of Residence *</Label>
-                  <Controller
-                    name="contact.country"
-                    control={control}
-                    defaultValue="Singapore"
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value || "Singapore"}>
-                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/20">
-                          <SelectValue placeholder="Select Country" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Singapore">🇸🇬 Singapore</SelectItem>
-                          <SelectItem value="Malaysia">🇲🇾 Malaysia</SelectItem>
-                          <SelectItem value="Indonesia">🇮🇩 Indonesia</SelectItem>
-                          <SelectItem value="India">🇮🇳 India</SelectItem>
-                          <SelectItem value="China">🇨🇳 China</SelectItem>
-                          <SelectItem value="United Kingdom">🇬🇧 United Kingdom</SelectItem>
-                          <SelectItem value="United States">🇺🇸 United States</SelectItem>
-                          <SelectItem value="Australia">🇦🇺 Australia</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
+              {/* Standalone Logic vs Package 3-Slot Logic */}
+              {watchCourseType === "Standalone Course" ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-neutral-100">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Academic Level *</Label>
+                    <Controller
+                      name="academicLevel"
+                      control={control}
+                      defaultValue="Diploma"
+                      render={({ field }) => (
+                        <Select onValueChange={(val) => {
+                          field.onChange(val);
+                          setValue("programmeId", "");
+                        }} value={field.value || "Diploma"}>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                            <SelectValue placeholder="Select Academic Level" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Preparatory">Preparatory</SelectItem>
+                            <SelectItem value="Foundation">Foundation</SelectItem>
+                            <SelectItem value="Diploma">Diploma / Advanced / Higher Diploma</SelectItem>
+                            <SelectItem value="Undergraduate">Undergraduate</SelectItem>
+                            <SelectItem value="Postgraduate">Postgraduate</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-semibold text-xs">School / Faculty *</Label>
-                  <Controller
-                    name="school"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/20">
-                          <SelectValue placeholder="Select School / Faculty" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {schools && schools.length > 0 ? (
-                            schools.map(s => (
-                              <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                            ))
-                          ) : (
-                            <>
-                              <SelectItem value="School of Business">School of Business</SelectItem>
-                              <SelectItem value="School of Computing">School of Computing</SelectItem>
-                              <SelectItem value="School of Engineering">School of Engineering</SelectItem>
-                            </>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Available Programme *</Label>
+                    <Controller
+                      name="programmeId"
+                      control={control}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                            <SelectValue placeholder="Select Programme" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredProgrammes.length > 0 ? (
+                              filteredProgrammes.map(p => (
+                                <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
+                              ))
+                            ) : (
+                              <>
+                                <SelectItem value="p1">Diploma in International Hotel and Tourism Management</SelectItem>
+                                <SelectItem value="p2">Diploma in Business Administration</SelectItem>
+                                <SelectItem value="p3">Higher Diploma in Computer Science</SelectItem>
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
 
-              {/* Sub-card 4: Course Level, Target Programme & Intake */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 border-t border-neutral-100">
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-semibold text-xs">Course Level *</Label>
-                  <Controller
-                    name="courseLevel"
-                    control={control}
-                    defaultValue="Diploma"
-                    render={({ field }) => (
-                      <Select onValueChange={(val) => {
-                        field.onChange(val);
-                        setValue("programmeId", "");
-                        setValue("progressionOption", "");
-                      }} value={field.value || ""}>
-                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium">
-                          <SelectValue placeholder="Select Level" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="All Levels">All Levels</SelectItem>
-                          <SelectItem value="Diploma">Diploma</SelectItem>
-                          <SelectItem value="Advanced Diploma">Advanced Diploma</SelectItem>
-                          <SelectItem value="Bachelor">Bachelor's Degree</SelectItem>
-                          <SelectItem value="Master">Master's / Post Graduate</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Intake *</Label>
+                    <Controller
+                      name="intake"
+                      control={control}
+                      defaultValue="January 2026"
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value || "January 2026"}>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                            <SelectValue placeholder="Select Intake" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {intakes && intakes.length > 0 ? (
+                              intakes.map(i => (
+                                <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
+                              ))
+                            ) : (
+                              <>
+                                <SelectItem value="January 2026">January 2026</SelectItem>
+                                <SelectItem value="April 2026">April 2026</SelectItem>
+                                <SelectItem value="July 2026">July 2026</SelectItem>
+                                <SelectItem value="October 2026">October 2026</SelectItem>
+                              </>
+                            )}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
                 </div>
-
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-semibold text-xs">Target Programme *</Label>
-                  <Controller
-                    name="programmeId"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={(val) => {
-                        field.onChange(val);
-                        setValue("progressionOption", "");
-                      }} value={field.value || ""}>
-                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/20">
-                          <SelectValue placeholder="Select Programme" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filteredProgrammes.map(p => (
-                            <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-slate-700 font-semibold text-xs">Intake / Entry Term *</Label>
-                  <Controller
-                    name="intake"
-                    control={control}
-                    render={({ field }) => (
-                      <Select onValueChange={field.onChange} value={field.value || ""}>
-                        <SelectTrigger className="h-12 bg-white border border-neutral-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#27295B]/20">
-                          <SelectValue placeholder="Select Intake" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {intakes.map(i => (
-                            <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </div>
-              </div>
-
-              {/* Sub-card 5: Package Progression Options (Visible when Package Course selected) */}
-              {watchCourseType === "Package Course" && selectedProgramme && (
+              ) : (
+                /* Package Courses: Mandatory 3 Predefined Slots */
                 <div className="space-y-4 pt-4 border-t border-neutral-100 animate-in fade-in duration-300">
-                  <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3 flex items-center justify-between">
-                    <span>Package Progression Options *</span>
-                    <span className="text-xs font-mono font-semibold text-[#27295B] bg-[#27295B]/10 px-2.5 py-1 rounded-full">Progression Package</span>
-                  </h3>
-                  <p className="text-xs text-neutral-500 font-medium">Select your intended pathway after completing {selectedProgramme.name}:</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {[
-                      `Advanced Diploma in ${selectedProgramme.name.replace(/^Diploma in /i, '')}`,
-                      `Advanced Diploma in ${selectedProgramme.name.replace(/^Diploma in /i, '')} + Bachelor's`
-                    ].map((opt, idx) => (
-                      <label 
-                        key={idx}
-                        className={cn(
-                          "p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3",
-                          watchProgressionOption === opt ? "border-[#27295B] bg-[#27295B]/5 font-bold" : "border-neutral-200 hover:border-[#27295B]/30"
-                        )}
-                      >
-                        <input 
-                          type="radio" 
-                          name="progressionOption" 
-                          value={opt} 
-                          checked={watchProgressionOption === opt} 
-                          onChange={() => setValue("progressionOption", opt, { shouldValidate: true })}
-                          className="mt-1 w-4 h-4 text-[#27295B]" 
-                        />
-                        <div>
-                          <p className="text-xs sm:text-sm text-neutral-900 font-bold">{opt}</p>
-                          <p className="text-[10px] text-neutral-500 font-medium mt-1">Option {idx + 1} Progression Pathway</p>
-                        </div>
-                      </label>
-                    ))}
+                  <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+                    <h3 className="font-heading font-bold text-base text-neutral-900">
+                      Package Programme Slots (All 3 Slots Mandatory) *
+                    </h3>
+                    <span className="text-xs font-mono font-bold text-[#27295B] bg-[#27295B]/10 px-3 py-1 rounded-full">
+                      Fixed 3-Level Pathway
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Slot 1: Foundation */}
+                    <div className="p-4 rounded-2xl border border-neutral-200 bg-slate-50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Slot 1</span>
+                        <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Foundation Level</span>
+                      </div>
+                      <Label className="text-neutral-800 font-bold text-xs">Foundation Programme *</Label>
+                      <Select defaultValue="f1">
+                        <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium text-xs">
+                          <SelectValue placeholder="Select Foundation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="f1">International Foundation Certificate</SelectItem>
+                          <SelectItem value="f2">Foundation Diploma in Higher Education</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Slot 2: Diploma / Advanced Diploma */}
+                    <div className="p-4 rounded-2xl border border-neutral-200 bg-slate-50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Slot 2</span>
+                        <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Diploma Family</span>
+                      </div>
+                      <Label className="text-neutral-800 font-bold text-xs">Diploma / Advanced Diploma *</Label>
+                      <Select defaultValue="d1">
+                        <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium text-xs">
+                          <SelectValue placeholder="Select Diploma" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="d1">Diploma in International Hotel & Tourism Management</SelectItem>
+                          <SelectItem value="d2">Advanced Diploma in Tourism & Hospitality Management</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Slot 3: Undergraduate */}
+                    <div className="p-4 rounded-2xl border border-neutral-200 bg-slate-50 space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Slot 3</span>
+                        <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md">Undergraduate</span>
+                      </div>
+                      <Label className="text-neutral-800 font-bold text-xs">Undergraduate Degree *</Label>
+                      <Select defaultValue="u1">
+                        <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium text-xs">
+                          <SelectValue placeholder="Select Degree" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="u1">BSc (Hons) International Tourism & Hospitality Management</SelectItem>
+                          <SelectItem value="u2">BA (Hons) Business & Management Top-Up</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Programme Summary Banner */}
-              <div className="p-5 rounded-2xl bg-slate-50 border border-neutral-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Selected Programme Summary</p>
-                  <h4 className="text-sm font-bold text-neutral-900 mt-0.5">
-                    {selectedProgramme ? `${selectedProgramme.name} (${selectedProgramme.code})` : "Please select a programme above"}
-                  </h4>
-                  <p className="text-xs text-neutral-500 mt-1 font-medium">
-                    Location: Singapore Campus • Duration: 12 Months • Mode: Full Time
-                  </p>
+              {/* Pre-Course Counselling Declaration Checklist */}
+              <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200/80 space-y-4 pt-4">
+                <div className="flex items-start gap-3">
+                  <Info size={20} className="text-amber-600 mt-0.5 shrink-0" />
+                  <div>
+                    <h3 className="font-heading font-bold text-sm text-amber-950">
+                      Section 6 — Pre-Course Counselling Declaration *
+                    </h3>
+                    <p className="text-xs text-amber-900 font-medium mt-1 leading-relaxed">
+                      To help confirm you have gathered sufficient information regarding your choice of study at {watchPartner}, please review the key points and select your counselling declaration statement below:
+                    </p>
+                  </div>
                 </div>
 
-                <div className="text-left sm:text-right shrink-0 border-t sm:border-t-0 sm:border-l border-neutral-200 pt-3 sm:pt-0 sm:pl-6">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">Application Fee</p>
-                  <p className="text-lg font-extrabold text-[#27295B] mt-0.5">
-                    SGD {selectedProgramme?.applicationFee || "50.00"}
-                  </p>
+                <div className="space-y-2 pt-2">
+                  <Controller
+                    name="counsellingDeclaration"
+                    control={control}
+                    defaultValue="counselled"
+                    render={({ field }) => (
+                      <div className="space-y-2">
+                        {[
+                          { val: "counselled", label: "I have been counselled by EGA / EGA Appointed Agents regarding this information." },
+                          { val: "read_contacted", label: "I have read sufficient information and, where applicable, I have contacted EGA / EGA Appointed Agents for clarification." },
+                          { val: "read_self", label: "I have read sufficient information on my own and confirm that I do not require pre-course counselling by EGA / EGA Appointed Agents." }
+                        ].map((opt) => (
+                          <label key={opt.val} className="flex items-center gap-3 p-3 rounded-xl bg-white border border-amber-200/60 cursor-pointer hover:border-amber-400 font-medium text-xs text-amber-950">
+                            <input 
+                              type="radio" 
+                              name="counsellingDeclaration" 
+                              value={opt.val} 
+                              checked={field.value === opt.val} 
+                              onChange={() => field.onChange(opt.val)} 
+                              className="w-4 h-4 text-[#27295B]" 
+                            />
+                            <span>{opt.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  />
                 </div>
               </div>
             </div>
           )}
 
-          {/* SECTION 2: Personal & Contact Particulars */}
+          {/* STEP 2: Section 1 (Personal Particulars) & Section 2 (Citizenship & Address) */}
           {step === 2 && (
             <div className="space-y-8 animate-in fade-in duration-300">
               <div>
                 <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 2 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Personal & Contact Details</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium">Provide your legal personal information, address, and emergency contact.</p>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Personal, Passport & Address Details</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium">Provide legal identity information, passport data, and official addresses.</p>
               </div>
 
               {/* Personal Particulars */}
@@ -619,7 +705,7 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                   Personal Particulars
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label className="text-slate-700 font-semibold text-xs">Title *</Label>
                     <Controller
@@ -635,7 +721,9 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                             <SelectItem value="mr">Mr.</SelectItem>
                             <SelectItem value="ms">Ms.</SelectItem>
                             <SelectItem value="mrs">Mrs.</SelectItem>
+                            <SelectItem value="miss">Miss</SelectItem>
                             <SelectItem value="dr">Dr.</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -643,12 +731,17 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                   </div>
 
                   <div className="md:col-span-2 space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Full Name (as in Passport / NRIC) *</Label>
-                    <Input {...register("personal.firstName")} placeholder="e.g. John Michael Doe" className="h-12 rounded-xl" />
+                    <Label className="text-slate-700 font-semibold text-xs">Full Name (as in NRIC / Passport) *</Label>
+                    <Input {...register("personal.fullName")} placeholder="e.g. John Michael Doe" className="h-12 rounded-xl" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Surname *</Label>
+                    <Input {...register("personal.surname")} placeholder="Enter . if no family name" className="h-12 rounded-xl" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
                   <div className="space-y-2">
                     <Label className="text-slate-700 font-semibold text-xs">Date of Birth *</Label>
                     <Input type="date" {...register("personal.dob")} className="h-12 rounded-xl" />
@@ -661,18 +754,11 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                       control={control}
                       defaultValue="male"
                       render={({ field }) => (
-                        <div className="flex h-12 items-center gap-4 bg-white border border-neutral-200 rounded-xl px-4">
-                          {["male", "female", "other"].map(genderVal => (
-                            <label key={genderVal} className="flex items-center gap-1.5 text-xs text-neutral-700 capitalize cursor-pointer font-medium">
-                              <input
-                                type="radio"
-                                name="gender"
-                                value={genderVal}
-                                checked={field.value === genderVal}
-                                onChange={() => field.onChange(genderVal)}
-                                className="w-4 h-4 text-[#27295B]"
-                              />
-                              <span>{genderVal}</span>
+                        <div className="flex h-12 items-center gap-4 bg-white border border-neutral-200 rounded-xl px-4 text-xs font-semibold text-neutral-800">
+                          {["male", "female"].map(g => (
+                            <label key={g} className="flex items-center gap-1.5 capitalize cursor-pointer">
+                              <input type="radio" name="gender" value={g} checked={field.value === g} onChange={() => field.onChange(g)} className="w-4 h-4 text-[#27295B]" />
+                              <span>{g}</span>
                             </label>
                           ))}
                         </div>
@@ -681,159 +767,165 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Nationality *</Label>
+                    <Label className="text-slate-700 font-semibold text-xs">Marital Status *</Label>
                     <Controller
-                      name="personal.nationality"
+                      name="personal.maritalStatus"
                       control={control}
-                      defaultValue="Singaporean"
+                      defaultValue="Single"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || "Singaporean"}>
+                        <Select onValueChange={field.onChange} value={field.value || "Single"}>
                           <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
-                            <SelectValue placeholder="Nationality" />
+                            <SelectValue placeholder="Status" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Singaporean">Singaporean</SelectItem>
-                            <SelectItem value="Malaysian">Malaysian</SelectItem>
-                            <SelectItem value="Indonesian">Indonesian</SelectItem>
-                            <SelectItem value="Indian">Indian</SelectItem>
-                            <SelectItem value="Chinese">Chinese</SelectItem>
+                            <SelectItem value="Single">Single</SelectItem>
+                            <SelectItem value="Married">Married</SelectItem>
+                            <SelectItem value="Divorced">Divorced</SelectItem>
+                            <SelectItem value="Widowed">Widowed</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
                     />
                   </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Nationality *</Label>
+                    <Input {...register("personal.nationality")} placeholder="e.g. Singaporean" className="h-12 rounded-xl" />
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">NRIC / Passport Number *</Label>
-                    <Input {...register("personal.passportNumber")} placeholder="e.g. S1234567A / E1234567" className="h-12 rounded-xl" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Country of Birth</Label>
-                    <Input {...register("personal.countryOfBirth")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Details & Address */}
-              <div className="space-y-4 pt-6 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
-                  Contact Details & Home Address
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Notification Email *</Label>
-                    <Input {...register("contact.email")} type="email" disabled className="h-12 bg-neutral-100 text-neutral-500 rounded-xl font-medium" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Mobile Phone Number *</Label>
-                    <div className="flex gap-2">
-                      <Controller
-                        name="contact.phonePrefix"
-                        control={control}
-                        defaultValue="+65"
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value || "+65"}>
-                            <SelectTrigger className="w-[100px] h-12 bg-white border border-neutral-200 rounded-xl font-medium shrink-0">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="+65">🇸🇬 +65</SelectItem>
-                              <SelectItem value="+60">🇲🇾 +60</SelectItem>
-                              <SelectItem value="+62">🇮🇩 +62</SelectItem>
-                              <SelectItem value="+91">🇮🇳 +91</SelectItem>
-                              <SelectItem value="+86">🇨🇳 +86</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                      <Input {...register("contact.phone")} placeholder="9123 4567" className="flex-1 h-12 rounded-xl" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-2">
-                  <Label className="text-slate-700 font-semibold text-xs">Address Line 1 *</Label>
-                  <Input {...register("contact.addressLine1")} placeholder="123 Orchard Road, #05-01 Singapore" className="h-12 rounded-xl" />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">City *</Label>
-                    <Input {...register("contact.city")} placeholder="Singapore" className="h-12 rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">State / Region</Label>
-                    <Input {...register("contact.state")} placeholder="Singapore" className="h-12 rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Postal Code *</Label>
-                    <Input {...register("contact.postalCode")} placeholder="238845" className="h-12 rounded-xl" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Parents' Details */}
-              <div className="space-y-4 pt-6 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3 flex items-center justify-between">
-                  <span>Parents' Details</span>
-                  <span className="text-xs text-rose-500 font-normal">* Parent's Name & Contact Number are mandatory</span>
-                </h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Parent's / Guardian's Name *</Label>
-                    <Input {...register("family.fatherName")} placeholder="e.g. Robert Doe" className="h-12 rounded-xl" />
+                    <Label className="text-slate-700 font-semibold text-xs">Email Address (Read Only) *</Label>
+                    <Input {...register("personal.email")} type="email" disabled className="h-12 bg-neutral-100 text-neutral-500 rounded-xl font-medium" />
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-slate-700 font-semibold text-xs">Contact Number *</Label>
-                    <Input {...register("family.fatherPhone")} placeholder="e.g. +65 9224 5678" className="h-12 rounded-xl" />
+                    <div className="flex gap-2">
+                      <Input {...register("personal.phoneCountryCode")} placeholder="+65" className="w-20 h-12 rounded-xl text-center shrink-0 font-mono font-semibold" />
+                      <Input {...register("personal.phone")} placeholder="9123 4567" className="flex-1 h-12 rounded-xl" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Under-18 Guardian Details (Auto-triggered by DOB) */}
+              {isUnder18 && (
+                <div className="space-y-4 pt-6 border-t border-rose-100 bg-rose-50/40 p-5 rounded-2xl animate-in fade-in duration-300">
+                  <div className="flex items-center justify-between border-b border-rose-200/80 pb-3">
+                    <h3 className="font-heading font-bold text-base text-rose-950">
+                      Parent / Legal Guardian Details (Mandatory for Applicants under 18) *
+                    </h3>
+                    <span className="text-xs font-mono font-bold text-rose-700 bg-rose-100 px-3 py-1 rounded-full">
+                      Age: {applicantAge} Years
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Guardian Full Name (as in ID) *</Label>
+                      <Input {...register("guardian.fullName")} placeholder="e.g. Robert Doe" className="h-12 bg-white rounded-xl" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Guardian Email Address *</Label>
+                      <Input {...register("guardian.email")} type="email" placeholder="e.g. guardian@example.com" className="h-12 bg-white rounded-xl" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Guardian Contact Number *</Label>
+                    <div className="flex gap-2">
+                      <Input {...register("guardian.countryCode")} placeholder="+65" className="w-20 h-12 bg-white rounded-xl text-center font-mono font-semibold" />
+                      <Input {...register("guardian.phone")} placeholder="9224 5678" className="flex-1 h-12 bg-white rounded-xl" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Passport & Visa Details */}
+              <div className="space-y-4 pt-6 border-t border-neutral-100">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  Passport & Citizenship Details
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Passport Number *</Label>
+                    <Input {...register("passport.passportNumber")} placeholder="e.g. S1234567A" className="h-12 rounded-xl font-mono uppercase" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Passport Country of Issue *</Label>
+                    <Input {...register("passport.countryOfIssue")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Country of Birth *</Label>
+                    <Input {...register("passport.countryOfBirth")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Email Address (Optional)</Label>
-                    <Input {...register("family.fatherEmail")} type="email" placeholder="e.g. parent@example.com" className="h-12 rounded-xl" />
+                    <Label className="text-slate-700 font-semibold text-xs">Passport Issue Date</Label>
+                    <Input type="date" {...register("passport.issueDate")} className="h-12 rounded-xl" />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Relationship</Label>
-                    <Controller
-                      name="family.fatherRelationship"
-                      control={control}
-                      defaultValue="Father"
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || "Father"}>
-                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
-                            <SelectValue placeholder="Relationship" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Father">Father</SelectItem>
-                            <SelectItem value="Mother">Mother</SelectItem>
-                            <SelectItem value="Guardian">Legal Guardian</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
+                    <Label className="text-slate-700 font-semibold text-xs">Passport Expiry Date</Label>
+                    <Input type="date" {...register("passport.expiryDate")} className="h-12 rounded-xl" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Address Information */}
+              <div className="space-y-4 pt-6 border-t border-neutral-100">
+                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
+                  Overseas & Permanent Address
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Country *</Label>
+                    <Input {...register("overseasAddress.country")} placeholder="Singapore" className="h-12 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">State / Region</Label>
+                    <Input {...register("overseasAddress.state")} placeholder="Singapore" className="h-12 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">City</Label>
+                    <Input {...register("overseasAddress.city")} placeholder="Singapore" className="h-12 rounded-xl" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+                  <div className="md:col-span-2 space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Address Line 1 *</Label>
+                    <Input {...register("overseasAddress.addressLine1")} placeholder="123 Orchard Road" className="h-12 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Unit No.</Label>
+                    <Input {...register("overseasAddress.unitNo")} placeholder="#05-01" className="h-12 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Postal Code *</Label>
+                    <Input {...register("overseasAddress.postalCode")} placeholder="238845" className="h-12 rounded-xl" />
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* SECTION 3: Education & English Language */}
+          {/* STEP 3: Academic Background & English Proficiency */}
           {step === 3 && (
             <div className="space-y-8 animate-in fade-in duration-300">
               <div>
                 <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 3 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Education & Language Proficiency</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium">List your academic qualifications and English language proficiency test results.</p>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Academic Background & English Proficiency</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium">List academic qualifications and English language proficiency details.</p>
               </div>
 
               {/* Academic Qualifications Table */}
@@ -846,23 +938,24 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                       setEditingQualId(null);
                       setQualForm({
                         country: "Singapore",
-                        qualification: "Bachelor's Degree",
                         institution: "",
-                        school: "",
-                        major: "",
-                        startYear: "2020",
-                        endYear: "2024",
+                        qualificationTitle: "Bachelor's Degree",
+                        schoolAttended: "",
+                        specialization: "",
+                        studyPeriodStart: "2020-08",
+                        studyPeriodEnd: "2024-05",
                         modeOfStudy: "Full Time",
                         completionStatus: "Completed",
-                        language: "English",
-                        gpa: "",
+                        languageOfInstruction: "English",
+                        dateAwarded: "2024-06-15",
+                        gpa: "3.8 / 4.0",
                         classification: "Pass With Merit"
                       });
                       setIsQualModalOpen(true);
                     }}
                     className="h-10 px-4 bg-[#27295B] hover:bg-[#1e204b] text-white rounded-xl font-bold text-xs"
                   >
-                    + Add Education
+                    + Add Qualification
                   </Button>
                 </div>
 
@@ -871,8 +964,8 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                     <thead>
                       <tr className="bg-slate-50 border-b border-neutral-200 text-neutral-500 font-bold uppercase tracking-wider">
                         <th className="px-5 py-3.5">Qualification</th>
-                        <th className="px-5 py-3.5">Institution</th>
-                        <th className="px-5 py-3.5">Field of Study</th>
+                        <th className="px-5 py-3.5">Awarding Institution</th>
+                        <th className="px-5 py-3.5">Specialization</th>
                         <th className="px-5 py-3.5">Period</th>
                         <th className="px-5 py-3.5 text-center">Action</th>
                       </tr>
@@ -881,45 +974,18 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                       {educationList.map((item) => (
                         <tr key={item.id} className="hover:bg-slate-50/50 text-neutral-700 font-medium">
                           <td className="px-5 py-3.5 font-bold text-neutral-900">
-                            {item.qualification}
+                            {item.qualificationTitle}
                             <span className="block text-[10px] text-neutral-400 font-normal">{item.country || "Singapore"} • {item.modeOfStudy || "Full Time"}</span>
                           </td>
                           <td className="px-5 py-3.5">{item.institution}</td>
-                          <td className="px-5 py-3.5">{item.major}</td>
-                          <td className="px-5 py-3.5 font-mono text-[11px]">{item.year}</td>
+                          <td className="px-5 py-3.5">{item.specialization || "General"}</td>
+                          <td className="px-5 py-3.5 font-mono text-[11px]">{item.studyPeriodStart} to {item.studyPeriodEnd}</td>
                           <td className="px-5 py-3.5 text-center">
                             <div className="flex items-center justify-center gap-2">
                               <button 
                                 type="button"
                                 onClick={() => {
-                                  setEditingQualId(item.id);
-                                  const years = (item.year || "2020-2024").split("-");
-                                  setQualForm({
-                                    country: item.country || "Singapore",
-                                    qualification: item.qualification,
-                                    institution: item.institution,
-                                    school: item.school || item.institution,
-                                    major: item.major,
-                                    startYear: years[0] || "2020",
-                                    endYear: years[1] || "2024",
-                                    modeOfStudy: item.modeOfStudy || "Full Time",
-                                    completionStatus: item.completionStatus || "Completed",
-                                    language: item.language || "English",
-                                    gpa: item.gpa || "",
-                                    classification: item.classification || "Pass With Merit"
-                                  });
-                                  setIsQualModalOpen(true);
-                                }}
-                                className="px-2.5 py-1 bg-neutral-100 hover:bg-neutral-200 rounded-lg text-neutral-700 font-bold transition-colors"
-                              >
-                                Edit
-                              </button>
-                              <button 
-                                type="button"
-                                onClick={() => {
-                                  if (confirm("Delete this qualification?")) {
-                                    setEducationList(educationList.filter(el => el.id !== item.id));
-                                  }
+                                  setEducationList(educationList.filter(el => el.id !== item.id));
                                 }}
                                 className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-600 font-bold transition-colors"
                               >
@@ -934,41 +1000,42 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                 </div>
               </div>
 
-              {/* English Language Proficiency */}
+              {/* English Language Test */}
               <div className="space-y-4 pt-6 border-t border-neutral-100">
                 <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
-                  English Language Proficiency
+                  English Language Proficiency Test
                 </h3>
 
                 <div className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl">
                   <input 
                     type="checkbox" 
-                    id="englishExempt" 
-                    {...register("englishTest.exempt")} 
+                    id="hasTakenTest" 
+                    {...register("englishTest.hasTakenTest")} 
                     className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" 
                   />
-                  <Label htmlFor="englishExempt" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
-                    I am exempt from English proficiency requirement (studied in an English-speaking medium institution)
+                  <Label htmlFor="hasTakenTest" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                    I have taken (or registered for) a formal English Language Proficiency Test
                   </Label>
                 </div>
 
-                <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 transition-opacity duration-300", watch("englishTest.exempt") && "opacity-40 pointer-events-none")}>
+                <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 transition-opacity duration-300", !watchHasTakenTest && "opacity-40 pointer-events-none")}>
                   <div className="space-y-2">
                     <Label className="text-slate-700 font-semibold text-xs">Test Type</Label>
                     <Controller
-                      name="englishTest.testName"
+                      name="englishTest.testType"
                       control={control}
-                      defaultValue="IELTS Academic"
+                      defaultValue="IELTS"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || "IELTS Academic"} disabled={watch("englishTest.exempt")}>
+                        <Select onValueChange={field.onChange} value={field.value || "IELTS"}>
                           <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
                             <SelectValue placeholder="Select Test" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="IELTS Academic">IELTS Academic</SelectItem>
-                            <SelectItem value="TOEFL iBT">TOEFL iBT</SelectItem>
-                            <SelectItem value="PTE Academic">PTE Academic</SelectItem>
-                            <SelectItem value="Duolingo English Test">Duolingo English Test</SelectItem>
+                            <SelectItem value="IELTS">IELTS Academic</SelectItem>
+                            <SelectItem value="TOEFL">TOEFL iBT</SelectItem>
+                            <SelectItem value="PTE">PTE Academic</SelectItem>
+                            <SelectItem value="Duolingo">Duolingo English Test</SelectItem>
+                            <SelectItem value="Other">Other Test</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -976,264 +1043,273 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Overall Score</Label>
-                    <Input {...register("englishTest.overallScore")} placeholder="e.g. 7.0" disabled={watch("englishTest.exempt")} className="h-12 rounded-xl" />
+                    <Label className="text-slate-700 font-semibold text-xs">Test Date (Actual or Tentative)</Label>
+                    <Input type="date" {...register("englishTest.testDate")} className="h-12 rounded-xl" />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Exam Date</Label>
-                    <Input type="date" {...register("englishTest.testDate")} disabled={watch("englishTest.exempt")} className="h-12 rounded-xl" />
+                  <div className="space-y-2 flex flex-col justify-end pb-2">
+                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-neutral-700">
+                      <input type="checkbox" {...register("englishTest.isTentativeDate")} className="w-4 h-4 text-[#27295B]" />
+                      <span>This is a tentative / upcoming test date</span>
+                    </label>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* SECTION 4: Employment & Documents */}
+          {/* STEP 4: Additional Information & Agent Contact */}
           {step === 4 && (
             <div className="space-y-8 animate-in fade-in duration-300">
               <div>
                 <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 4 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Employment & Document Uploads</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium">Provide current employment history and upload required application documents.</p>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Additional Information & Agent Contact</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium">Health conditions, conduct declarations, marketing channel, and agent details.</p>
               </div>
 
-              {/* Employment Particulars */}
-              <div className="space-y-4 pt-2">
+              {/* Health Conditions & Learning Needs */}
+              <div className="space-y-2 pt-2">
+                <Label className="text-slate-700 font-semibold text-xs">Health Conditions & Learning Needs *</Label>
+                <p className="text-[11px] text-neutral-400 font-medium">Describe any physical/mental health conditions or learning support requirements. If none, enter NA.</p>
+                <textarea 
+                  {...register("additionalInfo.healthConditions")} 
+                  rows={3} 
+                  className="w-full p-4 rounded-xl border border-neutral-200 text-xs font-medium focus:ring-2 focus:ring-[#27295B]/20" 
+                  placeholder="Enter NA if not applicable"
+                />
+              </div>
+
+              {/* Conduct Declarations */}
+              <div className="space-y-4 pt-4 border-t border-neutral-100">
                 <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
-                  Employment Particulars
+                  Conduct Declarations *
                 </h3>
 
-                <div className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl">
-                  <input 
-                    type="checkbox" 
-                    id="notEmployed" 
-                    {...register("notEmployed")} 
-                    className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" 
-                  />
-                  <Label htmlFor="notEmployed" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
-                    Currently not employed / Fresh Graduate
-                  </Label>
-                </div>
-
-                <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 transition-opacity duration-300", watch("notEmployed") && "opacity-40 pointer-events-none")}>
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Employer / Company Name</Label>
-                    <Input {...register("employment.0.employer")} placeholder="e.g. ABC Pte Ltd" disabled={watch("notEmployed")} className="h-12 rounded-xl" />
+                <div className="space-y-4 text-xs font-medium text-neutral-800">
+                  <div className="p-4 rounded-xl bg-slate-50 border border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <p className="flex-1">Have you ever been suspended, excluded and/or expelled from a course at a university or educational institution?</p>
+                    <div className="flex items-center gap-4 shrink-0 font-bold">
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" value="yes" {...register("additionalInfo.conductSuspended")} className="w-4 h-4 text-[#27295B]" /> Yes
+                      </label>
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" value="no" defaultChecked {...register("additionalInfo.conductSuspended")} className="w-4 h-4 text-[#27295B]" /> No
+                      </label>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Job Title / Position</Label>
-                    <Input {...register("employment.0.position")} placeholder="e.g. Business Analyst" disabled={watch("notEmployed")} className="h-12 rounded-xl" />
+                  <div className="p-4 rounded-xl bg-slate-50 border border-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <p className="flex-1">Have you ever been arrested, charged in court, or convicted of an offence in any country?</p>
+                    <div className="flex items-center gap-4 shrink-0 font-bold">
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" value="yes" {...register("additionalInfo.conductConvicted")} className="w-4 h-4 text-[#27295B]" /> Yes
+                      </label>
+                      <label className="flex items-center gap-1 cursor-pointer">
+                        <input type="radio" value="no" defaultChecked {...register("additionalInfo.conductConvicted")} className="w-4 h-4 text-[#27295B]" /> No
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Marketing / Referral Source: How did you get to know about us? */}
-              <div className="space-y-4 pt-6 border-t border-neutral-100">
+              {/* Marketing Channel */}
+              <div className="space-y-4 pt-4 border-t border-neutral-100">
                 <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
-                  How did you get to know about us?
+                  How did you hear about EGA? *
                 </h3>
-                <p className="text-xs text-neutral-500 font-medium">Select the primary channel through which you learned about our institution:</p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {[
-                    "Education Fair / Exhibition",
-                    "Search Engine (Google / Baidu)",
-                    "Social Media (Instagram / Facebook / Redbook)",
-                    "Friend / Family Recommendation",
-                    "Education Agent / Consultancy",
-                    "School / College Representative",
-                    "Advertisement / Billboard",
-                    "Other"
-                  ].map((source, idx) => (
-                    <label 
-                      key={idx}
-                      className={cn(
-                        "p-3.5 rounded-xl border flex items-center gap-3 cursor-pointer transition-all text-xs font-semibold",
-                        watchMarketingSource === source ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]" : "border-neutral-200 hover:border-neutral-300 text-neutral-700"
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name="marketingSource"
-                        value={source}
-                        checked={watchMarketingSource === source}
-                        onChange={() => setValue("marketingSource", source)}
-                        className="w-4 h-4 text-[#27295B]"
+                    "EGA Website", "Print Advertising", "Online Advertising", 
+                    "Out-of-Home Advertising", "EGA Open House", "School Education Fair", 
+                    "Exhibition", "EGA Seminar", "Recruitment Agents", 
+                    "Recommendations by others", "Website: E-learning", "Referred by EGA Student/Alumni", "Other"
+                  ].map((ch) => (
+                    <label key={ch} className={cn(
+                      "p-3 rounded-xl border flex items-center gap-2 cursor-pointer text-xs font-semibold transition-all",
+                      watchMarketingChannel === ch ? "border-[#27295B] bg-[#27295B]/5 text-[#27295B]" : "border-neutral-200 hover:border-neutral-300"
+                    )}>
+                      <input 
+                        type="radio" 
+                        name="marketingChannel" 
+                        value={ch} 
+                        checked={watchMarketingChannel === ch} 
+                        onChange={() => setValue("additionalInfo.marketingChannel", ch)} 
+                        className="w-4 h-4 text-[#27295B]" 
                       />
-                      <span>{source}</span>
+                      <span>{ch}</span>
                     </label>
                   ))}
                 </div>
+
+                {watchMarketingChannel === "Other" && (
+                  <div className="pt-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Specify Other Channel *</Label>
+                    <Input {...register("additionalInfo.marketingOtherText")} placeholder="Please describe" className="h-11 rounded-xl mt-1" />
+                  </div>
+                )}
+                {watchMarketingChannel === "Referred by EGA Student/Alumni" && (
+                  <div className="pt-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Referrer Name / Student ID *</Label>
+                    <Input {...register("additionalInfo.referrerName")} placeholder="Enter Referrer Full Name" className="h-11 rounded-xl mt-1" />
+                  </div>
+                )}
               </div>
 
-              {/* Agent Details Page / Section */}
+              {/* EGA Appointed Agent Contact */}
               <div className="space-y-4 pt-6 border-t border-neutral-100">
                 <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
                   <h3 className="font-heading font-bold text-base text-neutral-900">
-                    Agent Details
+                    EGA Appointed Agent Details
                   </h3>
-                  <span className="text-xs text-neutral-400 font-medium">Fill if applying through an agency</span>
+                  <span className="text-xs text-neutral-400 font-medium">Fill if represented by an agent</span>
                 </div>
 
                 <div className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl">
                   <input 
                     type="checkbox" 
-                    id="isAgentSubmitted" 
-                    {...register("agent.isAgentSubmitted")} 
+                    id="isAgentRepresented" 
+                    {...register("agent.isAgentRepresented")} 
                     className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" 
                   />
-                  <Label htmlFor="isAgentSubmitted" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
-                    This application is being submitted through an Education Agent / Representative
+                  <Label htmlFor="isAgentRepresented" className="text-neutral-800 font-semibold cursor-pointer text-xs sm:text-sm">
+                    Are you being represented by an EGA appointed agent for this application?
                   </Label>
                 </div>
 
-                <div className={cn("space-y-4 pt-2 transition-opacity duration-300", !watchIsAgent && "opacity-40 pointer-events-none")}>
+                <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 transition-opacity duration-300", !watchIsAgent && "opacity-40 pointer-events-none")}>
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Company Name</Label>
-                    <Input 
-                      {...register("agent.agentCompanyName")} 
-                      placeholder="e.g. Global Education Agency Pte Ltd" 
-                      disabled={!watchIsAgent} 
-                      className="h-12 rounded-xl" 
+                    <Label className="text-slate-700 font-semibold text-xs">Agent Country *</Label>
+                    <Controller
+                      name="agent.agentCountry"
+                      control={control}
+                      defaultValue="Singapore"
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} value={field.value || "Singapore"} disabled={!watchIsAgent}>
+                          <SelectTrigger className="h-12 bg-white border border-neutral-200 rounded-xl font-medium">
+                            <SelectValue placeholder="Select Country" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Singapore">Singapore</SelectItem>
+                            <SelectItem value="Malaysia">Malaysia</SelectItem>
+                            <SelectItem value="Indonesia">Indonesia</SelectItem>
+                            <SelectItem value="China">China</SelectItem>
+                            <SelectItem value="India">India</SelectItem>
+                            <SelectItem value="Vietnam">Vietnam</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Counsellor's Name *</Label>
-                    <Input 
-                      {...register("agent.counsellorName")} 
-                      placeholder="e.g. Jane Smith" 
-                      disabled={!watchIsAgent} 
-                      className="h-12 rounded-xl" 
-                    />
+                    <Label className="text-slate-700 font-semibold text-xs">Agency Name *</Label>
+                    <Input {...register("agent.agencyName")} placeholder="e.g. Global Education Agency" disabled={!watchIsAgent} className="h-12 rounded-xl" />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-slate-700 font-semibold text-xs">Agent Contact Email / Phone (Optional)</Label>
-                    <Input 
-                      {...register("agent.agentEmail")} 
-                      placeholder="e.g. counsellor@agency.com" 
-                      disabled={!watchIsAgent} 
-                      className="h-12 rounded-xl" 
-                    />
+                    <Label className="text-slate-700 font-semibold text-xs">Counsellor Name *</Label>
+                    <Input {...register("agent.counsellorName")} placeholder="e.g. Jane Smith" disabled={!watchIsAgent} className="h-12 rounded-xl" />
                   </div>
-                </div>
-              </div>
 
-              {/* Document Upload Cards */}
-              <div className="space-y-4 pt-6 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900 border-b border-neutral-100 pb-3">
-                  Required Application Documents
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  {[
-                    { label: "Passport / NRIC Copy", req: "Mandatory" },
-                    { label: "Academic Transcripts", req: "Mandatory" },
-                    { label: "Degree Certificate", req: "Mandatory" },
-                    { label: "Resume / CV", req: "Mandatory" },
-                    { label: "English Test Report", req: "Optional" },
-                    { label: "Passport-size Photo", req: "Mandatory" },
-                  ].map((doc, idx) => (
-                    <div key={idx} className="p-4 rounded-2xl border border-neutral-200/80 bg-slate-50/60 flex flex-col justify-between space-y-3">
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 font-mono">{doc.req}</span>
-                        <h4 className="font-bold text-xs text-neutral-900 mt-0.5">{doc.label}</h4>
-                      </div>
-                      <div className="flex items-center justify-between pt-2 border-t border-neutral-200/60">
-                        <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">Uploaded</span>
-                        <Button type="button" variant="ghost" className="h-7 px-2 text-[11px] font-bold text-[#27295B]">
-                          <Upload size={12} className="mr-1" /> Re-upload
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="space-y-2">
+                    <Label className="text-slate-700 font-semibold text-xs">Counsellor Email *</Label>
+                    <Input {...register("agent.counsellorEmail")} type="email" placeholder="e.g. counsellor@agency.com" disabled={!watchIsAgent} className="h-12 rounded-xl" />
+                  </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* SECTION 5: Review, Declaration & Payment */}
+          {/* STEP 5: Review, Declaration & Application Fee Payment */}
           {step === 5 && (
             <div className="space-y-8 animate-in fade-in duration-300">
               <div>
                 <span className="text-xs font-bold text-[#27295B] uppercase tracking-wider font-mono">Section 5 of 5</span>
-                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Review, Declaration & Payment</h2>
-                <p className="text-sm text-neutral-500 mt-1 font-medium font-sans">Verify your details, accept terms, and complete application fee payment.</p>
+                <h2 className="text-2xl font-bold text-neutral-900 mt-1">Review, Declaration & Fee Payment</h2>
+                <p className="text-sm text-neutral-500 mt-1 font-medium">Review your application summary, accept mandatory consents, and complete application fee payment.</p>
               </div>
 
-              {/* Comprehensive Summary Cards */}
+              {/* Application Summary Cards */}
               <div className="space-y-4 pt-2">
                 <div className="bg-slate-50/80 rounded-2xl border border-neutral-200/80 p-5 space-y-3">
                   <div className="flex justify-between items-center border-b border-neutral-200/60 pb-3">
-                    <h3 className="font-heading font-bold text-sm text-neutral-900">1. Programme & Residency</h3>
+                    <h3 className="font-heading font-bold text-sm text-neutral-900">1. Programme Selection & Pre-Course Counselling</h3>
                     <Button type="button" variant="ghost" onClick={() => setStep(1)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <div><span className="text-neutral-400 font-medium">Type:</span> <span className="font-bold text-neutral-800">{watchApplicantType}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Course Mode:</span> <span className="font-bold text-neutral-800">{watchCourseType}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Programme:</span> <span className="font-bold text-neutral-800">{selectedProgramme?.name || "Not Selected"}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Partner:</span> <span className="font-bold text-neutral-800">{watchPartner}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Study Mode:</span> <span className="font-bold text-neutral-800">{watchStudyMode}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Course Type:</span> <span className="font-bold text-neutral-800">{watchCourseType}</span></div>
                     <div><span className="text-neutral-400 font-medium">Intake:</span> <span className="font-bold text-neutral-800">{getValues("intake")}</span></div>
                   </div>
-                  {watchCourseType === "Package Course" && watchProgressionOption && (
-                    <div className="pt-2 border-t border-neutral-200/60 text-xs">
-                      <span className="text-neutral-400 font-medium">Package Progression:</span> <span className="font-bold text-[#27295B]">{watchProgressionOption}</span>
-                    </div>
-                  )}
                 </div>
 
                 <div className="bg-slate-50/80 rounded-2xl border border-neutral-200/80 p-5 space-y-3">
                   <div className="flex justify-between items-center border-b border-neutral-200/60 pb-3">
-                    <h3 className="font-heading font-bold text-sm text-neutral-900">2. Personal & Parents' Details</h3>
+                    <h3 className="font-heading font-bold text-sm text-neutral-900">2. Personal & Passport Details</h3>
                     <Button type="button" variant="ghost" onClick={() => setStep(2)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                    <div><span className="text-neutral-400 font-medium">Student Name:</span> <span className="font-bold text-neutral-800">{getValues("personal.firstName")}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Email:</span> <span className="font-bold text-neutral-800">{getValues("contact.email")}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Parent's Name:</span> <span className="font-bold text-neutral-800">{getValues("family.fatherName")}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Parent's Contact:</span> <span className="font-bold text-neutral-800">{getValues("family.fatherPhone")}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Full Name:</span> <span className="font-bold text-neutral-800">{getValues("personal.fullName")}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Passport:</span> <span className="font-bold text-neutral-800">{getValues("passport.passportNumber")}</span></div>
+                    <div><span className="text-neutral-400 font-medium">DOB:</span> <span className="font-bold text-neutral-800">{getValues("personal.dob")}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Phone:</span> <span className="font-bold text-neutral-800">{getValues("personal.phone")}</span></div>
                   </div>
                 </div>
 
                 <div className="bg-slate-50/80 rounded-2xl border border-neutral-200/80 p-5 space-y-3">
                   <div className="flex justify-between items-center border-b border-neutral-200/60 pb-3">
-                    <h3 className="font-heading font-bold text-sm text-neutral-900">4. Referral & Agent Info</h3>
+                    <h3 className="font-heading font-bold text-sm text-neutral-900">4. Additional Info & Agent Details</h3>
                     <Button type="button" variant="ghost" onClick={() => setStep(4)} className="h-7 px-2 text-xs font-bold text-[#27295B]">Edit</Button>
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div><span className="text-neutral-400 font-medium">How Heard:</span> <span className="font-bold text-neutral-800">{getValues("marketingSource") || "N/A"}</span></div>
-                    <div><span className="text-neutral-400 font-medium">Agency:</span> <span className="font-bold text-neutral-800">{watchIsAgent ? (getValues("agent.agentCompanyName") || "Yes") : "No Agent"}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Marketing Channel:</span> <span className="font-bold text-neutral-800">{watchMarketingChannel || "N/A"}</span></div>
+                    <div><span className="text-neutral-400 font-medium">Agent Represented:</span> <span className="font-bold text-neutral-800">{watchIsAgent ? getValues("agent.agencyName") : "No Agent"}</span></div>
                     {watchIsAgent && (
-                      <div><span className="text-neutral-400 font-medium">Counsellor's Name:</span> <span className="font-bold text-neutral-800">{getValues("agent.counsellorName") || "N/A"}</span></div>
+                      <div><span className="text-neutral-400 font-medium">Counsellor:</span> <span className="font-bold text-neutral-800">{getValues("agent.counsellorName")}</span></div>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Declaration Checkbox */}
+              {/* Section 5: Declarations & Consents */}
               <div className="space-y-4 pt-4 border-t border-neutral-100">
-                <h3 className="font-heading font-bold text-base text-neutral-900">Declaration & Terms</h3>
+                <h3 className="font-heading font-bold text-base text-neutral-900">Declarations & Mandatory Consents</h3>
                 <div className="p-4 bg-slate-50 border border-neutral-200 rounded-xl text-xs text-neutral-600 leading-relaxed font-medium">
-                  I hereby declare that all information provided in this application is accurate and complete. I acknowledge that providing false details may lead to immediate rejection of admission.
+                  I hereby declare that all information provided in this Educare Global Academy application form is complete, true, and correct. I understand that any false statement or omission may lead to rejection of admission or cancellation of enrollment.
                 </div>
-                <div className="flex items-center space-x-3 bg-white border border-neutral-200 p-4 rounded-xl">
-                  <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" />
-                  <Label htmlFor="declareCheck" className="text-neutral-900 font-bold cursor-pointer text-xs sm:text-sm">
-                    I have read, understood, and accept the application declaration *
-                  </Label>
+                
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3 bg-white border border-neutral-200 p-4 rounded-xl cursor-pointer">
+                    <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" />
+                    <span className="text-neutral-900 font-bold text-xs sm:text-sm">
+                      I accept the data processing consent and applicant declaration *
+                    </span>
+                  </label>
+
+                  <label className="flex items-center space-x-3 bg-slate-50 border border-neutral-200 p-4 rounded-xl cursor-pointer">
+                    <input type="checkbox" {...register("consent.marketingConsent")} className="w-4 h-4 text-[#27295B] border-neutral-300 rounded focus:ring-[#27295B]" />
+                    <span className="text-neutral-700 font-medium text-xs">
+                      (Optional) I consent to receiving educational updates, promotional communications, and event news from EGA via email/SMS.
+                    </span>
+                  </label>
                 </div>
               </div>
 
-              {/* Payment Method & Submission */}
+              {/* Application Fee Payment Calculation */}
               <div className="space-y-4 pt-4 border-t border-neutral-100">
-                <div className="flex justify-between items-center">
-                  <h3 className="font-heading font-bold text-base text-neutral-900">Application Fee Payment</h3>
-                  <span className="text-xl font-extrabold text-[#27295B]">SGD {selectedProgramme?.applicationFee || "50.00"}</span>
+                <div className="flex justify-between items-center bg-[#27295B]/5 p-5 rounded-2xl border border-[#27295B]/20">
+                  <div>
+                    <h3 className="font-heading font-bold text-base text-neutral-900">Application Fee Summary</h3>
+                    <p className="text-xs text-neutral-500 mt-0.5 font-medium">
+                      Partner Rule: {watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC") ? "Partner University Fee (SGD 360)" : "EGA Course Fee (SGD 160)"}
+                    </p>
+                  </div>
+                  <span className="text-2xl font-mono font-extrabold text-[#27295B]">SGD {feeAmount}.00</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                   {[
                     { value: "card", label: "Credit / Debit Card" },
                     { value: "paypal", label: "PayPal" },
@@ -1250,7 +1326,7 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
           )}
         </div>
 
-        {/* Action Buttons Footer */}
+        {/* Navigation Action Buttons */}
         <div className="flex items-center justify-between pt-2">
           {step > 1 ? (
             <Button
@@ -1271,161 +1347,54 @@ export default function ApplicationWizard({ user, programmes, intakes, schools =
             disabled={isSubmitting}
             className="h-12 px-8 bg-[#ED1C24] hover:bg-[#D91A20] text-white rounded-xl font-bold gap-2 shadow-md hover:shadow-lg transition-all"
           >
-            {isSubmitting ? "Processing..." : step === 5 ? "Pay & Submit Application" : `Continue to ${SECTIONS.find(s => s.id === step + 1)?.shortName || "Next"} >`}
+            {isSubmitting ? "Processing..." : step === 5 ? `Pay SGD ${feeAmount}.00 & Submit` : `Continue to ${SECTIONS.find(s => s.id === step + 1)?.shortName || "Next"} >`}
           </Button>
         </div>
       </form>
 
-      {/* Rich Education Modal (Matching SIMConnect Benchmark) */}
+      {/* Qualification Modal */}
       {isQualModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-2xl p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto no-scrollbar text-left border border-neutral-200 font-sans">
+          <div className="bg-white rounded-3xl w-full max-w-2xl p-6 sm:p-8 shadow-2xl relative text-left border border-neutral-200 font-sans">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-4 mb-5">
-              <div>
-                <h3 className="text-xl font-bold text-neutral-900 font-heading">
-                  {editingQualId ? "Edit Education Qualification" : "Add Education Qualification"}
-                </h3>
-                <p className="text-xs text-neutral-500 mt-1 font-medium">
-                  Please fill in your academic qualification details as shown on your certificates.
-                </p>
-              </div>
-              <button 
-                type="button"
-                onClick={() => setIsQualModalOpen(false)}
-                className="text-neutral-400 hover:text-neutral-700 p-1.5 rounded-xl hover:bg-neutral-100 transition-colors text-sm font-bold"
-              >
-                ✕
-              </button>
+              <h3 className="text-xl font-bold text-neutral-900 font-heading">Add Academic Qualification</h3>
+              <button type="button" onClick={() => setIsQualModalOpen(false)} className="text-neutral-400 hover:text-neutral-700 text-sm font-bold">✕</button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div className="space-y-1.5">
-                <Label className="text-slate-700 font-semibold text-xs">Country of Awarding Institution *</Label>
-                <Select value={qualForm.country || "Singapore"} onValueChange={v => setQualForm({...qualForm, country: v || "Singapore"})}>
-                  <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium">
-                    <SelectValue placeholder="Select Country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Singapore">🇸🇬 Singapore</SelectItem>
-                    <SelectItem value="Malaysia">🇲🇾 Malaysia</SelectItem>
-                    <SelectItem value="Indonesia">🇮🇩 Indonesia</SelectItem>
-                    <SelectItem value="India">🇮🇳 India</SelectItem>
-                    <SelectItem value="China">🇨🇳 China</SelectItem>
-                    <SelectItem value="United Kingdom">🇬🇧 United Kingdom</SelectItem>
-                    <SelectItem value="United States">🇺🇸 United States</SelectItem>
-                    <SelectItem value="Australia">🇦🇺 Australia</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-slate-700 font-semibold text-xs">Qualification Title *</Label>
+                <Input value={qualForm.qualificationTitle} onChange={e => setQualForm({...qualForm, qualificationTitle: e.target.value})} placeholder="e.g. Diploma in Business" className="h-11 rounded-xl" />
               </div>
-
               <div className="space-y-1.5">
-                <Label className="text-slate-700 font-semibold text-xs">Qualification Title / Level *</Label>
-                <Select value={qualForm.qualification || "Bachelor's Degree"} onValueChange={v => setQualForm({...qualForm, qualification: v || "Bachelor's Degree"})}>
-                  <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium">
-                    <SelectValue placeholder="Select Qualification" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Bachelor's Degree">Bachelor's Degree</SelectItem>
-                    <SelectItem value="Master's Degree">Master's Degree</SelectItem>
-                    <SelectItem value="Diploma">Diploma</SelectItem>
-                    <SelectItem value="Higher Secondary / A-Levels">Higher Secondary / A-Levels</SelectItem>
-                    <SelectItem value="Secondary School / O-Levels">Secondary School / O-Levels</SelectItem>
-                    <SelectItem value="Doctorate / PhD">Doctorate / PhD</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label className="text-slate-700 font-semibold text-xs">Awarding Institution *</Label>
+                <Input value={qualForm.institution} onChange={e => setQualForm({...qualForm, institution: e.target.value})} placeholder="e.g. Singapore Polytechnic" className="h-11 rounded-xl" />
               </div>
-
               <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <Label className="text-slate-700 font-semibold text-xs">Awarding Institution *</Label>
-                  <span className="text-[10px] text-[#27295B] font-semibold hover:underline cursor-pointer">I can't find my institution</span>
-                </div>
-                <Input value={qualForm.institution} onChange={e => setQualForm({...qualForm, institution: e.target.value})} placeholder="e.g. National University of Singapore" className="h-11 rounded-xl" />
+                <Label className="text-slate-700 font-semibold text-xs">Country *</Label>
+                <Input value={qualForm.country} onChange={e => setQualForm({...qualForm, country: e.target.value})} placeholder="Singapore" className="h-11 rounded-xl" />
               </div>
-
               <div className="space-y-1.5">
-                <Label className="text-slate-700 font-semibold text-xs">School / College Attended *</Label>
-                <Input value={qualForm.school} onChange={e => setQualForm({...qualForm, school: e.target.value})} placeholder="e.g. NUS Business School" className="h-11 rounded-xl" />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-slate-700 font-semibold text-xs">Specialization / Major</Label>
-                <Input value={qualForm.major} onChange={e => setQualForm({...qualForm, major: e.target.value})} placeholder="e.g. Business Administration" className="h-11 rounded-xl" />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
-                <Select value={qualForm.modeOfStudy || "Full Time"} onValueChange={v => setQualForm({...qualForm, modeOfStudy: v || "Full Time"})}>
-                  <SelectTrigger className="h-11 bg-white border border-neutral-200 rounded-xl font-medium">
-                    <SelectValue placeholder="Select Mode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Full Time">Full Time</SelectItem>
-                    <SelectItem value="Part Time">Part Time</SelectItem>
-                    <SelectItem value="Online / Distance">Online / Distance</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-slate-700 font-semibold text-xs">Study Period (Start - End Year) *</Label>
-                <div className="flex gap-2 items-center">
-                  <Input value={qualForm.startYear} onChange={e => setQualForm({...qualForm, startYear: e.target.value})} placeholder="2020" type="number" className="h-11 rounded-xl" />
-                  <span className="text-neutral-400 font-bold">To</span>
-                  <Input value={qualForm.endYear} onChange={e => setQualForm({...qualForm, endYear: e.target.value})} placeholder="2024" type="number" className="h-11 rounded-xl" />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-slate-700 font-semibold text-xs">Completion Status *</Label>
-                <div className="flex items-center gap-3 h-11 px-3 border border-neutral-200 rounded-xl bg-white">
-                  {["Completed", "Currently Pursuing", "Incomplete"].map(status => (
-                    <label key={status} className="flex items-center gap-1 text-[11px] text-neutral-700 cursor-pointer font-medium">
-                      <input type="radio" name="modalCompletionStatus" value={status} checked={qualForm.completionStatus === status} onChange={() => setQualForm({...qualForm, completionStatus: status})} className="w-3.5 h-3.5 text-[#27295B]" />
-                      <span>{status}</span>
-                    </label>
-                  ))}
-                </div>
+                <Label className="text-slate-700 font-semibold text-xs">Specialization</Label>
+                <Input value={qualForm.specialization} onChange={e => setQualForm({...qualForm, specialization: e.target.value})} placeholder="e.g. Business Administration" className="h-11 rounded-xl" />
               </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-neutral-100">
-              <Button variant="outline" type="button" onClick={() => setIsQualModalOpen(false)} className="h-10 px-5 rounded-xl font-bold">
-                Cancel
-              </Button>
+              <Button variant="outline" type="button" onClick={() => setIsQualModalOpen(false)} className="h-10 px-5 rounded-xl font-bold">Cancel</Button>
               <Button 
-                type="button"
+                type="button" 
                 className="h-10 px-6 bg-[#27295B] hover:bg-[#1e204b] text-white rounded-xl font-bold"
                 onClick={() => {
-                  if (qualForm.qualification && qualForm.institution) {
-                    const newItem = {
-                      id: editingQualId || Date.now(),
-                      qualification: qualForm.qualification,
-                      institution: qualForm.institution,
-                      school: qualForm.school || qualForm.institution,
-                      major: qualForm.major || "General",
-                      year: `${qualForm.startYear}-${qualForm.endYear}`,
-                      country: qualForm.country,
-                      modeOfStudy: qualForm.modeOfStudy,
-                      completionStatus: qualForm.completionStatus,
-                      language: qualForm.language,
-                      gpa: qualForm.gpa,
-                      classification: qualForm.classification,
-                    };
-
-                    if (editingQualId) {
-                      setEducationList(educationList.map(item => item.id === editingQualId ? newItem : item));
-                    } else {
-                      setEducationList([...educationList, newItem]);
-                    }
+                  if (qualForm.qualificationTitle && qualForm.institution) {
+                    setEducationList([...educationList, { ...qualForm, id: Date.now() }]);
                     setIsQualModalOpen(false);
-                    setEditingQualId(null);
                   } else {
-                    alert("Please fill in Qualification Title and Institution.");
+                    alert("Please enter Qualification Title and Institution.");
                   }
                 }}
               >
-                {editingQualId ? "Save Changes" : "Add Education"}
+                Save Qualification
               </Button>
             </div>
           </div>
