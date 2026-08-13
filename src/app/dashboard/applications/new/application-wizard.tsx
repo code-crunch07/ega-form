@@ -536,26 +536,38 @@ export default function ApplicationWizard({
                     <Controller
                       name="programmeId"
                       control={control}
-                      render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
-                          <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
-                            <SelectValue placeholder="Select Programme" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {filteredProgrammes.length > 0 ? (
-                              filteredProgrammes.map(p => (
-                                <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
-                              ))
-                            ) : (
-                              <>
-                                <SelectItem value="p1">Diploma in International Hotel and Tourism Management</SelectItem>
-                                <SelectItem value="p2">Diploma in Business Administration</SelectItem>
-                                <SelectItem value="p3">Higher Diploma in Computer Science</SelectItem>
-                              </>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      )}
+                      render={({ field }) => {
+                        const selectedProg = programmes.find(p => p.id === field.value);
+                        const displayName = selectedProg 
+                          ? `${selectedProg.name} (${selectedProg.code})`
+                          : field.value === "p1" ? "Diploma in International Hotel and Tourism Management"
+                          : field.value === "p2" ? "Diploma in Business Administration"
+                          : field.value === "p3" ? "Higher Diploma in Computer Science"
+                          : field.value;
+
+                        return (
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
+                              <span className="truncate text-left font-semibold">
+                                {field.value ? displayName : <span className="text-slate-400 font-normal">Select Programme</span>}
+                              </span>
+                            </SelectTrigger>
+                            <SelectContent className="w-[320px] max-w-md">
+                              {filteredProgrammes.length > 0 ? (
+                                filteredProgrammes.map(p => (
+                                  <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
+                                ))
+                              ) : (
+                                <>
+                                  <SelectItem value="p1">Diploma in International Hotel and Tourism Management</SelectItem>
+                                  <SelectItem value="p2">Diploma in Business Administration</SelectItem>
+                                  <SelectItem value="p3">Higher Diploma in Computer Science</SelectItem>
+                                </>
+                              )}
+                            </SelectContent>
+                          </Select>
+                        );
+                      }}
                     />
                   </div>
 
