@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Onest } from "next/font/google";
+import { Onest, Jost } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -7,6 +7,13 @@ const onest = Onest({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700", "800"],
   variable: "--font-onest",
+  display: "swap",
+});
+
+const jost = Jost({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  variable: "--font-jost",
   display: "swap",
 });
 
@@ -24,7 +31,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${onest.variable} ${onest.className} font-sans h-full antialiased`}
+      className={`${onest.variable} ${jost.variable} ${onest.className} font-sans h-full antialiased`}
     >
       <body className={`${onest.className} min-h-full flex flex-col text-sm`}>
         <ThemeProvider

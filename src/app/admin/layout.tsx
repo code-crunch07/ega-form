@@ -186,7 +186,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#0a0a0a] font-sans selection:bg-blue-200 dark:selection:bg-blue-900">
+    <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#0a0a0a] font-jost selection:bg-blue-200 dark:selection:bg-blue-900">
       
       {/* Mockup Deep Navy Sidebar */}
       <aside 

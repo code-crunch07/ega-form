@@ -99,7 +99,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f0f0bd] text-neutral-800 flex items-center justify-center p-4 md:p-8 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#f0f0f0bd] text-neutral-800 flex items-center justify-center p-4 md:p-8 relative overflow-hidden font-jost">
       {/* Soft Multi-Colored Mesh Gradients */}
       <div className="absolute top-[-30%] left-[-20%] w-[65%] h-[65%] rounded-full bg-blue-100/50 blur-[130px] pointer-events-none animate-pulse duration-[8s]" />
       <div className="absolute bottom-[-30%] right-[-20%] w-[65%] h-[65%] rounded-full bg-violet-100/50 blur-[130px] pointer-events-none animate-pulse duration-[10s]" />
