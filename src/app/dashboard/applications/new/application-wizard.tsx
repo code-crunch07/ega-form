@@ -348,7 +348,7 @@ export default function ApplicationWizard({
   }
 
   return (
-    <div className="w-full mx-auto space-y-6 text-left font-jost pb-12">
+    <div className="w-full max-w-[1180px] mx-auto space-y-6 text-left font-jost pb-12">
       
       {/* Error Alert Banner */}
       {formError && (
