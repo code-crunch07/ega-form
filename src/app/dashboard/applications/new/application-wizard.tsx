@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { 
@@ -24,6 +24,56 @@ const SECTIONS = [
   { id: 4, name: "Additional Info & Agent", shortName: "4. Additional & Agent", icon: Briefcase, desc: "Declarations, channel & agent" },
   { id: 5, name: "Review & Payment", shortName: "5. Review & Pay", icon: CreditCard, desc: "Review, fee payment & submit" },
 ];
+
+function FormAccordion({
+  title,
+  defaultOpen = true,
+  badgeText,
+  actionButton,
+  children,
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  badgeText?: string;
+  actionButton?: ReactNode;
+  children: ReactNode;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  return (
+    <div className="border border-slate-200/90 rounded-2xl overflow-hidden bg-white shadow-2xs transition-all duration-200 hover:border-slate-300">
+      <div
+        onClick={() => setIsOpen(!isOpen)}
+        className="bg-slate-50/80 hover:bg-slate-100/90 px-6 py-4.5 flex items-center justify-between transition-colors text-left select-none cursor-pointer"
+      >
+        <div className="flex items-center gap-3">
+          <span className="font-heading font-bold text-slate-900 text-base sm:text-lg">
+            {title}
+          </span>
+          {badgeText && (
+            <span className="text-[11px] font-bold font-mono text-[#252D65] bg-[#252D65]/10 px-2.5 py-0.5 rounded-md hidden sm:inline-block">
+              {badgeText}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {actionButton && (
+            <div onClick={(e) => e.stopPropagation()}>{actionButton}</div>
+          )}
+          <div className={cn("h-7 w-7 rounded-full bg-slate-200/70 flex items-center justify-center text-slate-600 transition-transform duration-300", isOpen && "rotate-180 bg-[#252D65]/10 text-[#252D65]")}>
+            <ChevronDown size={18} />
+          </div>
+        </div>
+      </div>
+
+      {isOpen && (
+        <div className="p-6 sm:p-8 space-y-6 border-t border-slate-100 animate-in fade-in duration-200">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ApplicationWizard({ 
   user, 
@@ -313,7 +363,7 @@ export default function ApplicationWizard({
         </div>
       )}
 
-      {/* SINGLE UNIFIED CARD CONTAINER: Clean, Frameless Section Flow without Hard Lines */}
+      {/* SINGLE UNIFIED CARD CONTAINER */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="bg-white rounded-3xl border-none shadow-2xs overflow-hidden">
           
@@ -393,18 +443,14 @@ export default function ApplicationWizard({
             </div>
           </div>
 
-          {/* Active Step Form Content Area */}
-          <div className="p-8 sm:p-10 lg:p-12 space-y-10 min-h-[500px]">
+          {/* Active Step Form Content Area with Clean Accordions */}
+          <div className="p-6 sm:p-8 lg:p-10 space-y-6 min-h-[500px]">
             
             {/* STEP 1: Programme Selection & Pre-Course Counselling */}
             {step === 1 && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-
-                {/* Sub-section 1: Partner & Mode */}
-                <div className="space-y-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    1. University Partner & Study Mode
-                  </h3>
+              <div className="space-y-6 animate-in fade-in duration-300">
+                {/* Accordion 1: Partner & Mode */}
+                <FormAccordion title="1. University Partner & Study Mode" defaultOpen={true}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">University Partner *</Label>
@@ -452,13 +498,10 @@ export default function ApplicationWizard({
                       />
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
 
-                {/* Sub-section 2: Course Type & Programme Selection */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    2. Course Type & Target Programme *
-                  </h3>
+                {/* Accordion 2: Course Type & Target Programme */}
+                <FormAccordion title="2. Course Type & Target Programme *" defaultOpen={true}>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
                       { value: "Standalone Course", title: "Standalone Course", desc: "Single programme selection at your target academic level." },
@@ -497,7 +540,7 @@ export default function ApplicationWizard({
 
                   {/* Standalone vs Package Logic */}
                   {watchCourseType === "Standalone Course" ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
                       <div className="space-y-2">
                         <Label className="text-slate-700 font-semibold text-xs">Academic Level *</Label>
                         <Controller
@@ -596,7 +639,7 @@ export default function ApplicationWizard({
                     </div>
                   ) : (
                     /* Package Courses: 3 Slots */
-                    <div className="space-y-4 pt-4 animate-in fade-in duration-300">
+                    <div className="space-y-4 pt-2 animate-in fade-in duration-300">
                       <div className="flex items-center justify-between pb-1">
                         <h4 className="font-heading font-bold text-sm text-slate-900">
                           Package Programme Slots (All 3 Slots Mandatory) *
@@ -660,13 +703,10 @@ export default function ApplicationWizard({
                       </div>
                     </div>
                   )}
-                </div>
+                </FormAccordion>
 
-                {/* Sub-section 3: Pre-Course Counselling */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    3. Pre-Course Counselling Declaration *
-                  </h3>
+                {/* Accordion 3: Pre-Course Counselling */}
+                <FormAccordion title="3. Pre-Course Counselling Declaration *" defaultOpen={true}>
                   <p className="text-xs text-slate-600 font-medium leading-relaxed">
                     Confirm you have gathered sufficient information regarding your choice of study at {watchPartner} by selecting your declaration statement below:
                   </p>
@@ -697,19 +737,15 @@ export default function ApplicationWizard({
                       </div>
                     )}
                   />
-                </div>
+                </FormAccordion>
               </div>
             )}
 
             {/* STEP 2: Section 1 (Personal Particulars) & Section 2 (Citizenship & Address) */}
             {step === 2 && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-
-                {/* Sub-section 1: Personal Particulars */}
-                <div className="space-y-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    1. Personal Particulars *
-                  </h3>
+              <div className="space-y-6 animate-in fade-in duration-300">
+                {/* Accordion 1: Personal Particulars */}
+                <FormAccordion title="1. Personal Particulars *" defaultOpen={true}>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Title *</Label>
@@ -813,19 +849,11 @@ export default function ApplicationWizard({
                       </div>
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
 
-                {/* Sub-section 2: Under-18 Guardian (Conditional) */}
+                {/* Accordion 2: Under-18 Guardian (Conditional) */}
                 {isUnder18 && (
-                  <div className="space-y-4 pt-4">
-                    <div className="flex items-center justify-between pb-1">
-                      <h3 className="font-heading font-bold text-base text-slate-900">
-                        2. Parent / Legal Guardian Details *
-                      </h3>
-                      <span className="text-xs font-mono font-bold text-[#252D65] bg-[#252D65]/10 px-3 py-1 rounded-full">
-                        Required (Age: {applicantAge} Years)
-                      </span>
-                    </div>
+                  <FormAccordion title="2. Parent / Legal Guardian Details *" defaultOpen={true} badgeText={`Age: ${applicantAge} Years`}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="text-slate-700 font-semibold text-xs">Guardian Full Name (as in ID) *</Label>
@@ -845,14 +873,11 @@ export default function ApplicationWizard({
                         <Input {...register("guardian.phone")} placeholder="9224 5678" className="flex-1 h-12 bg-white rounded-xl" />
                       </div>
                     </div>
-                  </div>
+                  </FormAccordion>
                 )}
 
-                {/* Sub-section 3: Passport & Citizenship */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    3. Passport & Citizenship Details *
-                  </h3>
+                {/* Accordion 3: Passport & Citizenship */}
+                <FormAccordion title="3. Passport & Citizenship Details *" defaultOpen={true}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Passport Number *</Label>
@@ -881,13 +906,10 @@ export default function ApplicationWizard({
                       <Input type="date" {...register("passport.expiryDate")} className="h-12 rounded-xl" />
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
 
-                {/* Sub-section 4: Overseas & Permanent Address */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    4. Overseas & Permanent Address *
-                  </h3>
+                {/* Accordion 4: Overseas & Permanent Address */}
+                <FormAccordion title="4. Overseas & Permanent Address *" defaultOpen={true}>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Country *</Label>
@@ -917,20 +939,18 @@ export default function ApplicationWizard({
                       <Input {...register("overseasAddress.postalCode")} placeholder="238845" className="h-12 rounded-xl" />
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
               </div>
             )}
 
             {/* STEP 3: Academic Background & English Proficiency */}
             {step === 3 && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-
-                {/* Sub-section 1: Qualifications */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center pb-1">
-                    <h3 className="font-heading font-bold text-base text-slate-900">
-                      1. Academic Qualifications
-                    </h3>
+              <div className="space-y-6 animate-in fade-in duration-300">
+                {/* Accordion 1: Qualifications */}
+                <FormAccordion 
+                  title="1. Academic Qualifications" 
+                  defaultOpen={true}
+                  actionButton={
                     <Button 
                       type="button" 
                       onClick={() => {
@@ -956,8 +976,8 @@ export default function ApplicationWizard({
                     >
                       + Add Qualification
                     </Button>
-                  </div>
-
+                  }
+                >
                   <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
@@ -995,13 +1015,10 @@ export default function ApplicationWizard({
                       </tbody>
                     </table>
                   </div>
-                </div>
+                </FormAccordion>
 
-                {/* Sub-section 2: English Test */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    2. English Language Proficiency Test
-                  </h3>
+                {/* Accordion 2: English Test */}
+                <FormAccordion title="2. English Language Proficiency Test" defaultOpen={true}>
                   <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
                     <input 
                       type="checkbox" 
@@ -1050,19 +1067,15 @@ export default function ApplicationWizard({
                       </label>
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
               </div>
             )}
 
             {/* STEP 4: Additional Information & Agent Contact */}
             {step === 4 && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-
-                {/* Sub-section 1: Health Conditions */}
-                <div className="space-y-2">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    1. Health Conditions & Learning Needs *
-                  </h3>
+              <div className="space-y-6 animate-in fade-in duration-300">
+                {/* Accordion 1: Health Conditions */}
+                <FormAccordion title="1. Health Conditions & Learning Needs *" defaultOpen={true}>
                   <p className="text-[11px] text-slate-400 font-medium">Describe any physical/mental health conditions or learning support requirements. If none, enter NA.</p>
                   <textarea 
                     {...register("additionalInfo.healthConditions")} 
@@ -1070,13 +1083,10 @@ export default function ApplicationWizard({
                     className="w-full p-4 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-[#252D65]/20" 
                     placeholder="Enter NA if not applicable"
                   />
-                </div>
+                </FormAccordion>
 
-                {/* Sub-section 2: Conduct Declarations */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    2. Conduct Declarations *
-                  </h3>
+                {/* Accordion 2: Conduct Declarations */}
+                <FormAccordion title="2. Conduct Declarations *" defaultOpen={true}>
                   <div className="space-y-4 text-xs font-medium text-slate-800">
                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <p className="flex-1">Have you ever been suspended, excluded and/or expelled from a course at a university or educational institution?</p>
@@ -1102,13 +1112,10 @@ export default function ApplicationWizard({
                       </div>
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
 
-                {/* Sub-section 3: Marketing Channel */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    3. How did you hear about EGA? *
-                  </h3>
+                {/* Accordion 3: Marketing Channel */}
+                <FormAccordion title="3. How did you hear about EGA? *" defaultOpen={true}>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                       {[
@@ -1147,13 +1154,10 @@ export default function ApplicationWizard({
                       </div>
                     )}
                   </div>
-                </div>
+                </FormAccordion>
 
-                {/* Sub-section 4: Agent Details */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    4. EGA Appointed Agent Details
-                  </h3>
+                {/* Accordion 4: Agent Details */}
+                <FormAccordion title="4. EGA Appointed Agent Details" defaultOpen={true}>
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
                       <input 
@@ -1208,19 +1212,15 @@ export default function ApplicationWizard({
                       </div>
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
               </div>
             )}
 
             {/* STEP 5: Review, Declaration & Application Fee Payment */}
             {step === 5 && (
-              <div className="space-y-8 animate-in fade-in duration-300">
-
-                {/* Summary Cards */}
-                <div className="space-y-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    1. Application Overview Summary
-                  </h3>
+              <div className="space-y-6 animate-in fade-in duration-300">
+                {/* Accordion 1: Summary */}
+                <FormAccordion title="1. Application Overview Summary" defaultOpen={true}>
                   <div className="space-y-4">
                     <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
                       <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
@@ -1262,13 +1262,10 @@ export default function ApplicationWizard({
                       </div>
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
 
-                {/* Declarations & Consents */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    2. Declarations & Mandatory Consents *
-                  </h3>
+                {/* Accordion 2: Consents */}
+                <FormAccordion title="2. Declarations & Mandatory Consents *" defaultOpen={true}>
                   <div className="space-y-4">
                     <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 leading-relaxed font-medium">
                       I hereby declare that all information provided in this Educare Global Academy application form is complete, true, and correct. I understand that any false statement or omission may lead to rejection of admission or cancellation of enrollment.
@@ -1290,13 +1287,10 @@ export default function ApplicationWizard({
                       </label>
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
 
-                {/* Payment Summary */}
-                <div className="space-y-4 pt-4">
-                  <h3 className="font-heading font-bold text-base text-slate-900">
-                    3. Application Fee Payment Summary *
-                  </h3>
+                {/* Accordion 3: Payment Summary */}
+                <FormAccordion title="3. Application Fee Payment Summary *" defaultOpen={true}>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center bg-[#252D65]/5 p-5 rounded-2xl border border-[#252D65]/20">
                       <div>
@@ -1321,7 +1315,7 @@ export default function ApplicationWizard({
                       ))}
                     </div>
                   </div>
-                </div>
+                </FormAccordion>
               </div>
             )}
           </div>
