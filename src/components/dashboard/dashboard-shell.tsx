@@ -130,15 +130,15 @@ function NavLinks({
                 className={cn(
                   "group flex items-center gap-3.5 rounded-xl px-4 py-3 text-[15px] font-medium transition-all duration-200 relative overflow-hidden",
                   isActive
-                    ? "bg-[#3A57E8] text-white shadow-md shadow-[#3A57E8]/25 font-bold"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-[#3A57E8]"
+                    ? "bg-[#252D65] text-white shadow-md shadow-[#252D65]/25 font-bold"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-[#252D65]"
                 )}
               >
                 <item.icon
                   size={19}
                   className={cn(
                     "shrink-0 transition-transform duration-200 group-hover:scale-110",
-                    isActive ? "text-white" : "text-slate-400 group-hover:text-[#3A57E8]"
+                    isActive ? "text-white" : "text-slate-400 group-hover:text-[#252D65]"
                   )}
                 />
                 <span className={cn("flex-1 transition-colors duration-200 truncate", isActive ? "font-bold" : "font-semibold")}>
@@ -190,7 +190,7 @@ export function DashboardShell({
   }, [mobileOpen]);
 
   return (
-    <div className="flex min-h-screen bg-[#f3f3fa] font-jost selection:bg-[#3A57E8]/20">
+    <div className="flex min-h-screen bg-[#f3f3fa] font-jost selection:bg-[#252D65]/20">
       {/* Desktop Sidebar */}
       <aside className="z-20 hidden w-[270px] shrink-0 flex-col bg-white text-slate-900 md:flex">
         <div className="flex h-16 items-center px-5 bg-white">
@@ -334,7 +334,7 @@ export function DashboardShell({
 
         {/* Scrollable Main Workspace */}
         <div className="no-scrollbar relative flex-1 overflow-auto p-4 sm:p-6 md:p-8 pt-8 sm:pt-10 md:pt-12 bg-[#f3f3fa]">
-          <div className={cn("mx-auto w-full", isWizard ? "max-w-7xl" : "max-w-[1440px]")}>
+          <div className="mx-auto w-full max-w-full">
             {children}
           </div>
         </div>
