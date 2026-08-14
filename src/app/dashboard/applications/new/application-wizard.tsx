@@ -394,7 +394,7 @@ export default function ApplicationWizard({
     setIsSubmitting(false);
 
     if (result.success) {
-      setSuccessAppNumber(result.appNumber);
+      setSuccessAppNumber(result.appNumber || "EGA2026-SUBMITTED");
     } else {
       setFormError("Error submitting application: " + (result.error || "Please try again."));
     }
