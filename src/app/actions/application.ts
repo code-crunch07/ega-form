@@ -2,9 +2,9 @@
 
 import { prisma } from "@/lib/prisma";
 import { getMockSessionUser } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
 import { applicationSchema } from "@/lib/application-schema";
 
+// CR-09: Correct application fees: EGA = SGD 160, NCC/GCU/KU = SGD 320
 export async function calculateApplicationFee(universityPartner: string): Promise<number> {
   const partnerUpper = (universityPartner || "").toUpperCase();
   if (
@@ -12,7 +12,7 @@ export async function calculateApplicationFee(universityPartner: string): Promis
     partnerUpper.includes("KINGSTON") ||
     partnerUpper.includes("NCC")
   ) {
-    return 360;
+    return 320;
   }
   return 160;
 }
@@ -23,89 +23,92 @@ export async function submitApplication(data: any) {
   try {
     const validatedData = applicationSchema.parse(data);
     
-    // Server-calculated application fee based on University Partner
-    const feeAmount = await calculateApplicationFee(data.universityPartner || "Educare Global Academy");
+    // Server-calculated application fee based on University Partner (CR-09)
+    const feeAmount = await calculateApplicationFee(validatedData.universityPartner);
     
-    // Generate a mock application number
-    const appNumber = `APP${new Date().getFullYear()}${Math.floor(10000 + Math.random() * 90000)}`;
+    // Generate official EGA application reference number
+    const appNumber = `EGA${new Date().getFullYear()}${Math.floor(10000 + Math.random() * 90000)}`;
 
     const application = await prisma.application.create({
       data: {
         userId: user.id,
         appNumber,
         status: "Submitted",
-        applicantType: data.applicantType || "Local",
+        applicantType: validatedData.studentType || "Local Student",
         
         // Programme Selection
         campus: "Singapore Campus",
-        school: data.universityPartner || "Educare Global Academy",
-        programmeLevel: data.academicLevel || (data.courseType === "Package Courses" ? "Package (Foundation + Diploma + Degree)" : "Diploma"),
-        programmeId: data.programmeId || "default-prog",
-        intake: data.intake || "January 2026",
-        studyMode: data.studyMode || "Full Time",
+        school: validatedData.universityPartner,
+        programmeLevel: validatedData.academicLevel || (validatedData.courseType === "Package Courses" ? "Package Pathway" : "Diploma"),
+        programmeId: validatedData.programmeId || "default-prog",
+        intake: validatedData.intake,
+        studyMode: validatedData.studyMode,
         scholarshipApply: false,
         
-        // Declaration
+        // Declaration & Native Signature (CR-12)
         termsAccepted: true,
         privacyAccepted: true,
-        digitalSignature: data.personal?.fullName || user.name || "Applicant",
+        digitalSignature: validatedData.digitalSignature || validatedData.personal.fullName,
         submittedAt: new Date(),
         
-        // Nested Relations: Education
+        // Nested Relations: Education Qualifications (CR-07)
         educationHistory: {
-          create: data.education?.map((ed: any) => ({
-            qualification: ed.qualificationTitle || "Qualification",
-            institution: ed.institution || "Institution",
-            country: ed.country || "Singapore",
-            major: ed.specialization || "General",
-            grade: ed.gpa || ed.classification || "Pass",
-          })) || []
+          create: validatedData.education.map((ed: any) => ({
+            qualification: ed.qualificationTitle,
+            institution: ed.institution,
+            country: ed.country,
+            major: "General",
+            grade: "Completed",
+          }))
         },
 
         // Nested Relations: English Tests
         englishTests: {
-          create: data.englishTest && data.englishTest.hasTakenTest ? [{
-            testName: data.englishTest.testType || "IELTS",
-            score: "Passed",
-            testDate: data.englishTest.testDate ? new Date(data.englishTest.testDate) : undefined,
+          create: validatedData.englishTest.hasTakenTest ? [{
+            testName: validatedData.englishTest.testType || "IELTS",
+            score: "Submitted",
+            testDate: validatedData.englishTest.testDate ? new Date(validatedData.englishTest.testDate) : undefined,
           }] : []
         },
       }
     });
 
     // Update applicant profile with latest information
-    if (data.personal) {
-      await prisma.profile.update({
-        where: { userId: user.id },
-        data: {
-          title: data.personal.title,
-          firstName: data.personal.fullName,
-          lastName: data.personal.surname,
-          gender: data.personal.gender,
-          dob: data.personal.dob ? new Date(data.personal.dob) : undefined,
-          nationality: data.personal.nationality,
-          passportNumber: data.passport?.passportNumber,
-          
-          phone: data.personal.phone,
-          address: data.overseasAddress?.addressLine1,
-          city: data.overseasAddress?.city,
-          state: data.overseasAddress?.state,
-          postalCode: data.overseasAddress?.postalCode,
-          country: data.overseasAddress?.country,
-          
-          emergencyContactName: data.guardian?.fullName || data.personal.fullName,
-          emergencyContactRelation: data.guardian?.isUnder18 ? "Parent / Guardian" : "Self",
-          emergencyContactPhone: data.guardian?.phone || data.personal.phone,
-        }
-      });
-    }
+    await prisma.profile.update({
+      where: { userId: user.id },
+      data: {
+        title: validatedData.personal.title,
+        firstName: validatedData.personal.fullName,
+        lastName: validatedData.personal.surname,
+        gender: validatedData.personal.gender,
+        dob: validatedData.personal.dob ? new Date(validatedData.personal.dob) : undefined,
+        nationality: validatedData.personal.nationality,
+        passportNumber: validatedData.passport.passportNumber,
+        
+        phone: validatedData.personal.phone,
+        address: validatedData.address.addressLine1,
+        city: validatedData.address.city,
+        state: validatedData.address.state,
+        postalCode: validatedData.address.postalCode,
+        country: validatedData.address.country,
+        
+        emergencyContactName: validatedData.emergencyContact.fullName,
+        emergencyContactRelation: validatedData.emergencyContact.relation,
+        emergencyContactPhone: validatedData.emergencyContact.phone,
+      }
+    });
 
-    revalidatePath("/dashboard");
-    revalidatePath("/admin/applications");
-    
-    return { success: true, appNumber, feeAmount };
-  } catch (error: any) {
-    console.error("Failed to submit application", error);
-    return { error: error.message || "Failed to submit application" };
+    return {
+      success: true,
+      appNumber: application.appNumber,
+      appId: application.id,
+      feeAmount,
+    };
+  } catch (err: any) {
+    console.error("Submission action error:", err);
+    return {
+      success: false,
+      error: err.message || "Failed to submit application. Please check required fields.",
+    };
   }
 }
