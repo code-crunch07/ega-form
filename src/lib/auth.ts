@@ -1,36 +1,35 @@
 import { prisma } from "./prisma";
+import { auth } from "@/auth";
 
 /**
- * MOCK AUTHENTICATION SYSTEM
- * Since we don't have a real login system yet, this function fetches the 
- * first APPLICANT user from the database. If none exist, it creates a dummy 
- * user and returns it. This allows the dashboard to have a "logged in" user context.
+ * AUTHENTICATION SESSION USER RETRIEVAL
+ * Fetches the active authenticated user from session & database.
  */
 export async function getMockSessionUser() {
+  const session = await auth();
+  
+  if (session?.user?.email) {
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { profile: true }
+    });
+    if (user) return user;
+  }
+
+  // Fetch the active applicant user from the database
   let user = await prisma.user.findFirst({
     where: { role: "APPLICANT" },
     include: { profile: true }
   });
 
   if (!user) {
-    // Create a dummy user if none exists
-    user = await prisma.user.create({
-      data: {
-        email: "test.applicant@example.com",
-        name: "Test Applicant",
-        role: "APPLICANT",
-        password: "dummy",
-        profile: {
-          create: {
-            firstName: "Test",
-            lastName: "Applicant",
-            country: "United States",
-            phone: "+1 555-0123"
-          }
-        }
-      },
+    user = await prisma.user.findFirst({
       include: { profile: true }
     });
+  }
+
+  if (!user) {
+    throw new Error("No applicant account found in database. Please register an account first.");
   }
 
   return user;
