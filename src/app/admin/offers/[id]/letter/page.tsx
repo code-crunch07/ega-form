@@ -242,14 +242,22 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
           </div>
 
           {/* Page 1 Legal Footer */}
-          <div className="border-t border-slate-200 pt-4 mt-8 flex items-center justify-between text-[9px] text-slate-500 font-mono">
-            <div>
-              <p className="font-bold text-slate-700">Educare Global Academy Pte Ltd</p>
-              <p>CPE Registration No: 201505088M | Period of Registration: 2022 to 2026</p>
-            </div>
-            <div className="text-right">
-              <p>133 New Bridge Road, #25-10 Chinatown Point, Singapore 059413</p>
-              <p>Tel: +65 6908 5994 | Web: www.ega.edu.sg</p>
+          <div className="pt-6 border-t border-slate-200 text-left space-y-1">
+            <p className="font-extrabold text-slate-900 text-[13px] leading-tight">Educare Global Academy Pte Ltd</p>
+            <p className="text-[12px] text-slate-600 font-medium leading-tight">Registration Number: 201505088M</p>
+            <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-600 font-medium pt-1.5 gap-2 border-t border-slate-100">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#BE1E2D]">📍</span>
+                <span>133 New Bridge Road, Chinatown Point #25-10, Singapore 059413</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#BE1E2D]">📞</span>
+                <span>(65) 6908 5994 / (65) 6908 5984</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#BE1E2D]">🌐</span>
+                <span>www.ega.edu.sg</span>
+              </div>
             </div>
           </div>
         </div>
@@ -303,13 +311,6 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
 
                 <p className="font-bold underline uppercase text-xs text-slate-900 pt-1">THE IN-PRINCIPLE APPROVAL (IPA) LETTER</p>
                 <p className="leading-relaxed text-slate-700">
-                  The IPA letter issued by the Immigration & Checkpoints Authority&apos;s (ICA) will not be released to you if the EGA offer and PEI-signed contract are not accepted/submitted by due dates and course fee is not paid. Your STP application will also be cancelled if we do not receive your contract acceptance by the stipulated deadline.
-                </p>
-                <p className="leading-relaxed text-slate-700">
-                  EGA will inform you of the outcome of your Student&apos;s Pass (STP) application as we receive the decision from the Immigration & Checkpoints Authority (ICA).
-                </p>
-                <p className="leading-relaxed text-slate-700">
-                  It is important that <strong className="font-extrabold text-slate-900">you hold a valid student&apos;s pass</strong>. Successful enrolment into the programme is subject to the STP approval by ICA.
                 </p>
                 <p className="leading-relaxed text-slate-700">
                   You are to book your air ticket and arrive in <strong className="font-extrabold text-slate-900">Singapore only after receiving the ICA&apos;s IPA letter from EGA</strong>. Do read the <span className="text-blue-600 underline cursor-pointer font-semibold">arrival Information</span> which will tell you what you must do before your departure from your country and what you must do when you arrive in Singapore.
@@ -364,16 +365,23 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          {/* Page 2 Footer */}
-          <div className="pt-8 border-t border-slate-200 text-[10px] text-slate-600 space-y-1">
-            <div className="flex justify-between font-semibold">
-              <span>Educare Global Academy Pte Ltd</span>
-              <span>Registration Number: 201505088M</span>
-            </div>
-            <div className="flex flex-wrap justify-between text-slate-500 pt-0.5">
-              <span>📍 133 New Bridge Road, Chinatown Point #25-10, Singapore 059413</span>
-              <span>📞 (65) 6908 5994 / (65) 6908 5984</span>
-              <span>🌐 www.ega.edu.sg</span>
+          {/* Page 2 Legal Footer */}
+          <div className="pt-6 border-t border-slate-200 text-left space-y-1">
+            <p className="font-extrabold text-slate-900 text-[13px] leading-tight">Educare Global Academy Pte Ltd</p>
+            <p className="text-[12px] text-slate-600 font-medium leading-tight">Registration Number: 201505088M</p>
+            <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-600 font-medium pt-1.5 gap-2 border-t border-slate-100">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#BE1E2D]">📍</span>
+                <span>133 New Bridge Road, Chinatown Point #25-10, Singapore 059413</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#BE1E2D]">📞</span>
+                <span>(65) 6908 5994 / (65) 6908 5984</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[#BE1E2D]">🌐</span>
+                <span>www.ega.edu.sg</span>
+              </div>
             </div>
           </div>
         </div>
