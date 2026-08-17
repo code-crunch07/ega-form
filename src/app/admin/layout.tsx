@@ -186,17 +186,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc] dark:bg-[#0a0a0a] font-jost selection:bg-blue-200 dark:selection:bg-blue-900">
+    <div className="flex min-h-screen bg-[#f3f3fa] dark:bg-[#0a0a0a] font-jost selection:bg-[#252D65]/20">
       
-      {/* Mockup Deep Navy Sidebar */}
+      {/* Deep Navy Theme Sidebar */}
       <aside 
         className={cn(
-          "bg-[#0c1427] text-white flex-shrink-0 flex flex-col z-20 transition-all duration-300 border-r border-[#131d35]",
+          "bg-[#1c224e] text-white flex-shrink-0 flex flex-col z-20 transition-all duration-300 border-r border-[#252D65]/40",
           isCollapsed ? "w-[76px]" : "w-[280px]"
         )}
       >
         {/* Sidebar Branded Logo header */}
-        <div className="h-16 flex items-center justify-center px-4 border-b border-[#131d35] flex-shrink-0 overflow-hidden">
+        <div className="h-16 flex items-center justify-center px-4 border-b border-[#252D65]/40 flex-shrink-0 overflow-hidden">
           <Logo href="/admin" iconSize={isCollapsed ? 32 : 120} className={cn("transition-all", isCollapsed ? "p-1 rounded-lg bg-white/5" : "")} />
         </div>
         
@@ -205,7 +205,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           {SIDEBAR_GROUPS.map((group, idx) => (
             <div key={idx} className="space-y-1">
               {group.title && !isCollapsed && (
-                <p className="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
                   {group.title}
                 </p>
               )}
@@ -221,8 +221,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative text-[14px] font-medium",
                       isActive 
-                        ? "bg-[#e11d48] text-white font-semibold" 
-                        : "text-slate-400 hover:bg-white/5 hover:text-white"
+                        ? "bg-[#252D65] text-white font-bold shadow-md shadow-[#252D65]/30 ring-1 ring-white/10" 
+                        : "text-slate-300 hover:bg-white/10 hover:text-white"
                     )}
                     title={isCollapsed ? link.label : undefined}
                   >
@@ -237,7 +237,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                       <span className="flex-1 text-[14px] truncate">{link.label}</span>
                     )}
                     {link.badge !== undefined && !isCollapsed && (
-                      <span className="h-5 px-1.5 rounded-full bg-[#e11d48] text-white text-[11px] font-bold flex items-center justify-center min-w-5">
+                      <span className="h-5 px-1.5 rounded-full bg-[#252D65] text-white text-[11px] font-bold flex items-center justify-center min-w-5 border border-white/20">
                         {link.href === "/admin/notifications" 
                           ? badgeCounts.notifications 
                           : link.href === "/admin/messages" 
@@ -253,10 +253,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Sidebar Bottom Collapse Button */}
-        <div className="p-3 border-t border-[#131d35] flex-shrink-0">
+        <div className="p-3 border-t border-[#252D65]/40 flex-shrink-0">
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all duration-200 text-[14px] font-medium"
+            className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition-all duration-200 text-[14px] font-medium"
           >
             {isCollapsed ? (
               <ChevronRight size={18} />
@@ -271,9 +271,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </aside>
       
       {/* Main Content Pane */}
-      <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
+      <main className="flex-1 flex flex-col h-screen overflow-auto relative bg-[#f3f3fa]">
         {/* Premium Header */}
-        <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-neutral-200/80 flex-shrink-0 z-10 sticky top-0">
+        <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-200/80 flex-shrink-0 z-10 sticky top-0">
           {/* Left Side: Hamburger & Dynamic Title */}
           <div className="flex items-center gap-6">
             <button 
@@ -283,9 +283,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <Menu size={20} />
             </button>
             <div className="flex flex-col text-left">
-              <h1 className="text-[30px] font-bold text-slate-900 leading-none">{getPageTitle(pathname)}</h1>
-              <p className="text-[14px] text-neutral-500 font-normal mt-1 leading-none">
-                Welcome back, <span className="text-[#e11d48] font-semibold">Admin</span>
+              <h1 className="text-[26px] font-extrabold text-slate-900 leading-none font-heading">{getPageTitle(pathname)}</h1>
+              <p className="text-[13px] text-slate-500 font-medium mt-1 leading-none">
+                Welcome back, <span className="text-[#252D65] font-bold">Admin</span>
               </p>
             </div>
           </div>
@@ -293,11 +293,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           {/* Center Search Input */}
           <div className="hidden lg:flex items-center justify-center flex-1 max-w-[480px] mx-8">
             <div className="relative w-full group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-blue-600 transition-colors" size={18} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#252D65] transition-colors" size={18} />
               <input 
                 type="text"
                 placeholder="Search applicants, applications, ID..."
-                className="w-full bg-neutral-50 border border-neutral-200 text-neutral-800 h-10 pl-10 pr-16 rounded-full text-[14px] focus:outline-none focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/10 transition-all placeholder-neutral-400"
+                className="w-full bg-slate-50 border border-slate-200 text-neutral-800 h-10 pl-10 pr-16 rounded-full text-[14px] focus:outline-none focus:bg-white focus:border-[#252D65] focus:ring-2 focus:ring-[#252D65]/15 transition-all placeholder-neutral-400 font-medium"
               />
               <div className="absolute right-3.5 top-1/2 -translate-y-1/2 font-sans text-[11px] font-medium text-neutral-400 border border-neutral-200/60 rounded px-1.5 py-0.5 bg-white select-none pointer-events-none">
                 Ctrl + K
@@ -311,7 +311,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             {/* Messages Icon */}
             <button className="relative p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 rounded-full transition-all">
               <MessageSquare size={18} />
-              <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-[#e11d48] text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center">
                 12
               </span>
             </button>
@@ -319,7 +319,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             {/* Notifications Icon */}
             <button className="relative p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 rounded-full transition-all">
               <Bell size={18} />
-              <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-[#e11d48] text-white text-[9px] font-bold flex items-center justify-center">
+              <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center">
                 20
               </span>
             </button>
