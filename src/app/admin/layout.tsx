@@ -4,7 +4,7 @@ import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/ui/logo";
-import { getAdminSession, getSidebarBadgeCounts } from "@/app/actions/admin";
+import { getAdminSession, getSidebarBadgeCounts, searchAdminRecords } from "@/app/actions/admin";
 import { signOut } from "next-auth/react";
 import {
   DropdownMenu,
@@ -42,7 +42,10 @@ import {
   Menu,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  X,
+  Loader2,
+  ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -123,6 +126,45 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [adminUser, setAdminUser] = useState<{ name?: string | null; email?: string | null; role?: string } | null>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [badgeCounts, setBadgeCounts] = useState({ notifications: 0, messages: 0 });
+
+  // Live Search States
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<{ applications: any[]; applicants: any[]; programmes: any[] }>({
+    applications: [],
+    applicants: [],
+    programmes: []
+  });
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Keyboard listener for Ctrl+K / Cmd+K
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(prev => !prev);
+      } else if (e.key === "Escape") {
+        setIsSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Debounced search query trigger
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults({ applications: [], applicants: [], programmes: [] });
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      const results = await searchAdminRecords(searchQuery);
+      setSearchResults(results);
+      setIsSearching(false);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (pathname === "/admin/login") {
@@ -290,39 +332,47 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          {/* Center Search Input */}
+          {/* Center Search Input (Triggers Search Palette Modal) */}
           <div className="hidden lg:flex items-center justify-center flex-1 max-w-[480px] mx-8">
-            <div className="relative w-full group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-[#252D65] transition-colors" size={18} />
-              <input 
-                type="text"
-                placeholder="Search applicants, applications, ID..."
-                className="w-full bg-slate-50 border border-slate-200 text-neutral-800 h-10 pl-10 pr-16 rounded-full text-[14px] focus:outline-none focus:bg-white focus:border-[#252D65] focus:ring-2 focus:ring-[#252D65]/15 transition-all placeholder-neutral-400 font-medium"
-              />
-              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 font-sans text-[11px] font-medium text-neutral-400 border border-neutral-200/60 rounded px-1.5 py-0.5 bg-white select-none pointer-events-none">
+            <button 
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              className="relative w-full group flex items-center bg-slate-50 hover:bg-white border border-slate-200 text-neutral-800 h-10 pl-10 pr-16 rounded-full text-[14px] transition-all cursor-pointer shadow-2xs hover:border-[#252D65] hover:ring-2 hover:ring-[#252D65]/15"
+            >
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-hover:text-[#252D65] transition-colors" size={18} />
+              <span className="text-slate-400 font-medium truncate">Search applicants, applications, ID...</span>
+              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 font-sans text-[11px] font-medium text-slate-500 border border-slate-200/80 rounded px-1.5 py-0.5 bg-white select-none shadow-2xs">
                 Ctrl + K
               </div>
-            </div>
+            </button>
           </div>
           
           {/* Right Profile Dropdown and Actions */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             
-            {/* Messages Icon */}
-            <button className="relative p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 rounded-full transition-all">
-              <MessageSquare size={18} />
-              <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center">
-                12
+            {/* Messages Icon (Navigates to /admin/messages) */}
+            <Link 
+              href="/admin/messages"
+              className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all group"
+              title="View Messages"
+            >
+              <MessageSquare size={19} className="group-hover:scale-110 transition-transform" />
+              <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center border border-white">
+                {badgeCounts.messages || 12}
               </span>
-            </button>
+            </Link>
 
-            {/* Notifications Icon */}
-            <button className="relative p-2 text-neutral-500 hover:text-neutral-900 hover:bg-neutral-50 rounded-full transition-all">
-              <Bell size={18} />
-              <span className="absolute top-1 right-1 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center">
-                20
+            {/* Notifications Icon (Navigates to /admin/notifications) */}
+            <Link 
+              href="/admin/notifications"
+              className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all group"
+              title="View Notifications"
+            >
+              <Bell size={19} className="group-hover:scale-110 transition-transform" />
+              <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center border border-white">
+                {badgeCounts.notifications || 20}
               </span>
-            </button>
+            </Link>
             
             <div className="h-6 w-px bg-neutral-200" />
 
@@ -380,12 +430,154 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </header>
         
         {/* Scrollable Page Content */}
-        <div className="flex-1 overflow-auto p-4 sm:p-6 md:p-8 z-10 bg-[#f8fafc]">
+        <div className="flex-1 overflow-auto p-4 sm:p-6 md:p-8 z-10 bg-[#f2f2f282]">
           <div className="max-w-[1600px] mx-auto">
             {children}
           </div>
         </div>
       </main>
+
+      {/* Interactive Global Search Modal */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-neutral-900 w-full max-w-2xl mx-4 rounded-2xl shadow-2xl border border-slate-200 dark:border-neutral-800 overflow-hidden animate-in zoom-in-95 duration-200">
+            
+            {/* Search Input Bar */}
+            <div className="flex items-center px-4 border-b border-slate-200 dark:border-neutral-800 h-14 bg-white dark:bg-neutral-900">
+              <Search className="text-[#252D65] mr-3 flex-shrink-0" size={20} />
+              <input
+                type="text"
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Type to search applications, applicants, programmes..."
+                className="flex-1 bg-transparent text-slate-900 dark:text-white placeholder-slate-400 text-[15px] font-medium outline-none"
+              />
+              {isSearching && <Loader2 className="animate-spin text-slate-400 mr-2" size={18} />}
+              {searchQuery && (
+                <button 
+                  onClick={() => setSearchQuery("")}
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-neutral-800 mr-1"
+                >
+                  <X size={16} />
+                </button>
+              )}
+              <button
+                onClick={() => setIsSearchOpen(false)}
+                className="text-xs font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-2 py-1 bg-slate-100 dark:bg-neutral-800 rounded-md"
+              >
+                ESC
+              </button>
+            </div>
+
+            {/* Results Container */}
+            <div className="max-h-[60vh] overflow-y-auto p-4 space-y-4 text-left">
+              {!searchQuery.trim() ? (
+                <div className="py-8 text-center text-slate-400 text-sm">
+                  <p className="font-medium text-slate-500">Quick Search Shortcuts</p>
+                  <div className="flex justify-center gap-2 mt-3 flex-wrap">
+                    <button onClick={() => setSearchQuery("APP")} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs hover:bg-[#252D65] hover:text-white font-medium transition-colors">Applications</button>
+                    <button onClick={() => setSearchQuery("EGA")} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs hover:bg-[#252D65] hover:text-white font-medium transition-colors">Programmes</button>
+                    <button onClick={() => setSearchQuery("John")} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs hover:bg-[#252D65] hover:text-white font-medium transition-colors">Applicants</button>
+                  </div>
+                </div>
+              ) : isSearching ? (
+                <div className="py-8 text-center text-slate-400 text-sm animate-pulse">
+                  Searching live database records...
+                </div>
+              ) : searchResults.applications.length === 0 && searchResults.applicants.length === 0 && searchResults.programmes.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 text-sm">
+                  No matching records found for "{searchQuery}".
+                </div>
+              ) : (
+                <>
+                  {/* Matching Applications */}
+                  {searchResults.applications.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Applications</p>
+                      <div className="space-y-1">
+                        {searchResults.applications.map((app) => (
+                          <Link
+                            key={app.id}
+                            href={`/admin/applications/${app.id}`}
+                            onClick={() => setIsSearchOpen(false)}
+                            className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <FileCheck size={18} className="text-[#252D65]" />
+                              <div>
+                                <span className="font-semibold text-slate-900 dark:text-white text-sm">{app.appNumber || app.id}</span>
+                                <span className="text-xs text-slate-500 ml-2">({app.applicantName || "Applicant"})</span>
+                              </div>
+                            </div>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">View &rarr;</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching Applicants */}
+                  {searchResults.applicants.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Applicants</p>
+                      <div className="space-y-1">
+                        {searchResults.applicants.map((user) => {
+                          const name = user.profile ? `${user.profile.firstName || ''} ${user.profile.lastName || ''}`.trim() : user.name || "Applicant";
+                          return (
+                            <Link
+                              key={user.id}
+                              href={`/admin/applicants/${user.id}`}
+                              onClick={() => setIsSearchOpen(false)}
+                              className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors group"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Users size={18} className="text-[#252D65]" />
+                                <div>
+                                  <span className="font-semibold text-slate-900 dark:text-white text-sm">{name}</span>
+                                  <span className="text-xs text-slate-500 ml-2">{user.email}</span>
+                                </div>
+                              </div>
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-medium">Profile &rarr;</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Matching Programmes */}
+                  {searchResults.programmes.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Programmes</p>
+                      <div className="space-y-1">
+                        {searchResults.programmes.map((prog) => (
+                          <Link
+                            key={prog.id}
+                            href="/admin/programmes"
+                            onClick={() => setIsSearchOpen(false)}
+                            className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors group"
+                          >
+                            <div className="flex items-center gap-3">
+                              <BookOpen size={18} className="text-[#252D65]" />
+                              <div>
+                                <span className="font-semibold text-slate-900 dark:text-white text-sm">{prog.name}</span>
+                                <span className="text-xs text-slate-500 ml-2">[{prog.code}]</span>
+                              </div>
+                            </div>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium">Programme &rarr;</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
     </div>
   );
 }

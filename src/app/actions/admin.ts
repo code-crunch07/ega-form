@@ -665,5 +665,56 @@ export async function getFinancialSummary() {
   }
 }
 
+export async function searchAdminRecords(query: string) {
+  if (!query || query.trim().length < 2) return { applications: [], applicants: [], programmes: [] };
+  const q = query.trim();
+
+  try {
+    const [applications, applicants, programmes] = await Promise.all([
+      prisma.application.findMany({
+        where: {
+          OR: [
+            { appNumber: { contains: q, mode: "insensitive" } },
+            { applicantName: { contains: q, mode: "insensitive" } },
+            { applicantEmail: { contains: q, mode: "insensitive" } },
+            { programmeId: { contains: q, mode: "insensitive" } },
+          ]
+        },
+        take: 5,
+        select: { id: true, appNumber: true, applicantName: true, status: true, programmeId: true }
+      }),
+      prisma.user.findMany({
+        where: {
+          role: "APPLICANT",
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { email: { contains: q, mode: "insensitive" } },
+            { profile: { firstName: { contains: q, mode: "insensitive" } } },
+            { profile: { lastName: { contains: q, mode: "insensitive" } } },
+          ]
+        },
+        take: 5,
+        include: { profile: true }
+      }),
+      prisma.programme.findMany({
+        where: {
+          OR: [
+            { name: { contains: q, mode: "insensitive" } },
+            { code: { contains: q, mode: "insensitive" } },
+          ]
+        },
+        take: 5,
+        select: { id: true, name: true, code: true, level: true }
+      })
+    ]);
+
+    return { applications, applicants, programmes };
+  } catch (error) {
+    console.error("Error in searchAdminRecords:", error);
+    return { applications: [], applicants: [], programmes: [] };
+  }
+}
+
+
 
 
