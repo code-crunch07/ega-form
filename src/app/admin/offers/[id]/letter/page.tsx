@@ -90,7 +90,7 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          <div>
+          <div className="flex-1 flex flex-col justify-start">
             {/* Page 1 Header Logo */}
             <div className="flex justify-end pb-8">
               {logoUrl ? (
@@ -124,125 +124,67 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
                 EGA APPLICATION NO. <span className="underline">{appNumber}</span>
               </p>
 
-              <p className="pt-4 font-bold text-slate-900">Dear Applicant,</p>
+              <p className="pt-3 font-bold text-slate-900">Dear Applicant,</p>
 
               {/* Programme Award Details */}
-              <div className="space-y-1 font-bold text-slate-900 uppercase pt-2">
+              <div className="space-y-1 font-bold text-slate-900 uppercase pt-1">
                 <p className="text-base font-extrabold text-[#252D65]">
-                  {programmeName} {studyMode} {intake}
+                  {programmeName} {studyMode.toUpperCase()} {intake.toUpperCase()}
                 </p>
                 <p className="text-xs font-bold text-slate-800">
                   AWARDED BY {schoolName.toUpperCase()}
                 </p>
               </div>
 
-              <p className="pt-2 text-xs sm:text-sm leading-relaxed text-slate-800">
-                We are pleased to inform you that you have been given a(n) confirmed offer after meeting all the conditions to the <strong className="font-extrabold">{programmeName}</strong> commencing <strong className="font-extrabold">{commencementDate}</strong>.
+              <p className="pt-1 text-xs sm:text-sm leading-relaxed text-slate-800 text-justify">
+                We are pleased to inform you that your application for admission to Educare Global Academy (EGA) has been successful. On behalf of the Academic Board and Management of EGA, we take great pleasure in offering you a place in the above-mentioned programme, subject to your acceptance of the terms and conditions outlined in this letter and the Student Contract.
               </p>
 
-              {/* Section 1: Acceptance of Offer */}
-              <div className="space-y-2 pt-3 text-xs sm:text-sm">
+              {/* Offer Details Table */}
+              <div className="border border-slate-300 rounded-xs overflow-hidden my-3">
+                <table className="w-full text-xs text-left">
+                  <tbody>
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      <td className="p-2.5 font-bold w-1/3 border-r border-slate-200">Programme Applied</td>
+                      <td className="p-2.5 font-bold text-[#252D65]">{programmeName}</td>
+                    </tr>
+                    <tr className="border-b border-slate-200">
+                      <td className="p-2.5 font-bold border-r border-slate-200">Awarding Body</td>
+                      <td className="p-2.5">{schoolName}</td>
+                    </tr>
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      <td className="p-2.5 font-bold border-r border-slate-200">Mode of Study</td>
+                      <td className="p-2.5">{studyMode}</td>
+                    </tr>
+                    <tr className="border-b border-slate-200">
+                      <td className="p-2.5 font-bold border-r border-slate-200">Course Intake / Commencement</td>
+                      <td className="p-2.5">{intake} ({commencementDate})</td>
+                    </tr>
+                    <tr className="bg-slate-50">
+                      <td className="p-2.5 font-bold border-r border-slate-200">Application Processing Fee</td>
+                      <td className="p-2.5 font-bold text-[#BE1E2D]">{feeAmount} (Non-Refundable)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Important Terms */}
+              <div className="space-y-2 text-xs">
                 <h3 className="font-extrabold text-slate-900 uppercase">1. ACCEPTANCE OF OFFER</h3>
                 <p className="leading-relaxed text-slate-700">
-                  Please proceed to accept the Admission Offer and PEI-Student Contract by signing on the offer letter and student contract.
+                  To accept this offer, please sign and return the Offer Acceptance Form along with the non-refundable application fee payment receipt to the Admissions Office within 14 days from the date of this letter.
                 </p>
-                <p className="leading-relaxed text-slate-700">
-                  You may refer to the PEI-student contract for course details, modules, subjects, course fees payable, refund policy, cooling-off period, confidentiality clause, medical insurance, fee protection schemes and other information.
-                </p>
-                <div className="pt-1">
-                  <p className="font-bold underline uppercase text-xs text-slate-900">UNDER 18 YEARS OF AGE</p>
-                  <p className="leading-relaxed text-slate-700">
-                    If you are below 18 years old, you and your parents are required to accept the Offer Letter and submit the signed copy PEI Student Contract to EGA.
-                  </p>
-                </div>
-              </div>
 
-              {/* Section 2: Application Fee and Payment Method */}
-              <div className="space-y-2 pt-3 text-xs sm:text-sm">
-                <h3 className="font-extrabold text-slate-900 uppercase">2. APPLICATION FEE AND PAYMENT METHOD</h3>
+                <h3 className="font-extrabold text-slate-900 uppercase pt-2">2. FEE PROTECTION SCHEME (FPS) & INSURANCE</h3>
                 <p className="leading-relaxed text-slate-700">
-                  A non-refundable application fee of <strong className="font-extrabold text-slate-900">{feeAmount}</strong> is payable upon acceptance of this offer.
-                </p>
-                <p className="leading-relaxed text-slate-700">
-                  For details on the available payment methods and payment instructions, please refer to <span className="text-blue-600 underline cursor-pointer font-semibold">EGA Payment Method Details</span>.
+                  In accordance with Committee for Private Education (CPE) requirements, EGA has implemented Fee Protection Scheme (FPS) to protect the paid course fees of both local and international students.
                 </p>
               </div>
-
-              {/* Section 3: EGA Mail Login and Password */}
-              <div className="space-y-2 pt-3 text-xs sm:text-sm">
-                <h3 className="font-extrabold text-slate-900 uppercase">3. EGA MAIL LOGIN AND PASSWORD</h3>
-                <p className="leading-relaxed text-slate-700">
-                  Your EGA email login credentials will be sent to your personal email address within seven days of course fee payment.
-                </p>
-                <p className="leading-relaxed text-slate-700">
-                  It is important that you log in to your EGA email account before the commencement of classes, as your &apos;Welcome Package&apos; and other important course-related information will be available there.
-                </p>
-              </div>
-
             </div>
           </div>
 
-          {/* Body Content */}
-          <div className="space-y-4 text-xs sm:text-sm font-medium text-slate-900 leading-relaxed pt-6">
-            <p className="font-bold text-slate-900">Dear Applicant,</p>
-
-            <div className="space-y-1">
-              <h2 className="text-base font-black text-[#252D65] uppercase tracking-tight">
-                {programmeName} {studyMode.toUpperCase()} {intake.toUpperCase()}
-              </h2>
-              <p className="font-bold text-xs uppercase text-slate-700">
-                AWARDED BY {schoolName}
-              </p>
-            </div>
-
-            <p className="text-justify leading-relaxed">
-              We are pleased to inform you that your application for admission to Educare Global Academy (EGA) has been successful. On behalf of the Academic Board and Management of EGA, we take great pleasure in offering you a place in the above-mentioned programme, subject to your acceptance of the terms and conditions outlined in this letter and the Student Contract.
-            </p>
-
-            {/* Offer Details Table */}
-            <div className="border border-slate-300 rounded-xs overflow-hidden my-4">
-              <table className="w-full text-xs text-left">
-                <tbody>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <td className="p-2.5 font-bold w-1/3 border-r border-slate-200">Programme Applied</td>
-                    <td className="p-2.5 font-bold text-[#252D65]">{programmeName}</td>
-                  </tr>
-                  <tr className="border-b border-slate-200">
-                    <td className="p-2.5 font-bold border-r border-slate-200">Awarding Body</td>
-                    <td className="p-2.5">{schoolName}</td>
-                  </tr>
-                  <tr className="border-b border-slate-200 bg-slate-50">
-                    <td className="p-2.5 font-bold border-r border-slate-200">Mode of Study</td>
-                    <td className="p-2.5">{studyMode}</td>
-                  </tr>
-                  <tr className="border-b border-slate-200">
-                    <td className="p-2.5 font-bold border-r border-slate-200">Course Intake / Commencement</td>
-                    <td className="p-2.5">{intake} ({commencementDate})</td>
-                  </tr>
-                  <tr className="bg-slate-50">
-                    <td className="p-2.5 font-bold border-r border-slate-200">Application Processing Fee</td>
-                    <td className="p-2.5 font-bold text-[#BE1E2D]">{feeAmount} (Non-Refundable)</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Important Terms */}
-            <div className="space-y-2 text-xs">
-              <h3 className="font-extrabold text-slate-900 uppercase">1. ACCEPTANCE OF OFFER</h3>
-              <p>
-                To accept this offer, please sign and return the Offer Acceptance Form along with the non-refundable application fee payment receipt to the Admissions Office within 14 days from the date of this letter.
-              </p>
-
-              <h3 className="font-extrabold text-slate-900 uppercase pt-2">2. FEE PROTECTION SCHEME (FPS) & INSURANCE</h3>
-              <p>
-                In accordance with Committee for Private Education (CPE) requirements, EGA has implemented Fee Protection Scheme (FPS) to protect the paid course fees of both local and international students.
-              </p>
-            </div>
-          </div>
-
-          {/* Page 1 Legal Footer */}
-          <div className="pt-6 border-t border-slate-200 text-left space-y-1">
+          {/* Page 1 Legal Footer (Pinned to Bottom) */}
+          <div className="mt-auto pt-6 border-t border-slate-200 text-left space-y-1">
             <p className="font-extrabold text-slate-900 text-[13px] leading-tight">Educare Global Academy Pte Ltd</p>
             <p className="text-[12px] text-slate-600 font-medium leading-tight">Registration Number: 201505088M</p>
             <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-600 font-medium pt-1.5 gap-2 border-t border-slate-100">
@@ -262,7 +204,6 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
           </div>
         </div>
 
-
         {/* ==================== PAGE 2 ==================== */}
         <div className="bg-white p-8 sm:p-14 shadow-2xl rounded-sm border border-slate-300 relative overflow-hidden min-h-[1100px] flex flex-col justify-between print:shadow-none print:border-none print:p-0 print:m-0 print:min-h-screen">
           
@@ -273,7 +214,7 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
             </div>
           </div>
 
-          <div>
+          <div className="flex-1 flex flex-col justify-start">
             {/* Page 2 Header Logo */}
             <div className="flex justify-end pb-8">
               {logoUrl ? (
@@ -310,8 +251,6 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
                 </p>
 
                 <p className="font-bold underline uppercase text-xs text-slate-900 pt-1">THE IN-PRINCIPLE APPROVAL (IPA) LETTER</p>
-                <p className="leading-relaxed text-slate-700">
-                </p>
                 <p className="leading-relaxed text-slate-700">
                   You are to book your air ticket and arrive in <strong className="font-extrabold text-slate-900">Singapore only after receiving the ICA&apos;s IPA letter from EGA</strong>. Do read the <span className="text-blue-600 underline cursor-pointer font-semibold">arrival Information</span> which will tell you what you must do before your departure from your country and what you must do when you arrive in Singapore.
                 </p>
@@ -353,20 +292,20 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
               {/* Sign-off */}
               <div className="pt-4 space-y-3 text-xs sm:text-sm">
                 <p className="text-slate-800">We wish you an enriching experience in Educare Global Academy.</p>
-                <p className="text-slate-800">You&apos;re sincerely,</p>
+                <p className="text-slate-800">Yours sincerely,</p>
 
                 <div className="pt-4 space-y-0.5">
                   <p className="font-bold text-slate-900 text-base">Zun Hnin Pwint Aung</p>
                   <p className="font-semibold text-slate-700">Admissions Department</p>
-                  <p className="text-[11px] text-slate-400 italic pt-1">(This is a computer generate letter. No Signature is required.)</p>
+                  <p className="text-[11px] text-slate-400 italic pt-1">(This is a computer generated letter. No Signature is required.)</p>
                 </div>
               </div>
 
             </div>
           </div>
 
-          {/* Page 2 Legal Footer */}
-          <div className="pt-6 border-t border-slate-200 text-left space-y-1">
+          {/* Page 2 Legal Footer (Pinned to Bottom) */}
+          <div className="mt-auto pt-6 border-t border-slate-200 text-left space-y-1">
             <p className="font-extrabold text-slate-900 text-[13px] leading-tight">Educare Global Academy Pte Ltd</p>
             <p className="text-[12px] text-slate-600 font-medium leading-tight">Registration Number: 201505088M</p>
             <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-600 font-medium pt-1.5 gap-2 border-t border-slate-100">
