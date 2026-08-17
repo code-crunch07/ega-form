@@ -191,7 +191,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       {/* White Theme Admin Sidebar */}
       <aside 
         className={cn(
-          "bg-white text-slate-900 flex-shrink-0 flex flex-col z-20 transition-all duration-300 border-r border-slate-200",
+          "bg-white text-slate-900 flex-shrink-0 flex flex-col z-20 transition-all duration-300 border-none",
           isCollapsed ? "w-[76px]" : "w-[280px]"
         )}
       >
@@ -271,7 +271,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </aside>
       
       {/* Main Content Pane */}
-      <main className="flex-1 flex flex-col h-screen overflow-auto relative bg-[#f3f3fa]">
+      <main className="flex-1 flex flex-col h-screen overflow-auto relative bg-[#f2f2f282]">
         {/* Premium Header */}
         <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-200/80 flex-shrink-0 z-10 sticky top-0">
           {/* Left Side: Hamburger & Dynamic Title */}
