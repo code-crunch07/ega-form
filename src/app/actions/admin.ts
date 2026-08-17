@@ -675,13 +675,13 @@ export async function searchAdminRecords(query: string) {
         where: {
           OR: [
             { appNumber: { contains: q, mode: "insensitive" } },
-            { applicantName: { contains: q, mode: "insensitive" } },
-            { applicantEmail: { contains: q, mode: "insensitive" } },
             { programmeId: { contains: q, mode: "insensitive" } },
+            { user: { name: { contains: q, mode: "insensitive" } } },
+            { user: { email: { contains: q, mode: "insensitive" } } },
           ]
         },
         take: 5,
-        select: { id: true, appNumber: true, applicantName: true, status: true, programmeId: true }
+        include: { user: { include: { profile: true } } }
       }),
       prisma.user.findMany({
         where: {

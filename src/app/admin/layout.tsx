@@ -496,23 +496,26 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     <div>
                       <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Applications</p>
                       <div className="space-y-1">
-                        {searchResults.applications.map((app) => (
-                          <Link
-                            key={app.id}
-                            href={`/admin/applications/${app.id}`}
-                            onClick={() => setIsSearchOpen(false)}
-                            className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors group"
-                          >
-                            <div className="flex items-center gap-3">
-                              <FileCheck size={18} className="text-[#252D65]" />
-                              <div>
-                                <span className="font-semibold text-slate-900 dark:text-white text-sm">{app.appNumber || app.id}</span>
-                                <span className="text-xs text-slate-500 ml-2">({app.applicantName || "Applicant"})</span>
+                        {searchResults.applications.map((app) => {
+                          const name = app.user?.profile ? `${app.user.profile.firstName || ''} ${app.user.profile.lastName || ''}`.trim() : app.user?.name || "Applicant";
+                          return (
+                            <Link
+                              key={app.id}
+                              href={`/admin/applications/${app.id}`}
+                              onClick={() => setIsSearchOpen(false)}
+                              className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-neutral-800 transition-colors group"
+                            >
+                              <div className="flex items-center gap-3">
+                                <FileCheck size={18} className="text-[#252D65]" />
+                                <div>
+                                  <span className="font-semibold text-slate-900 dark:text-white text-sm">{app.appNumber || app.id}</span>
+                                  <span className="text-xs text-slate-500 ml-2">({name})</span>
+                                </div>
                               </div>
-                            </div>
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">View &rarr;</span>
-                          </Link>
-                        ))}
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 font-medium">View &rarr;</span>
+                            </Link>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
