@@ -193,7 +193,7 @@ export function DashboardShell({
     <div className="flex min-h-screen bg-[#f3f3fa] font-jost selection:bg-[#252D65]/20">
       {/* Desktop Sidebar */}
       <aside className="z-20 hidden w-[270px] shrink-0 flex-col bg-white text-slate-900 md:flex">
-        <div className="flex h-16 items-center px-5 bg-white">
+        <div className="flex h-16 items-center border-b border-slate-200 px-5 bg-white">
           <Logo href="/dashboard" iconSize={125} />
         </div>
 

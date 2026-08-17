@@ -196,7 +196,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         )}
       >
         {/* Sidebar Branded Logo header */}
-        <div className="h-16 flex items-center justify-center px-4 border-b border-[#252D65]/40 flex-shrink-0 overflow-hidden">
+        <div className="h-16 flex items-center justify-center px-4 border-b border-[#252D65]/80 flex-shrink-0 overflow-hidden">
           <Logo href="/admin" iconSize={isCollapsed ? 32 : 120} className={cn("transition-all", isCollapsed ? "p-1 rounded-lg bg-white/5" : "")} />
         </div>
         
