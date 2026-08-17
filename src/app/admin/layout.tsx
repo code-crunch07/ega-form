@@ -188,24 +188,24 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen bg-[#f3f3fa] dark:bg-[#0a0a0a] font-jost selection:bg-[#252D65]/20">
       
-      {/* Deep Navy Theme Sidebar */}
+      {/* White Theme Admin Sidebar */}
       <aside 
         className={cn(
-          "bg-[#1c224e] text-white flex-shrink-0 flex flex-col z-20 transition-all duration-300 border-r border-[#252D65]/40",
+          "bg-white text-slate-900 flex-shrink-0 flex flex-col z-20 transition-all duration-300 border-r border-slate-200",
           isCollapsed ? "w-[76px]" : "w-[280px]"
         )}
       >
-        {/* Sidebar Branded Logo header */}
-        <div className="h-16 flex items-center justify-center px-4 border-b border-[#252D65]/80 flex-shrink-0 overflow-hidden">
-          <Logo href="/admin" iconSize={isCollapsed ? 32 : 120} className={cn("transition-all", isCollapsed ? "p-1 rounded-lg bg-white/5" : "")} />
+        {/* Sidebar Branded Logo Header (Left Aligned) */}
+        <div className="h-16 flex items-center justify-start px-5 border-b border-slate-200 flex-shrink-0 overflow-hidden bg-white">
+          <Logo href="/admin" iconSize={isCollapsed ? 32 : 125} className={cn("transition-all", isCollapsed ? "p-1 rounded-lg" : "")} />
         </div>
         
         {/* Navigation list */}
-        <div className="flex-1 overflow-y-auto py-4 px-3 no-scrollbar space-y-5 text-left">
+        <div className="flex-1 overflow-y-auto py-4 px-3.5 no-scrollbar space-y-5 text-left bg-white">
           {SIDEBAR_GROUPS.map((group, idx) => (
             <div key={idx} className="space-y-1">
               {group.title && !isCollapsed && (
-                <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                <p className="px-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">
                   {group.title}
                 </p>
               )}
@@ -221,8 +221,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative text-[14px] font-medium",
                       isActive 
-                        ? "bg-[#252D65] text-white font-bold shadow-md shadow-[#252D65]/30 ring-1 ring-white/10" 
-                        : "text-slate-300 hover:bg-white/10 hover:text-white"
+                        ? "bg-[#252D65] text-white font-bold shadow-md shadow-[#252D65]/25" 
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                     )}
                     title={isCollapsed ? link.label : undefined}
                   >
@@ -230,14 +230,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                       size={18} 
                       className={cn(
                         "flex-shrink-0 transition-transform duration-200 group-hover:scale-110", 
-                        isActive ? "text-white" : "text-slate-400 group-hover:text-white"
+                        isActive ? "text-white" : "text-slate-400 group-hover:text-slate-900"
                       )} 
                     />
                     {!isCollapsed && (
                       <span className="flex-1 text-[14px] truncate">{link.label}</span>
                     )}
                     {link.badge !== undefined && !isCollapsed && (
-                      <span className="h-5 px-1.5 rounded-full bg-[#252D65] text-white text-[11px] font-bold flex items-center justify-center min-w-5 border border-white/20">
+                      <span className="h-5 px-1.5 rounded-full bg-[#252D65] text-white text-[11px] font-bold flex items-center justify-center min-w-5">
                         {link.href === "/admin/notifications" 
                           ? badgeCounts.notifications 
                           : link.href === "/admin/messages" 
@@ -253,10 +253,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </div>
 
         {/* Sidebar Bottom Collapse Button */}
-        <div className="p-3 border-t border-[#252D65]/40 flex-shrink-0">
+        <div className="p-3 border-t border-slate-200 flex-shrink-0 bg-white">
           <button 
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl hover:bg-white/10 text-slate-300 hover:text-white transition-all duration-200 text-[14px] font-medium"
+            className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-all duration-200 text-[14px] font-medium"
           >
             {isCollapsed ? (
               <ChevronRight size={18} />
