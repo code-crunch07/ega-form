@@ -228,12 +228,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen bg-[#f3f3fa] dark:bg-[#0a0a0a] font-jost selection:bg-[#252D65]/20">
+    <div className="flex min-h-screen bg-[#f3f3fa] dark:bg-[#0a0a0a] font-jost selection:bg-[#252D65]/20 print:bg-white print:block print:p-0 print:m-0">
       
-      {/* White Theme Admin Sidebar */}
+      {/* White Theme Admin Sidebar (Hidden on Print) */}
       <aside 
         className={cn(
-          "bg-white text-slate-900 flex-shrink-0 flex flex-col z-20 transition-all duration-300 border-none",
+          "bg-white text-slate-900 flex-shrink-0 flex flex-col z-20 transition-all duration-300 border-none print:hidden",
           isCollapsed ? "w-[76px]" : "w-[280px]"
         )}
       >
@@ -313,9 +313,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </aside>
       
       {/* Main Content Pane */}
-      <main className="flex-1 flex flex-col h-screen overflow-auto relative bg-[#f2f2f282]">
-        {/* Premium Header */}
-        <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-200/80 flex-shrink-0 z-10 sticky top-0">
+      <main className="flex-1 flex flex-col h-screen overflow-auto relative bg-[#f2f2f282] print:bg-white print:h-auto print:overflow-visible print:p-0 print:m-0 print:block">
+        {/* Premium Header (Hidden on Print) */}
+        <header className="h-16 flex items-center justify-between px-6 bg-white border-b border-slate-200/80 flex-shrink-0 z-10 sticky top-0 print:hidden">
           {/* Left Side: Hamburger & Dynamic Title */}
           <div className="flex items-center gap-6">
             <button 
@@ -430,8 +430,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </header>
         
         {/* Scrollable Page Content */}
-        <div className="flex-1 overflow-auto p-4 sm:p-6 md:p-8 z-10 bg-[#f2f2f282]">
-          <div className="max-w-[1600px] mx-auto">
+        <div className="flex-1 overflow-auto p-4 sm:p-6 md:p-8 z-10 bg-[#f2f2f282] print:bg-white print:p-0 print:m-0 print:overflow-visible print:block">
+          <div className="max-w-[1600px] mx-auto print:max-w-none print:w-full print:p-0 print:m-0">
             {children}
           </div>
         </div>

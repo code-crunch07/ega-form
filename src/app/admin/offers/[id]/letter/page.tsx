@@ -62,7 +62,7 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
     : "S$160.00";
 
   return (
-    <div className="min-h-screen bg-slate-200 dark:bg-neutral-950 p-4 sm:p-8 font-sans antialiased text-slate-800">
+    <div className="min-h-screen bg-slate-200 dark:bg-neutral-950 p-4 sm:p-8 font-sans antialiased text-slate-800 print:bg-white print:p-0 print:m-0 print:block">
       
       {/* Top Action Bar (Print / Back) */}
       <div className="max-w-4xl mx-auto mb-6 flex items-center justify-between print:hidden">
