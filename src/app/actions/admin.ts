@@ -275,31 +275,38 @@ export async function scheduleInterview(formData: FormData) {
 
 export async function generateOffer(formData: FormData) {
   const applicationId = formData.get("applicationId") as string;
-  const type = formData.get("type") as string;
-  const documentUrl = formData.get("documentUrl") as string || "/offers/sample-offer.pdf";
+  const type = formData.get("type") as string || "Unconditional";
 
-  if (!applicationId || !type) {
-    return { error: "Application and Offer Type are required." };
+  if (!applicationId) {
+    return { error: "Application is required." };
   }
 
   try {
-    await prisma.offer.create({
+    // 1. Create Offer record
+    const offer = await prisma.offer.create({
       data: {
         applicationId,
         type,
-        documentUrl,
+        documentUrl: `/admin/offers/temp`, // Temp placeholder
         status: "Issued"
       }
     });
 
-    // Update application status based on type
+    // Update documentUrl to point directly to the viewable offer letter route
+    const documentUrl = `/admin/offers/${offer.id}/letter`;
+    await prisma.offer.update({
+      where: { id: offer.id },
+      data: { documentUrl }
+    });
+
+    // 2. Update application status based on type
     const newStatus = type === "Rejection" ? "Rejected" : "Offered";
     await prisma.application.update({
       where: { id: applicationId },
       data: { status: newStatus }
     });
 
-    // Send email notification to applicant
+    // 3. Automated Email Notification
     const app = await prisma.application.findUnique({
       where: { id: applicationId },
       include: { user: { include: { profile: true } } }
@@ -311,33 +318,16 @@ export async function generateOffer(formData: FormData) {
         : app.user.name || "Applicant";
 
       const isRejection = type === "Rejection";
-      const templateTriggerKeyword = isRejection ? "Rejection" : "Offer";
+      const subject = isRejection 
+        ? "Application Update - Educare Global Academy" 
+        : "🎉 Official Letter of Offer - Educare Global Academy";
 
-      const template = await prisma.template.findFirst({
-        where: { trigger: { contains: templateTriggerKeyword } }
-      });
-
-      let subject = isRejection 
-        ? "Application Update - EGA University" 
-        : "Official Offer of Admission - EGA University";
-
-      let content = isRejection
+      const content = isRejection
         ? `<p>Dear ${applicantName},</p>
-           <p>Thank you for your interest in EGA University. After reviewing your application, we regret to inform you that we are unable to offer you admission at this time.</p>
-           <p>We wish you all the best in your future endeavors.</p>
-           <p>Best regards,<br/>Admissions Office</p>`
+           <p>Thank you for your application to Educare Global Academy. After reviewing your credentials, we regret to inform you that we are unable to offer admission at this time.</p>`
         : `<p>Dear ${applicantName},</p>
-           <p>Congratulations! We are delighted to offer you admission to EGA University as a student.</p>
-           <p>Your official <strong>${type} Offer</strong> has been generated and is ready for your signature. Please log in to your portal to review and accept the offer.</p>
-           <p>Best regards,<br/>Admissions Team</p>`;
-
-      if (template) {
-        if (template.subject) subject = template.subject;
-        content = template.content
-          .replace(/\{\{name\}\}/g, applicantName)
-          .replace(/\{\{type\}\}/g, type)
-          .replace(/\{\{offerType\}\}/g, type);
-      }
+           <p>Congratulations! We are delighted to issue your official <strong>${type} Letter of Offer</strong> for <strong>${app.programmeLevel}</strong> at <strong>${app.school}</strong>.</p>
+           <p>Your official offer letter is generated and ready. Log in to your EGA Student Portal to review your offer letter.</p>`;
 
       await sendEmail({
         to: app.user.email,
@@ -350,7 +340,7 @@ export async function generateOffer(formData: FormData) {
     revalidatePath("/admin/offers");
     revalidatePath("/admin/applications");
     revalidatePath(`/admin/applications/${applicationId}`);
-    return { success: true };
+    return { success: true, offerId: offer.id, documentUrl };
   } catch (error: any) {
     return { error: error.message || "Failed to generate offer." };
   }

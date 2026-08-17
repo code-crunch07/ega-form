@@ -342,7 +342,7 @@ export function DashboardShell({
         {!isWizard && (
           <Link
             href="/dashboard/applications/new"
-            className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#27295B] text-white shadow-lg shadow-[#27295B]/30 transition-transform hover:scale-105 hover:bg-[#1E2045] sm:hidden"
+            className="fixed bottom-6 right-6 zE-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#27295B] text-white shadow-lg shadow-[#27295B]/30 transition-transform hover:scale-105 hover:bg-[#1E2045] sm:hidden"
             aria-label="Start new application"
           >
             <PlusCircle size={24} />
