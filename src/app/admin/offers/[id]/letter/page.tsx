@@ -9,18 +9,23 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
   const resolvedParams = await params;
   const offerId = resolvedParams.id;
 
-  const offer = await prisma.offer.findUnique({
-    where: { id: offerId },
-    include: {
-      application: {
-        include: {
-          user: {
-            include: { profile: true }
+  const [offer, logoSetting] = await Promise.all([
+    prisma.offer.findUnique({
+      where: { id: offerId },
+      include: {
+        application: {
+          include: {
+            user: {
+              include: { profile: true }
+            }
           }
         }
       }
-    }
-  });
+    }),
+    prisma.systemSetting.findUnique({
+      where: { key: "INSTITUTION_LOGO" }
+    })
+  ]);
 
   if (!offer || !offer.application) {
     notFound();
@@ -28,6 +33,7 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
 
   const app = offer.application;
   const profile = app.user?.profile;
+  const logoUrl = logoSetting?.value || null;
 
   // Dynamic Data Extraction
   const issueDate = new Date(offer.createdAt).toLocaleDateString('en-GB', {
@@ -87,16 +93,20 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
           <div>
             {/* Page 1 Header Logo */}
             <div className="flex justify-end pb-8">
-              <div className="text-right">
-                <div className="flex items-center justify-end gap-2 text-[#BE1E2D]">
-                  <div className="w-9 h-9 rounded-full border-4 border-[#BE1E2D] flex items-center justify-center font-black text-xs font-mono">
-                    ∞
+              {logoUrl ? (
+                <img src={logoUrl} alt="Educare Global Academy" className="h-16 w-auto max-w-[220px] object-contain" />
+              ) : (
+                <div className="text-right">
+                  <div className="flex items-center justify-end gap-2 text-[#BE1E2D]">
+                    <div className="w-9 h-9 rounded-full border-4 border-[#BE1E2D] flex items-center justify-center font-black text-xs font-mono">
+                      ∞
+                    </div>
+                    <span className="font-extrabold text-xl tracking-tight text-[#252D65]">EDUCARE</span>
                   </div>
-                  <span className="font-extrabold text-xl tracking-tight text-[#252D65]">EDUCARE</span>
+                  <p className="text-[9px] font-bold tracking-widest text-[#BE1E2D] uppercase font-mono">GLOBAL ACADEMY</p>
+                  <p className="text-[8px] text-slate-400 font-serif italic">shaping destinies</p>
                 </div>
-                <p className="text-[9px] font-bold tracking-widest text-[#BE1E2D] uppercase font-mono">GLOBAL ACADEMY</p>
-                <p className="text-[8px] text-slate-400 font-serif italic">shaping destinies</p>
-              </div>
+              )}
             </div>
 
             {/* Date & Applicant Details */}
@@ -169,27 +179,77 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
                 </p>
               </div>
 
-              {/* Section 4: Verification of Documents */}
-              <div className="space-y-2 pt-3 text-xs sm:text-sm">
-                <h3 className="font-extrabold text-slate-900 uppercase">4. VERIFICATION OF DOCUMENTS</h3>
-                <p className="leading-relaxed text-slate-700">
-                  It is the EGA&apos;s policy that all supporting documents submitted in your application such as, Identification document (NRIC/Passport), academic qualifications and etc., must be verified by EGA.
-                </p>
-              </div>
-
             </div>
           </div>
 
-          {/* Page 1 Footer */}
-          <div className="pt-8 border-t border-slate-200 text-[10px] text-slate-600 space-y-1">
-            <div className="flex justify-between font-semibold">
-              <span>Educare Global Academy Pte Ltd</span>
-              <span>Registration Number: 201505088M</span>
+          {/* Body Content */}
+          <div className="space-y-4 text-xs sm:text-sm font-medium text-slate-900 leading-relaxed pt-6">
+            <p className="font-bold text-slate-900">Dear Applicant,</p>
+
+            <div className="space-y-1">
+              <h2 className="text-base font-black text-[#252D65] uppercase tracking-tight">
+                {programmeName} {studyMode.toUpperCase()} {intake.toUpperCase()}
+              </h2>
+              <p className="font-bold text-xs uppercase text-slate-700">
+                AWARDED BY {schoolName}
+              </p>
             </div>
-            <div className="flex flex-wrap justify-between text-slate-500 pt-0.5">
-              <span>📍 133 New Bridge Road, Chinatown Point #25-10, Singapore 059413</span>
-              <span>📞 (65) 6908 5994 / (65) 6908 5984</span>
-              <span>🌐 www.ega.edu.sg</span>
+
+            <p className="text-justify leading-relaxed">
+              We are pleased to inform you that your application for admission to Educare Global Academy (EGA) has been successful. On behalf of the Academic Board and Management of EGA, we take great pleasure in offering you a place in the above-mentioned programme, subject to your acceptance of the terms and conditions outlined in this letter and the Student Contract.
+            </p>
+
+            {/* Offer Details Table */}
+            <div className="border border-slate-300 rounded-xs overflow-hidden my-4">
+              <table className="w-full text-xs text-left">
+                <tbody>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <td className="p-2.5 font-bold w-1/3 border-r border-slate-200">Programme Applied</td>
+                    <td className="p-2.5 font-bold text-[#252D65]">{programmeName}</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-2.5 font-bold border-r border-slate-200">Awarding Body</td>
+                    <td className="p-2.5">{schoolName}</td>
+                  </tr>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <td className="p-2.5 font-bold border-r border-slate-200">Mode of Study</td>
+                    <td className="p-2.5">{studyMode}</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-2.5 font-bold border-r border-slate-200">Course Intake / Commencement</td>
+                    <td className="p-2.5">{intake} ({commencementDate})</td>
+                  </tr>
+                  <tr className="bg-slate-50">
+                    <td className="p-2.5 font-bold border-r border-slate-200">Application Processing Fee</td>
+                    <td className="p-2.5 font-bold text-[#BE1E2D]">{feeAmount} (Non-Refundable)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Important Terms */}
+            <div className="space-y-2 text-xs">
+              <h3 className="font-extrabold text-slate-900 uppercase">1. ACCEPTANCE OF OFFER</h3>
+              <p>
+                To accept this offer, please sign and return the Offer Acceptance Form along with the non-refundable application fee payment receipt to the Admissions Office within 14 days from the date of this letter.
+              </p>
+
+              <h3 className="font-extrabold text-slate-900 uppercase pt-2">2. FEE PROTECTION SCHEME (FPS) & INSURANCE</h3>
+              <p>
+                In accordance with Committee for Private Education (CPE) requirements, EGA has implemented Fee Protection Scheme (FPS) to protect the paid course fees of both local and international students.
+              </p>
+            </div>
+          </div>
+
+          {/* Page 1 Legal Footer */}
+          <div className="border-t border-slate-200 pt-4 mt-8 flex items-center justify-between text-[9px] text-slate-500 font-mono">
+            <div>
+              <p className="font-bold text-slate-700">Educare Global Academy Pte Ltd</p>
+              <p>CPE Registration No: 201505088M | Period of Registration: 2022 to 2026</p>
+            </div>
+            <div className="text-right">
+              <p>133 New Bridge Road, #25-10 Chinatown Point, Singapore 059413</p>
+              <p>Tel: +65 6908 5994 | Web: www.ega.edu.sg</p>
             </div>
           </div>
         </div>
@@ -208,16 +268,20 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
           <div>
             {/* Page 2 Header Logo */}
             <div className="flex justify-end pb-8">
-              <div className="text-right">
-                <div className="flex items-center justify-end gap-2 text-[#BE1E2D]">
-                  <div className="w-9 h-9 rounded-full border-4 border-[#BE1E2D] flex items-center justify-center font-black text-xs font-mono">
-                    ∞
+              {logoUrl ? (
+                <img src={logoUrl} alt="Educare Global Academy" className="h-16 w-auto max-w-[220px] object-contain" />
+              ) : (
+                <div className="text-right">
+                  <div className="flex items-center justify-end gap-2 text-[#BE1E2D]">
+                    <div className="w-9 h-9 rounded-full border-4 border-[#BE1E2D] flex items-center justify-center font-black text-xs font-mono">
+                      ∞
+                    </div>
+                    <span className="font-extrabold text-xl tracking-tight text-[#252D65]">EDUCARE</span>
                   </div>
-                  <span className="font-extrabold text-xl tracking-tight text-[#252D65]">EDUCARE</span>
+                  <p className="text-[9px] font-bold tracking-widest text-[#BE1E2D] uppercase font-mono">GLOBAL ACADEMY</p>
+                  <p className="text-[8px] text-slate-400 font-serif italic">shaping destinies</p>
                 </div>
-                <p className="text-[9px] font-bold tracking-widest text-[#BE1E2D] uppercase font-mono">GLOBAL ACADEMY</p>
-                <p className="text-[8px] text-slate-400 font-serif italic">shaping destinies</p>
-              </div>
+              )}
             </div>
 
             <div className="space-y-4 text-xs sm:text-sm font-medium text-slate-900 leading-snug">
