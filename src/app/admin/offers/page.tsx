@@ -9,7 +9,7 @@ import { Mail, FileSignature, FilePlus2 } from "lucide-react";
 import { GenerateOfferDialog } from "./generate-offer-dialog";
 
 export default async function AdminOffersPage() {
-  const [offers, applications] = await Promise.all([
+  const [offers, applications, programmes] = await Promise.all([
     prisma.offer.findMany({
       include: {
         application: {
@@ -29,8 +29,11 @@ export default async function AdminOffersPage() {
         }
       },
       orderBy: { createdAt: 'desc' }
-    })
+    }),
+    prisma.programme.findMany({ select: { id: true, name: true, code: true } })
   ]);
+
+  const programmeMap = new Map(programmes.map(p => [p.id, p.name]));
 
   const applicationOptions = applications.map(app => ({
     id: app.id,
@@ -75,7 +78,11 @@ export default async function AdminOffersPage() {
                   ? `${offer.application.user.profile.firstName || ''} ${offer.application.user.profile.lastName || ''}`.trim()
                   : offer.application?.user?.name || "Unknown";
                   
-                const programmeName = offer.application?.programmeId || "Not Selected"; // fallback
+                const programmeName = (offer.application?.programmeId && programmeMap.get(offer.application.programmeId)) 
+                  || offer.application?.programmeLevel 
+                  || "Higher Diploma in Business";
+
+                const letterUrl = offer.documentUrl || `/admin/offers/${offer.id}/letter`;
 
                 return (
                   <TableRow key={offer.id}>
@@ -95,13 +102,9 @@ export default async function AdminOffersPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        {offer.documentUrl ? (
-                          <a href={offer.documentUrl} target="_blank" rel="noopener noreferrer">
-                            <Button variant="ghost" size="sm" className="h-8 text-neutral-500 gap-2"><FileSignature size={14} /> PDF</Button>
-                          </a>
-                        ) : (
-                          <span className="text-neutral-400 text-xs mt-2 mr-2">No Doc</span>
-                        )}
+                        <a href={letterUrl} target="_blank" rel="noopener noreferrer">
+                          <Button variant="ghost" size="sm" className="h-8 text-neutral-500 gap-2"><FileSignature size={14} /> PDF</Button>
+                        </a>
                         <Button variant="ghost" size="sm" className="h-8 text-neutral-500 gap-2"><Mail size={14} /> Resend</Button>
                       </div>
                     </TableCell>

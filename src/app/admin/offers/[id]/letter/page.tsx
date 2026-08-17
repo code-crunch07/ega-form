@@ -1,8 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Printer, ArrowLeft, Building2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Building2, ExternalLink } from "lucide-react";
 import Link from "next/link";
+import { PrintButton } from "./print-button";
 
 export default async function OfferLetterPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -66,12 +67,7 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
         </Link>
 
         <div className="flex items-center gap-3">
-          <Button 
-            onClick={() => {}} 
-            className="gap-2 bg-[#252D65] hover:bg-[#1C224E] text-white font-bold text-xs shadow-md"
-          >
-            <Printer size={16} /> Print / Save as PDF
-          </Button>
+          <PrintButton />
         </div>
       </div>
 
