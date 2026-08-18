@@ -190,7 +190,7 @@ export function DashboardShell({
   }, [mobileOpen]);
 
   return (
-    <div className="flex min-h-screen bg-[#f3f3fa] font-jost selection:bg-[#252D65]/20">
+    <div className="flex min-h-screen bg-[#f1f1f1] font-jost selection:bg-[#252D65]/20">
       {/* Desktop Sidebar */}
       <aside className="z-20 hidden w-[270px] shrink-0 flex-col bg-white text-slate-900 md:flex">
         <div className="flex h-16 items-center border-b border-slate-200 px-5 bg-white">
@@ -230,7 +230,7 @@ export function DashboardShell({
       )}
 
       {/* Main Container */}
-      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
+      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#f1f1f1]">
         
         {/* Top Header */}
         <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 backdrop-blur-md">
@@ -333,7 +333,7 @@ export function DashboardShell({
         </header>
 
         {/* Scrollable Main Workspace */}
-        <div className="no-scrollbar relative flex-1 overflow-auto p-6 sm:p-8 md:p-10 lg:p-12 bg-[#f3f3fa]">
+        <div className="no-scrollbar relative flex-1 overflow-auto p-6 sm:p-8 md:p-10 lg:p-12 bg-[#f1f1f1]">
           <div className="mx-auto w-full max-w-[1180px]">
             {children}
           </div>
