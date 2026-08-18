@@ -67,6 +67,59 @@ export async function createProgramme(formData: FormData) {
   }
 }
 
+export async function updateProgramme(id: string, formData: FormData) {
+  const code = formData.get("code") as string;
+  const name = formData.get("name") as string;
+  const schoolId = formData.get("schoolId") as string;
+  const level = formData.get("level") as string;
+  const duration = formData.get("duration") as string;
+  const creditsStr = formData.get("credits") as string;
+  const feeStr = formData.get("applicationFee") as string;
+  const status = formData.get("status") as string || "Active";
+
+  if (!id || !code || !name) {
+    return { error: "ID, Code, and Name are required." };
+  }
+
+  try {
+    await prisma.programme.update({
+      where: { id },
+      data: {
+        code,
+        name,
+        schoolId: schoolId || undefined,
+        level: level || "Diploma",
+        duration: duration || "12 Months",
+        credits: parseInt(creditsStr) || 0,
+        applicationFee: parseFloat(feeStr) || 0,
+        status
+      }
+    });
+
+    revalidatePath("/admin/programmes");
+    revalidatePath("/admin/courses");
+    revalidatePath("/dashboard/applications/new");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update programme." };
+  }
+}
+
+export async function deleteProgramme(id: string) {
+  try {
+    await prisma.programme.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/programmes");
+    revalidatePath("/admin/courses");
+    revalidatePath("/dashboard/applications/new");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete programme." };
+  }
+}
+
 export async function createIntake(formData: FormData) {
   const name = formData.get("name") as string;
   const openDateStr = formData.get("openDate") as string;
