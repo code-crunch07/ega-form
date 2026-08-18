@@ -3,13 +3,43 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Filter, MoreHorizontal, Eye, RotateCcw } from "lucide-react";
+import { Eye, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { RefundsFilters } from "./refunds-filters";
+import { RefundActionsDropdown } from "./refund-actions-dropdown";
 
-export default async function AdminRefundsPage() {
+export default async function AdminRefundsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string, status?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const search = resolvedSearchParams?.search;
+  const status = resolvedSearchParams?.status;
+
+  const whereClause: any = {};
+
+  if (search) {
+    whereClause.OR = [
+      { id: { contains: search, mode: "insensitive" } },
+      { invoiceNumber: { contains: search, mode: "insensitive" } },
+      { reason: { contains: search, mode: "insensitive" } },
+      { details: { contains: search, mode: "insensitive" } },
+      { application: { appNumber: { contains: search, mode: "insensitive" } } },
+      { application: { user: { email: { contains: search, mode: "insensitive" } } } },
+      { application: { user: { name: { contains: search, mode: "insensitive" } } } },
+      { application: { user: { profile: { firstName: { contains: search, mode: "insensitive" } } } } },
+      { application: { user: { profile: { lastName: { contains: search, mode: "insensitive" } } } } },
+    ];
+  }
+
+  if (status && status !== "all") {
+    whereClause.status = status;
+  }
+
   let refunds = await prisma.refund.findMany({
+    where: whereClause,
     include: {
       application: {
         include: {
@@ -22,7 +52,7 @@ export default async function AdminRefundsPage() {
     orderBy: { createdAt: 'desc' }
   });
 
-  if (refunds.length === 0) {
+  if (refunds.length === 0 && !search && !status) {
     const sampleApp = await prisma.application.findFirst();
     if (sampleApp) {
       await prisma.refund.createMany({
@@ -48,44 +78,34 @@ export default async function AdminRefundsPage() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 font-jost text-left">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">Refund Requests</h1>
-          <p className="text-neutral-500 mt-1.5 dark:text-neutral-400">Manage and process applicant refund requests.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-blue-500 transition-colors" size={18} />
-            <Input 
-              placeholder="Search refunds..." 
-              className="pl-10 h-10 w-full md:w-[280px] rounded-full border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm focus-visible:ring-1 focus-visible:ring-blue-500 transition-all" 
-            />
-          </div>
-          <Button variant="outline" className="h-10 rounded-full px-4 border-neutral-200 dark:border-neutral-800 shadow-sm hidden md:flex items-center gap-2">
-            <Filter size={16} className="text-neutral-500" />
-            <span>Filter</span>
-          </Button>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading">Refund Requests</h1>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Manage and process applicant refund requests, adjustments, and claims.</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-neutral-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 shadow-sm overflow-hidden">
+      <RefundsFilters />
+
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-neutral-50/80 dark:bg-neutral-900 hover:bg-transparent">
-              <TableHead className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-neutral-500">Refund ID</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Applicant / Invoice</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Amount</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Request Date</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Status</TableHead>
-              <TableHead className="py-4 text-right px-6 text-xs font-semibold uppercase tracking-wider text-neutral-500">Actions</TableHead>
+            <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
+              <TableHead className="py-4 px-6 font-bold text-slate-700 w-[180px]">Refund ID</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Applicant / Invoice</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Amount</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Reason</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Request Date</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Status</TableHead>
+              <TableHead className="py-4 text-right px-6 font-bold text-slate-700 w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {refunds.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-24 text-neutral-500">
-                  No refund requests found in the database.
+                <TableCell colSpan={7} className="text-center h-32 text-slate-400 font-medium">
+                  No refund requests found matching the search / filter criteria.
                 </TableCell>
               </TableRow>
             ) : (
@@ -95,42 +115,58 @@ export default async function AdminRefundsPage() {
                   : ref.application?.user?.name || "Unknown Applicant";
 
                 return (
-                  <TableRow key={ref.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 transition-colors group">
+                  <TableRow key={ref.id} className="hover:bg-slate-50/70 transition-colors border-b border-slate-100 group">
                     <TableCell className="py-3 px-6">
-                      <Link href={`/admin/refunds/${ref.id}`} className="font-mono font-bold text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                        {ref.id.toUpperCase()}
+                      <Link href={`/admin/refunds/${ref.id}`} className="font-mono font-bold text-xs text-[#252D65] hover:text-[#1C224E] bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
+                        {ref.id.toUpperCase().slice(0, 16)}...
                       </Link>
                     </TableCell>
                     <TableCell className="py-3">
-                      <p className="font-bold text-sm text-neutral-800 dark:text-neutral-200">{applicantName}</p>
-                      <p className="text-xs text-neutral-500 mt-0.5 font-mono">{ref.invoiceNumber}</p>
+                      <p className="font-bold text-xs text-slate-900">{applicantName}</p>
+                      <p className="text-[11px] text-slate-400 font-mono">{ref.invoiceNumber}</p>
                     </TableCell>
-                    <TableCell className="py-3 font-semibold text-neutral-800 dark:text-neutral-200">
+                    <TableCell className="py-3 font-bold text-xs text-slate-900">
                       ${ref.amount.toFixed(2)}
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-sm text-neutral-600 dark:text-neutral-400">{new Date(ref.createdAt).toLocaleDateString()}</span>
+                      <p className="text-xs font-semibold text-slate-700">{ref.reason || "Fee Refund"}</p>
+                    </TableCell>
+                    <TableCell className="py-3 text-xs text-slate-500 font-medium">
+                      {new Date(ref.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </TableCell>
                     <TableCell className="py-3">
-                      {ref.status === "Approved" && <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/50 shadow-sm px-2.5 py-0.5">Approved</Badge>}
-                      {ref.status === "Pending" && <Badge variant="outline" className="bg-amber-50 text-amber-700 hover:bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/50 shadow-sm px-2.5 py-0.5">Pending Review</Badge>}
-                      {ref.status === "Rejected" && <Badge variant="destructive" className="shadow-sm px-2.5 py-0.5">Rejected</Badge>}
+                      {ref.status === "Approved" && (
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[11px] font-semibold flex w-fit items-center gap-1.5 px-2 py-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                          Approved
+                        </Badge>
+                      )}
+                      {ref.status === "Pending" && (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[11px] font-semibold flex w-fit items-center gap-1.5 px-2 py-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                          Pending Review
+                        </Badge>
+                      )}
+                      {ref.status === "Rejected" && (
+                        <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 text-[11px] font-semibold flex w-fit items-center gap-1.5 px-2 py-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                          Rejected
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="py-3 px-6 text-right">
-                      <div className="flex justify-end items-center gap-1.5">
-                        {ref.status === "Pending" && (
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg" title="Process Refund">
-                            <RotateCcw size={16} />
-                          </Button>
-                        )}
-                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
+                      <div className="flex justify-end items-center gap-1">
+                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-[#252D65] hover:bg-slate-100 rounded-lg" title="View Case">
                           <Link href={`/admin/refunds/${ref.id}`}>
                             <Eye size={16} />
                           </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-neutral-900 dark:hover:text-white rounded-lg">
-                          <MoreHorizontal size={16} />
-                        </Button>
+                        <RefundActionsDropdown refund={{
+                          id: ref.id,
+                          invoiceNumber: ref.invoiceNumber,
+                          status: ref.status,
+                          applicationId: ref.applicationId
+                        }} />
                       </div>
                     </TableCell>
                   </TableRow>

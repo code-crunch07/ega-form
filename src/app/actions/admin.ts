@@ -818,7 +818,7 @@ export async function getSidebarBadgeCounts() {
   }
 }
 
-export async function updateRefundStatus(id: string, status: "Approved" | "Rejected") {
+export async function updateRefundStatus(id: string, status: "Approved" | "Rejected" | "Pending") {
   try {
     await prisma.refund.update({
       where: { id },
@@ -830,6 +830,19 @@ export async function updateRefundStatus(id: string, status: "Approved" | "Rejec
     return { success: true };
   } catch (error: any) {
     return { error: error.message || "Failed to update refund status." };
+  }
+}
+
+export async function deleteRefund(id: string) {
+  try {
+    await prisma.refund.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/refunds");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete refund request." };
   }
 }
 
