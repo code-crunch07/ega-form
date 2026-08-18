@@ -4,12 +4,44 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Download, ExternalLink, Filter, MoreHorizontal, Eye } from "lucide-react";
+import { Eye } from "lucide-react";
 import Link from "next/link";
+import { PaymentsFilters } from "./payments-filters";
+import { PaymentActionsDropdown } from "./payment-actions-dropdown";
 
-export default async function AdminPaymentsPage() {
+export default async function AdminPaymentsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string, status?: string, gateway?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const search = resolvedSearchParams?.search;
+  const status = resolvedSearchParams?.status;
+  const gateway = resolvedSearchParams?.gateway;
+
+  const whereClause: any = {};
+
+  if (search) {
+    whereClause.OR = [
+      { invoiceNumber: { contains: search, mode: "insensitive" } },
+      { application: { appNumber: { contains: search, mode: "insensitive" } } },
+      { application: { user: { email: { contains: search, mode: "insensitive" } } } },
+      { application: { user: { name: { contains: search, mode: "insensitive" } } } },
+      { application: { user: { profile: { firstName: { contains: search, mode: "insensitive" } } } } },
+      { application: { user: { profile: { lastName: { contains: search, mode: "insensitive" } } } } },
+    ];
+  }
+
+  if (status && status !== "all") {
+    whereClause.status = status;
+  }
+
+  if (gateway && gateway !== "all") {
+    whereClause.gateway = { contains: gateway, mode: "insensitive" };
+  }
+
   const payments = await prisma.payment.findMany({
+    where: whereClause,
     include: { 
       application: {
         include: {
@@ -22,50 +54,52 @@ export default async function AdminPaymentsPage() {
     orderBy: { createdAt: 'desc' }
   });
 
+  const exportData = payments.map((p) => {
+    const applicantName = p.application?.user?.profile 
+      ? `${p.application.user.profile.firstName || ''} ${p.application.user.profile.lastName || ''}`.trim()
+      : p.application?.user?.name || "Unknown Applicant";
+    const applicantEmail = p.application?.user?.email || "";
+
+    return {
+      invoiceNumber: p.invoiceNumber,
+      applicantName,
+      applicantEmail,
+      amount: p.amount,
+      gateway: p.gateway,
+      date: new Date(p.createdAt).toLocaleDateString('en-GB'),
+      status: p.status
+    };
+  });
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 font-jost text-left">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">Payments Ledger</h1>
-          <p className="text-neutral-500 mt-1.5 dark:text-neutral-400">Track application fees, program deposits, and invoice statuses.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-emerald-500 transition-colors" size={18} />
-            <Input 
-              placeholder="Search invoice or applicant..." 
-              className="pl-10 h-10 w-full md:w-[280px] rounded-full border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm focus-visible:ring-1 focus-visible:ring-emerald-500 transition-all" 
-            />
-          </div>
-          <Button variant="outline" className="h-10 rounded-full px-4 border-neutral-200 dark:border-neutral-800 shadow-sm hidden md:flex items-center gap-2">
-            <Filter size={16} className="text-neutral-500" />
-            <span>Filter</span>
-          </Button>
-          <Button variant="outline" className="h-10 rounded-full px-4 border-neutral-200 dark:border-neutral-800 shadow-sm flex items-center gap-2">
-            <Download size={16} className="text-neutral-500" />
-            <span>Export CSV</span>
-          </Button>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading">Payments Ledger</h1>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Track application fees, program deposits, and invoice settlement statuses.</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-neutral-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 shadow-sm overflow-hidden">
+      <PaymentsFilters paymentsData={exportData} />
+
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-neutral-50/80 dark:bg-neutral-900 hover:bg-transparent">
-              <TableHead className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-neutral-500">Invoice #</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Applicant</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Amount</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Gateway</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Date</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Status</TableHead>
-              <TableHead className="py-4 text-right px-6 text-xs font-semibold uppercase tracking-wider text-neutral-500">Actions</TableHead>
+            <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
+              <TableHead className="py-4 px-6 font-bold text-slate-700 w-[160px]">Invoice #</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Applicant</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Amount</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Gateway</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Date</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Status</TableHead>
+              <TableHead className="py-4 text-right px-6 font-bold text-slate-700 w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {payments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center h-32 text-neutral-500">
-                  No payments found in the database.
+                <TableCell colSpan={7} className="text-center h-32 text-slate-400 font-medium">
+                  No payments found matching the selected search / filter criteria.
                 </TableCell>
               </TableRow>
             ) : (
@@ -75,40 +109,69 @@ export default async function AdminPaymentsPage() {
                   : payment.application?.user?.name || "Unknown Applicant";
 
                 return (
-                  <TableRow key={payment.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 transition-colors group">
+                  <TableRow key={payment.id} className="hover:bg-slate-50/70 transition-colors border-b border-slate-100 group">
                     <TableCell className="py-3 px-6">
-                      <span className="font-mono font-bold text-sm text-neutral-700 dark:text-neutral-300 bg-slate-100 dark:bg-neutral-800 px-2 py-1 rounded-md border border-neutral-200 dark:border-neutral-700">
+                      <Link href={`/admin/payments/${payment.id}`} className="font-mono font-bold text-xs text-[#252D65] hover:text-[#1C224E] bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
                         {payment.invoiceNumber}
-                      </span>
+                      </Link>
                     </TableCell>
-                    <TableCell className="py-3 font-bold text-sm">
-                      {applicantName}
+                    <TableCell className="py-3">
+                      <div>
+                        <p className="font-bold text-xs text-slate-900">{applicantName}</p>
+                        <p className="text-[11px] text-slate-400 font-mono">{payment.application?.user?.email}</p>
+                      </div>
                     </TableCell>
-                    <TableCell className="py-3 font-semibold text-neutral-800 dark:text-neutral-200">
+                    <TableCell className="py-3 font-bold text-xs text-slate-900">
                       ${payment.amount.toFixed(2)}
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-sm text-neutral-600 dark:text-neutral-400 capitalize">{payment.gateway}</span>
+                      <span className="text-xs font-semibold text-slate-600 capitalize">{payment.gateway}</span>
+                    </TableCell>
+                    <TableCell className="py-3 text-xs text-slate-500 font-medium">
+                      {new Date(payment.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </TableCell>
                     <TableCell className="py-3">
-                      <span className="text-sm text-neutral-600 dark:text-neutral-400">{payment.createdAt.toLocaleDateString()}</span>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      {payment.status === "Paid" && <Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/50 shadow-sm px-2.5 py-0.5">Paid</Badge>}
-                      {payment.status === "Pending" && <Badge variant="outline" className="bg-amber-50 text-amber-700 hover:bg-amber-50 border border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/50 shadow-sm px-2.5 py-0.5">Pending</Badge>}
-                      {payment.status === "Failed" && <Badge variant="destructive" className="shadow-sm px-2.5 py-0.5">Failed</Badge>}
-                      {payment.status === "Refunded" && <Badge variant="secondary" className="shadow-sm px-2.5 py-0.5">Refunded</Badge>}
+                      {payment.status === "Paid" && (
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[11px] font-semibold flex w-fit items-center gap-1.5 px-2 py-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                          Paid
+                        </Badge>
+                      )}
+                      {payment.status === "Pending" && (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[11px] font-semibold flex w-fit items-center gap-1.5 px-2 py-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                          Pending
+                        </Badge>
+                      )}
+                      {payment.status === "Failed" && (
+                        <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 text-[11px] font-semibold flex w-fit items-center gap-1.5 px-2 py-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span>
+                          Failed
+                        </Badge>
+                      )}
+                      {payment.status === "Refunded" && (
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-[11px] font-semibold flex w-fit items-center gap-1.5 px-2 py-0.5">
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                          Refunded
+                        </Badge>
+                      )}
+                      {!["Paid", "Pending", "Failed", "Refunded"].includes(payment.status) && (
+                        <Badge variant="outline" className="text-[11px]">{payment.status}</Badge>
+                      )}
                     </TableCell>
                     <TableCell className="py-3 px-6 text-right">
-                      <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg">
+                      <div className="flex justify-end items-center gap-1">
+                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-[#252D65] hover:bg-slate-100 rounded-lg" title="View Receipt">
                           <Link href={`/admin/payments/${payment.id}`}>
                             <Eye size={16} />
                           </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-neutral-900 dark:hover:text-white rounded-lg">
-                          <MoreHorizontal size={16} />
-                        </Button>
+                        <PaymentActionsDropdown payment={{
+                          id: payment.id,
+                          invoiceNumber: payment.invoiceNumber,
+                          status: payment.status,
+                          applicationId: payment.applicationId
+                        }} />
                       </div>
                     </TableCell>
                   </TableRow>

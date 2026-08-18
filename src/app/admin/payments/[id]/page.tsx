@@ -5,24 +5,17 @@ import { Button } from "@/components/ui/button";
 import { 
   CreditCard, 
   Receipt, 
-  Activity, 
-  FileText,
-  MoreHorizontal,
-  Download,
-  RotateCcw,
-  User,
-  Building
+  User, 
+  ArrowLeft,
+  Calendar,
+  Building,
+  CheckCircle2,
+  FileText
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
+import { PaymentActionsDropdown } from "../payment-actions-dropdown";
 
 export default async function PaymentDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -50,172 +43,144 @@ export default async function PaymentDetailView({ params }: { params: Promise<{ 
     : payment.application?.user?.name || "Unknown Applicant";
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-16">
-      
+    <div className="space-y-6 animate-in fade-in duration-500 pb-16 font-jost text-left">
+      <div>
+        <Button asChild variant="ghost" size="sm" className="gap-2 text-slate-500 hover:text-[#252D65] -ml-2 mb-2 font-bold text-xs">
+          <Link href="/admin/payments">
+            <ArrowLeft size={15} /> Back to Payments Ledger
+          </Link>
+        </Button>
+      </div>
+
       {/* Detail Header Card */}
-      <div className="bg-slate-50/50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/60 rounded-3xl p-6 sm:p-8 shadow-2xs">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-mono font-bold bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400 px-2.5 py-1 rounded-lg border border-neutral-200/40 dark:border-neutral-700/40">
+              <span className="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200">
                 INVOICE {payment.invoiceNumber}
               </span>
-              {payment.status === "Paid" && <Badge className="bg-emerald-50 text-emerald-700 border-none px-2.5 font-semibold shadow-2xs">Paid in Full</Badge>}
-              {payment.status === "Pending" && <Badge className="bg-amber-50 text-amber-700 border-none px-2.5 font-semibold shadow-2xs">Payment Pending</Badge>}
-              {payment.status === "Failed" && <Badge variant="destructive" className="border-none px-2.5 font-semibold shadow-2xs">Payment Failed</Badge>}
-              {payment.status === "Refunded" && <Badge className="bg-neutral-200 text-neutral-800 border-none px-2.5 font-semibold shadow-2xs dark:bg-neutral-800 dark:text-neutral-300">Refunded</Badge>}
+              {payment.status === "Paid" && (
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-2.5 font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                  Paid in Full
+                </Badge>
+              )}
+              {payment.status === "Pending" && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 px-2.5 font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+                  Payment Pending
+                </Badge>
+              )}
+              {payment.status === "Failed" && (
+                <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 px-2.5 font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 mr-1.5"></span>
+                  Payment Failed
+                </Badge>
+              )}
+              {payment.status === "Refunded" && (
+                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 px-2.5 font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-500 mr-1.5"></span>
+                  Refunded
+                </Badge>
+              )}
             </div>
             
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-800 dark:text-neutral-100 flex items-center gap-3">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading flex items-center gap-3">
               ${payment.amount.toFixed(2)} 
-              <span className="text-lg font-medium text-neutral-400">USD</span>
+              <span className="text-sm font-semibold text-slate-400">USD</span>
             </h1>
             
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-neutral-500 text-sm font-medium pt-1">
-              <span className="flex items-center gap-1.5">
-                <User size={15} className="text-neutral-400" />
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-500 text-xs font-medium pt-1">
+              <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                <User size={15} className="text-slate-400" />
                 {applicantName}
               </span>
-              <span className="hidden sm:inline text-neutral-300">•</span>
-              <span className="flex items-center gap-1.5">
-                <CreditCard size={15} className="text-neutral-400" />
+              <span className="hidden sm:inline text-slate-300">•</span>
+              <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                <CreditCard size={15} className="text-slate-400" />
                 Gateway: <span className="capitalize">{payment.gateway}</span>
               </span>
-              <span className="hidden sm:inline text-neutral-300">•</span>
-              <span className="flex items-center gap-1.5 text-neutral-400">
-                Created: {payment.createdAt.toLocaleString()}
+              <span className="hidden sm:inline text-slate-300">•</span>
+              <span className="flex items-center gap-1.5 text-slate-500 font-mono">
+                {new Date(payment.createdAt).toLocaleString('en-GB')}
               </span>
             </div>
           </div>
           
           {/* Action Row */}
           <div className="flex items-center gap-3 lg:self-center">
-            {payment.status === "Paid" && (
-              <Button className="gap-2 bg-neutral-900 hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
-                <Download size={16} /> Download Receipt
+            {payment.applicationId && (
+              <Button asChild className="gap-2 bg-[#252D65] hover:bg-[#1C224E] text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all text-xs">
+                <Link href={`/admin/applications/${payment.applicationId}`}>
+                  <FileText size={15} /> View Application
+                </Link>
               </Button>
             )}
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-11 w-11 p-0 rounded-xl border-neutral-200 dark:border-neutral-800">
-                  <MoreHorizontal size={16} className="text-neutral-500" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-lg border-neutral-200 dark:border-neutral-800">
-                <DropdownMenuItem className="gap-2 text-neutral-600 dark:text-neutral-300 font-medium">
-                  <RotateCcw size={15} /> Issue Refund
-                </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 text-neutral-600 dark:text-neutral-300 font-medium">
-                  <Activity size={15} /> Refresh Status
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <PaymentActionsDropdown payment={{
+              id: payment.id,
+              invoiceNumber: payment.invoiceNumber,
+              status: payment.status,
+              applicationId: payment.applicationId
+            }} />
           </div>
         </div>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="flex items-center gap-1 border-b border-neutral-200 dark:border-neutral-800 pb-px mb-6 overflow-x-auto w-full custom-scrollbar bg-transparent">
-          <TabsTrigger value="overview" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Receipt size={16}/> Payment Details</TabsTrigger>
-          <TabsTrigger value="application" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><FileText size={16}/> Related Application</TabsTrigger>
-          <TabsTrigger value="logs" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Activity size={16}/> Gateway Logs</TabsTrigger>
+        <TabsList className="flex items-center gap-1 border-b border-slate-200 pb-px mb-6 overflow-x-auto w-full bg-transparent">
+          <TabsTrigger value="overview" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-xs font-bold text-slate-400 hover:text-slate-700 data-[state=active]:border-[#252D65] data-[state=active]:text-[#252D65] transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Receipt size={15}/> Transaction Receipt</TabsTrigger>
+          <TabsTrigger value="payer" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-xs font-bold text-slate-400 hover:text-slate-700 data-[state=active]:border-[#252D65] data-[state=active]:text-[#252D65] transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><User size={15}/> Payer Information</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="m-0 focus-visible:outline-none">
-          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-neutral-850">Transaction Details</CardTitle>
+          <Card className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-5">
+              <CardTitle className="text-base font-bold text-slate-900 font-heading">Invoice Breakdown</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div>
-                  <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Gateway</p>
-                  <p className="font-semibold text-sm text-neutral-700 mt-1 capitalize">{payment.gateway}</p>
+            <CardContent className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Invoice Reference</p>
+                  <p className="font-mono font-bold text-sm text-slate-900 mt-1">{payment.invoiceNumber}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Transaction ID</p>
-                  <p className="font-mono text-sm text-neutral-700 mt-1">{payment.id.substring(0, 12)}...</p>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Payment Provider</p>
+                  <p className="font-bold text-sm text-slate-900 mt-1 capitalize">{payment.gateway}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Last Updated</p>
-                  <p className="font-semibold text-sm text-neutral-700 mt-1">{payment.updatedAt.toLocaleString()}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Receipt URL</p>
-                  {payment.receiptUrl ? (
-                    <a href={payment.receiptUrl} target="_blank" rel="noreferrer" className="font-semibold text-sm text-blue-600 hover:underline mt-1 block truncate">View Receipt</a>
-                  ) : (
-                    <p className="font-semibold text-sm text-neutral-500 mt-1">Not available</p>
-                  )}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Total Billed</p>
+                  <p className="font-bold text-sm text-[#252D65] mt-1">${payment.amount.toFixed(2)} USD</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="application" className="m-0 focus-visible:outline-none">
-          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5 flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-bold text-neutral-850">Application Reference</CardTitle>
-                <CardDescription className="text-xs font-semibold text-neutral-400 mt-1">The application this payment is associated with.</CardDescription>
-              </div>
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/admin/applications/${payment.applicationId}`}>View Application</Link>
-              </Button>
+        <TabsContent value="payer" className="m-0 focus-visible:outline-none">
+          <Card className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-5">
+              <CardTitle className="text-base font-bold text-slate-900 font-heading">Applicant & Account Details</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              {payment.application ? (
-                <div className="flex flex-col md:flex-row gap-6 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-slate-50/30 dark:bg-neutral-900/30">
-                  <div className="flex-1">
-                    <p className="text-xs text-neutral-500 mb-1">Applicant</p>
-                    <p className="font-bold text-sm text-neutral-800 dark:text-neutral-200">{applicantName}</p>
-                    <p className="text-xs text-neutral-500 mt-0.5">{payment.application.user?.email}</p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-neutral-500 mb-1">Programme</p>
-                    <p className="font-bold text-sm text-neutral-800 dark:text-neutral-200">
-                      {payment.application.programmeId ? payment.application.programmeId : "Unspecified"}
-                    </p>
-                    <p className="text-xs text-neutral-500 mt-0.5">
-                      Intake: {payment.application.intake ? payment.application.intake : "Unspecified"}
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-xs text-neutral-500 mb-1">Status</p>
-                    <Badge variant="outline" className="mt-0.5">{payment.application.status}</Badge>
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Full Name</p>
+                  <p className="font-bold text-sm text-slate-900 mt-1">{applicantName}</p>
                 </div>
-              ) : (
-                <p className="text-sm text-neutral-500">Application details not found or deleted.</p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="logs" className="m-0 focus-visible:outline-none">
-          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-neutral-850">Gateway Webhook Logs</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="border-l-2 border-emerald-500 pl-4 py-1">
-                  <p className="text-xs text-neutral-400 font-mono mb-1">{payment.updatedAt.toLocaleString()}</p>
-                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">payment_intent.succeeded</p>
-                  <p className="text-xs text-neutral-500 mt-1">Payment processed successfully via {payment.gateway}</p>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Email Address</p>
+                  <p className="font-bold text-sm text-slate-900 mt-1">{payment.application?.user?.email || "N/A"}</p>
                 </div>
-                <div className="border-l-2 border-neutral-300 dark:border-neutral-700 pl-4 py-1">
-                  <p className="text-xs text-neutral-400 font-mono mb-1">{payment.createdAt.toLocaleString()}</p>
-                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">payment_intent.created</p>
-                  <p className="text-xs text-neutral-500 mt-1">Invoice generated and sent to customer.</p>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Application Number</p>
+                  <p className="font-mono font-bold text-sm text-slate-900 mt-1">{payment.application?.appNumber || "N/A"}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
     </div>
   );

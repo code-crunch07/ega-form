@@ -1054,3 +1054,37 @@ export async function deleteApplicant(applicantId: string) {
     return { error: error.message || "Failed to delete applicant." };
   }
 }
+
+export async function updatePaymentStatus(id: string, status: string) {
+  if (!id || !status) {
+    return { error: "ID and Status are required." };
+  }
+
+  try {
+    await prisma.payment.update({
+      where: { id },
+      data: { status }
+    });
+
+    revalidatePath("/admin/payments");
+    revalidatePath(`/admin/payments/${id}`);
+    revalidatePath("/admin/reports/financial");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update payment status." };
+  }
+}
+
+export async function deletePayment(id: string) {
+  try {
+    await prisma.payment.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/payments");
+    revalidatePath("/admin/reports/financial");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete payment record." };
+  }
+}
