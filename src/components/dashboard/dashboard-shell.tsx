@@ -190,10 +190,10 @@ export function DashboardShell({
   }, [mobileOpen]);
 
   return (
-    <div className="flex min-h-screen bg-[#f1f1f1] font-jost selection:bg-[#252D65]/20">
+    <div className="flex h-screen overflow-hidden bg-[#f1f1f1] font-jost selection:bg-[#252D65]/20">
       {/* Desktop Sidebar */}
-      <aside className="z-20 hidden w-[270px] shrink-0 flex-col bg-white text-slate-900 md:flex">
-        <div className="flex h-16 items-center border-b border-slate-200 px-5 bg-white">
+      <aside className="z-20 hidden w-[270px] shrink-0 flex-col bg-white text-slate-900 md:flex h-screen sticky top-0 border-r border-slate-200/80 shadow-2xs">
+        <div className="flex h-16 items-center border-b border-slate-200 px-5 bg-white shrink-0">
           <Logo href="/dashboard" iconSize={125} />
         </div>
 
@@ -212,7 +212,7 @@ export function DashboardShell({
             aria-label="Close menu backdrop"
           />
           <aside className="relative flex h-full w-[270px] max-w-[85vw] flex-col border-r border-slate-200 bg-white text-slate-900 p-0 shadow-2xl animate-in slide-in-from-left duration-200">
-            <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 bg-white">
+            <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4 bg-white shrink-0">
               <Logo href="/dashboard" iconSize={120} />
               <button
                 type="button"
@@ -230,7 +230,7 @@ export function DashboardShell({
       )}
 
       {/* Main Container */}
-      <main className="relative flex min-w-0 flex-1 flex-col overflow-hidden bg-[#f1f1f1]">
+      <main className="relative flex min-w-0 flex-1 flex-col h-screen overflow-hidden bg-[#f1f1f1]">
         
         {/* Top Header */}
         <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 sm:px-6 backdrop-blur-md">
