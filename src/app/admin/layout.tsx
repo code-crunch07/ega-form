@@ -105,8 +105,8 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     title: "COMMUNICATION",
     links: [
-      { href: "/admin/messages", icon: MessageSquare, label: "Messages", badge: 12 },
-      { href: "/admin/notifications", icon: Bell, label: "Notifications", badge: 20 },
+      { href: "/admin/messages", icon: MessageSquare, label: "Messages" },
+      { href: "/admin/notifications", icon: Bell, label: "Notifications" },
       { href: "/admin/templates", icon: Mail, label: "Email Templates" },
     ]
   },
@@ -278,13 +278,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     {!isCollapsed && (
                       <span className="flex-1 text-[14px] truncate">{link.label}</span>
                     )}
-                    {link.badge !== undefined && !isCollapsed && (
+                    {link.href === "/admin/notifications" && badgeCounts.notifications > 0 && !isCollapsed && (
                       <span className="h-5 px-1.5 rounded-full bg-[#252D65] text-white text-[11px] font-bold flex items-center justify-center min-w-5">
-                        {link.href === "/admin/notifications" 
-                          ? badgeCounts.notifications 
-                          : link.href === "/admin/messages" 
-                            ? badgeCounts.messages 
-                            : link.badge}
+                        {badgeCounts.notifications}
+                      </span>
+                    )}
+                    {link.href === "/admin/messages" && badgeCounts.messages > 0 && !isCollapsed && (
+                      <span className="h-5 px-1.5 rounded-full bg-[#252D65] text-white text-[11px] font-bold flex items-center justify-center min-w-5">
+                        {badgeCounts.messages}
                       </span>
                     )}
                   </Link>
@@ -357,9 +358,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               title="View Messages"
             >
               <MessageSquare size={19} className="group-hover:scale-110 transition-transform" />
-              <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center border border-white">
-                {badgeCounts.messages || 12}
-              </span>
+              {badgeCounts.messages > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center border border-white">
+                  {badgeCounts.messages}
+                </span>
+              )}
             </Link>
 
             {/* Notifications Icon (Navigates to /admin/notifications) */}
@@ -369,9 +372,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               title="View Notifications"
             >
               <Bell size={19} className="group-hover:scale-110 transition-transform" />
-              <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center border border-white">
-                {badgeCounts.notifications || 20}
-              </span>
+              {badgeCounts.notifications > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center border border-white">
+                  {badgeCounts.notifications}
+                </span>
+              )}
             </Link>
             
             <div className="h-6 w-px bg-neutral-200" />

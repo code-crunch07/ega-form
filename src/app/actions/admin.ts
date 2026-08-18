@@ -799,18 +799,17 @@ export async function updateTemplate(id: string, formData: FormData) {
 
 export async function getSidebarBadgeCounts() {
   try {
-    const [pendingApps, pendingPayments, pendingInterviews, messageCount] = await Promise.all([
+    const [pendingApps, pendingPayments, pendingInterviews] = await Promise.all([
       prisma.application.count({ where: { status: "Submitted" } }),
       prisma.payment.count({ where: { status: "Pending" } }),
       prisma.interview.count({ where: { result: "Pending" } }),
-      prisma.message.count(),
     ]);
 
     const notificationsCount = pendingApps + pendingPayments + pendingInterviews;
 
     return {
-      notifications: notificationsCount || 5,
-      messages: messageCount || 3,
+      notifications: notificationsCount,
+      messages: 0,
     };
   } catch (error) {
     console.error("Error fetching badge counts:", error);

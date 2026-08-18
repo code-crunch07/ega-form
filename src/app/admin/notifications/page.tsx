@@ -1,17 +1,15 @@
 import { prisma } from "@/lib/prisma";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Bell, 
   FileText, 
   CreditCard, 
   Calendar, 
-  User, 
   ShieldAlert, 
-  CheckCircle2, 
   Clock 
 } from "lucide-react";
+import { MarkAllReadButton } from "./mark-all-read-button";
 
 interface NotificationItem {
   id: string;
@@ -28,21 +26,21 @@ export default async function AdminNotificationsPage() {
     prisma.application.findMany({
       include: { user: { include: { profile: true } } },
       orderBy: { createdAt: 'desc' },
-      take: 10
+      take: 15
     }),
     prisma.payment.findMany({
       include: { application: { include: { user: true } } },
       orderBy: { createdAt: 'desc' },
-      take: 10
+      take: 15
     }),
     prisma.interview.findMany({
       include: { application: { include: { user: true } } },
       orderBy: { createdAt: 'desc' },
-      take: 10
+      take: 15
     }),
     prisma.auditLog.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 10
+      take: 15
     })
   ]);
 
@@ -70,8 +68,8 @@ export default async function AdminNotificationsPage() {
     items.push({
       id: `pay_${pay.id}`,
       type: "payment",
-      title: "Payment Received",
-      message: `Successfully processed fee payment of $${pay.amount.toFixed(2)} from ${applicantName} (Invoice: ${pay.invoiceNumber}).`,
+      title: "Payment Transaction",
+      message: `Processed payment of $${pay.amount.toFixed(2)} USD from ${applicantName} (Invoice: ${pay.invoiceNumber}).`,
       timestamp: pay.createdAt,
       status: pay.status
     });
@@ -84,7 +82,7 @@ export default async function AdminNotificationsPage() {
       id: `int_${int.id}`,
       type: "interview",
       title: "Interview Scheduled",
-      message: `Interview arranged with ${applicantName} on ${new Date(int.date).toLocaleDateString()} at ${int.time}.`,
+      message: `Interview arranged with ${applicantName} on ${new Date(int.date).toLocaleDateString('en-GB')} at ${int.time}.`,
       timestamp: int.createdAt,
       status: int.result || "Pending"
     });
@@ -96,7 +94,7 @@ export default async function AdminNotificationsPage() {
       id: `log_${log.id}`,
       type: "system",
       title: "System Audit Log Entry",
-      message: `${log.action}: ${log.details || 'No additional details provided.'}`,
+      message: `${log.action}: ${log.details || 'System event recorded.'}`,
       timestamp: log.createdAt,
       status: "Logged"
     });
@@ -109,86 +107,89 @@ export default async function AdminNotificationsPage() {
   const getIcon = (type: string) => {
     switch (type) {
       case "application":
-        return <FileText className="text-blue-500" size={18} />;
+        return <FileText className="text-[#252D65]" size={18} />;
       case "payment":
-        return <CreditCard className="text-emerald-500" size={18} />;
+        return <CreditCard className="text-emerald-600" size={18} />;
       case "interview":
-        return <Calendar className="text-purple-500" size={18} />;
+        return <Calendar className="text-purple-600" size={18} />;
       default:
-        return <ShieldAlert className="text-amber-500" size={18} />;
+        return <ShieldAlert className="text-amber-600" size={18} />;
     }
   };
 
   const getBadgeColor = (type: string) => {
     switch (type) {
       case "application":
-        return "bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400 border border-blue-200/50";
+        return "bg-blue-50 text-[#252D65] border-blue-200";
       case "payment":
-        return "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-400 border border-emerald-200/50";
+        return "bg-emerald-50 text-emerald-700 border-emerald-200";
       case "interview":
-        return "bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400 border border-purple-200/50";
+        return "bg-purple-50 text-purple-700 border-purple-200";
       default:
-        return "bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400 border border-amber-200/50";
+        return "bg-amber-50 text-amber-700 border-amber-200";
     }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 animate-in fade-in duration-500 font-jost text-left">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white flex items-center gap-2">
-            <Bell className="text-slate-800 dark:text-neutral-200" size={28} />
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading flex items-center gap-2.5">
+            <Bell className="text-[#252D65]" size={28} />
             Notifications & Activity Log
           </h1>
-          <p className="text-neutral-500 mt-1 dark:text-neutral-400">Track real-time system activities, student submissions, and transactions.</p>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Track real-time system activities, student submissions, and transactions.</p>
         </div>
-        <Button variant="outline" className="text-xs rounded-xl h-9 border-neutral-200 dark:border-neutral-800">
-          Mark all as read
-        </Button>
+        <MarkAllReadButton />
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {items.length === 0 ? (
-          <Card className="border border-neutral-200 dark:border-neutral-800 shadow-3xs rounded-2xl overflow-hidden">
-            <CardContent className="p-12 text-center text-neutral-500 flex flex-col items-center justify-center gap-2">
-              <CheckCircle2 size={40} className="text-neutral-300" />
-              <p className="font-semibold mt-2">All Quiet!</p>
-              <p className="text-xs max-w-xs leading-relaxed">No new system alerts or candidate submissions logged in the database yet.</p>
+          <Card className="border border-slate-200 rounded-2xl bg-white shadow-xs">
+            <CardContent className="flex flex-col items-center justify-center p-12 text-slate-400">
+              <Bell size={40} className="stroke-[1.5] mb-2 opacity-50" />
+              <p className="font-semibold text-sm">No activity recorded yet</p>
+              <p className="text-xs text-slate-400 mt-0.5">System actions and submissions will appear here.</p>
             </CardContent>
           </Card>
         ) : (
           items.map((item) => (
-            <div 
-              key={item.id} 
-              className="flex items-start gap-4 p-4 border border-neutral-200/60 dark:border-neutral-800 bg-white dark:bg-neutral-900 rounded-2xl hover:shadow-xs transition-shadow"
-            >
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-neutral-800/50 flex-shrink-0">
-                {getIcon(item.type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-neutral-900 dark:text-white">{item.title}</span>
-                    <Badge variant="outline" className={`text-[10px] font-semibold tracking-wide uppercase px-2 py-px border-none rounded-md shadow-none ${getBadgeColor(item.type)}`}>
-                      {item.type}
-                    </Badge>
+            <Card key={item.id} className="border border-slate-200 rounded-2xl bg-white shadow-xs hover:border-slate-300 transition-colors">
+              <CardContent className="p-4 sm:p-5 flex items-start gap-4">
+                <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                  {getIcon(item.type)}
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-slate-900 font-heading">{item.title}</h3>
+                      <Badge variant="outline" className={`text-[10px] uppercase font-bold px-2 py-0.5 ${getBadgeColor(item.type)}`}>
+                        {item.type}
+                      </Badge>
+                    </div>
+                    
+                    <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+                      <Clock size={12} />
+                      {new Date(item.timestamp).toLocaleString('en-GB')}
+                    </span>
                   </div>
-                  <span className="text-[11px] text-neutral-400 flex items-center gap-1 font-mono">
-                    <Clock size={12} />
-                    {item.timestamp.toLocaleString()}
-                  </span>
+                  
+                  <p className="text-xs text-slate-600 mt-1.5 leading-relaxed font-normal">
+                    {item.message}
+                  </p>
+                  
+                  {item.status && item.status !== "Logged" && (
+                    <div className="mt-2.5 flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">Status:</span>
+                      <span className="text-[11px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                        {item.status}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 leading-relaxed">
-                  {item.message}
-                </p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="text-[10px] text-neutral-400 font-semibold uppercase">Status:</span>
-                  <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-300 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-md">
-                    {item.status}
-                  </span>
-                </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
           ))
         )}
       </div>
