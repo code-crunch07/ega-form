@@ -45,7 +45,7 @@ function FormAccordion({
     <div className="border border-slate-200/90 rounded-2xl overflow-hidden bg-white shadow-2xs transition-all duration-200 hover:border-slate-300">
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-slate-50/80 hover:bg-slate-100/90 px-6 py-4.5 flex items-center justify-between transition-colors text-left select-none cursor-pointer"
+        className="bg-white hover:bg-slate-50/80 px-6 py-4.5 flex items-center justify-between transition-colors text-left select-none cursor-pointer border-b border-slate-100"
       >
         <div className="flex items-center gap-3">
           <span className="font-heading font-bold text-slate-900 text-base sm:text-lg">
@@ -61,14 +61,14 @@ function FormAccordion({
           {actionButton && (
             <div onClick={(e) => e.stopPropagation()}>{actionButton}</div>
           )}
-          <div className={cn("h-7 w-7 rounded-full bg-slate-200/70 flex items-center justify-center text-slate-600 transition-transform duration-300", isOpen && "rotate-180 bg-[#252D65]/10 text-[#252D65]")}>
+          <div className={cn("h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 transition-transform duration-300", isOpen && "rotate-180 bg-[#252D65]/10 text-[#252D65]")}>
             <ChevronDown size={18} />
           </div>
         </div>
       </div>
 
       {isOpen && (
-        <div className="p-6 sm:p-8 space-y-6 border-t border-slate-100 animate-in fade-in duration-200">
+        <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
           {children}
         </div>
       )}
@@ -447,87 +447,86 @@ export default function ApplicationWizard({
         </div>
       )}
 
-      {/* SINGLE UNIFIED CARD CONTAINER */}
+      {/* APPLICATION WIZARD FORM */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="bg-white rounded-3xl border-none shadow-2xs overflow-hidden">
-          
-          {/* Header & 5-Step Connected Stepper Track */}
-          <div className="p-8 sm:p-10 lg:p-12 bg-slate-50/30 space-y-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-              <div className="space-y-1">
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
-                  Student Application Form
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                  Official Educare Global Academy (EGA) Baseline Specification v1.2.
-                </p>
-              </div>
-
-              {/* Progress Badge Pill */}
-              <div className="flex items-center gap-3 bg-white border border-slate-200/80 px-4 py-2.5 rounded-2xl shrink-0 shadow-2xs">
-                <div className="text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Progress</p>
-                  <p className="text-xs font-bold text-[#252D65]">Step {step} of 5 • {Math.round((step / 5) * 100)}%</p>
-                </div>
-                <div className="h-9 w-9 rounded-xl bg-[#252D65] text-white flex items-center justify-center font-bold text-xs font-mono shadow-md shadow-[#252D65]/25">
-                  {step}/5
-                </div>
-              </div>
+        
+        {/* Header & 5-Step Connected Stepper Track Card */}
+        <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 lg:p-10 shadow-xs space-y-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+            <div className="space-y-1">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-heading">
+                Student Application Form
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                Official Educare Global Academy (EGA) Baseline Specification v1.2.
+              </p>
             </div>
 
-            {/* 5-Section Connected Stepper Track */}
-            <div className="no-scrollbar overflow-x-auto py-2">
-              <div className="flex items-center justify-between min-w-[700px] relative">
-                <div className="absolute left-6 right-6 top-5 h-0.5 bg-slate-200 -z-0" />
-                <div 
-                  className="absolute left-6 top-5 h-0.5 bg-[#252D65] transition-all duration-500 -z-0" 
-                  style={{ width: `${((step - 1) / 4) * 94}%` }} 
-                />
-
-                {SECTIONS.map((sec) => {
-                  const isActive = step === sec.id;
-                  const isCompleted = step > sec.id;
-
-                  return (
-                    <button
-                      type="button"
-                      key={sec.id}
-                      onClick={() => {
-                        if (sec.id <= step || isCompleted) {
-                          setStep(sec.id);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }
-                      }}
-                      className="flex flex-col items-center group relative z-10 focus:outline-none"
-                    >
-                      <div 
-                        className={cn(
-                          "w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 shadow-2xs",
-                          isActive 
-                            ? "bg-[#252D65] text-white ring-4 ring-[#252D65]/20 scale-110 shadow-md shadow-[#252D65]/30" 
-                            : isCompleted
-                            ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                            : "bg-white text-slate-400 border border-slate-200 group-hover:border-slate-300"
-                        )}
-                      >
-                        {isCompleted ? <Check size={16} strokeWidth={3} /> : sec.id}
-                      </div>
-                      
-                      <span className={cn(
-                        "text-xs font-bold mt-2 truncate transition-colors",
-                        isActive ? "text-[#252D65]" : isCompleted ? "text-emerald-950" : "text-slate-500"
-                      )}>
-                        {sec.shortName}
-                      </span>
-                    </button>
-                  );
-                })}
+            {/* Progress Badge Pill */}
+            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-2xl shrink-0 shadow-2xs">
+              <div className="text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Progress</p>
+                <p className="text-xs font-bold text-[#252D65]">Step {step} of 5 • {Math.round((step / 5) * 100)}%</p>
+              </div>
+              <div className="h-9 w-9 rounded-xl bg-[#252D65] text-white flex items-center justify-center font-bold text-xs font-mono shadow-md shadow-[#252D65]/25">
+                {step}/5
               </div>
             </div>
           </div>
 
-          {/* Active Step Form Content Area with Clean Accordions */}
-          <div className="p-6 sm:p-8 lg:p-10 space-y-6 min-h-[500px]">
+          {/* 5-Section Connected Stepper Track */}
+          <div className="no-scrollbar overflow-x-auto py-2">
+            <div className="flex items-center justify-between min-w-[700px] relative">
+              <div className="absolute left-6 right-6 top-5 h-0.5 bg-slate-200 -z-0" />
+              <div 
+                className="absolute left-6 top-5 h-0.5 bg-[#252D65] transition-all duration-500 -z-0" 
+                style={{ width: `${((step - 1) / 4) * 94}%` }} 
+              />
+
+              {SECTIONS.map((sec) => {
+                const isActive = step === sec.id;
+                const isCompleted = step > sec.id;
+
+                return (
+                  <button
+                    type="button"
+                    key={sec.id}
+                    onClick={() => {
+                      if (sec.id <= step || isCompleted) {
+                        setStep(sec.id);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }}
+                    className="flex flex-col items-center group relative z-10 focus:outline-none"
+                  >
+                    <div 
+                      className={cn(
+                        "w-10 h-10 rounded-2xl flex items-center justify-center text-xs font-bold font-mono transition-all duration-300 shadow-2xs",
+                        isActive 
+                          ? "bg-[#252D65] text-white ring-4 ring-[#252D65]/20 scale-110 shadow-md shadow-[#252D65]/30" 
+                          : isCompleted
+                          ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                          : "bg-white text-slate-400 border border-slate-200 group-hover:border-slate-300"
+                      )}
+                    >
+                      {isCompleted ? <Check size={16} strokeWidth={3} /> : sec.id}
+                    </div>
+                    
+                    <span className={cn(
+                      "text-xs font-bold mt-2 truncate transition-colors",
+                      isActive ? "text-[#252D65]" : isCompleted ? "text-emerald-950" : "text-slate-500"
+                    )}>
+                      {sec.shortName}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Active Step Form Content Area */}
+        <div className="space-y-6 min-h-[450px]">
             
             {/* STEP 1: Mandatory Student Type, Programme Selection & Pre-Course Counselling */}
             {step === 1 && (
@@ -1629,7 +1628,6 @@ export default function ApplicationWizard({
                 </FormAccordion>
               </div>
             )}
-          </div>
         </div>
 
         {/* Bottom Navigation Action Buttons */}

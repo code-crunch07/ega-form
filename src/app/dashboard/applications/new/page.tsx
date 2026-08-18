@@ -24,7 +24,7 @@ export default async function NewApplicationPage() {
   ]);
 
   return (
-    <div className="min-h-screen bg-slate-50 -m-6 sm:-m-8 md:-m-10">
+    <div className="w-full">
       <ApplicationWizard 
         user={user} 
         programmes={programmes} 
