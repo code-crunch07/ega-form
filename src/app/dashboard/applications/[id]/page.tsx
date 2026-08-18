@@ -41,8 +41,8 @@ export default async function ApplicantApplicationDetailPage({
   const app = await prisma.application.findFirst({
     where: { 
       id: appId,
-      // Allow user to view their own application, or if super admin
-      ...(sessionUser.role === "SUPER_ADMIN" || sessionUser.role === "ADMIN" ? {} : { userId: sessionUser.id })
+      // Allow user to view their own application, or if administrative role
+      ...(sessionUser.role === "SUPER_ADMIN" || sessionUser.role === "ADMISSIONS_MANAGER" || sessionUser.role === "ADMISSIONS_OFFICER" ? {} : { userId: sessionUser.id })
     },
     include: {
       user: {
@@ -274,7 +274,7 @@ export default async function ApplicantApplicationDetailPage({
                   <div className="flex flex-wrap gap-3">
                     {app.englishTests.map((test) => (
                       <div key={test.id} className="px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800">
-                        {test.testType}: <span className="font-bold text-[#27295B]">{test.overallScore || "Passed"}</span>
+                        {test.testName}: <span className="font-bold text-[#27295B]">{test.score || "Passed"}</span>
                       </div>
                     ))}
                   </div>
@@ -322,7 +322,7 @@ export default async function ApplicantApplicationDetailPage({
                     <div className="absolute -left-[31px] top-0 w-4 h-4 rounded-full bg-blue-500 ring-4 ring-blue-100" />
                     <p className="text-xs font-bold text-neutral-900">Admission Interview</p>
                     <p className="text-[11px] text-neutral-500 mt-0.5">
-                      {new Date(interview.scheduledAt).toLocaleDateString("en-GB")} at {new Date(interview.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(interview.date).toLocaleDateString("en-GB")} at {interview.time}
                     </p>
                   </div>
                 )}
@@ -342,12 +342,12 @@ export default async function ApplicantApplicationDetailPage({
                 <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200/80 space-y-2">
                   <p className="text-xs font-bold text-blue-900">Upcoming Interview Scheduled</p>
                   <p className="text-xs text-blue-800 leading-relaxed font-medium">
-                    Date: <strong>{new Date(interview.scheduledAt).toLocaleDateString("en-GB")}</strong><br />
-                    Location/Mode: {interview.mode || "Online Video Call"}
+                    Date: <strong>{new Date(interview.date).toLocaleDateString("en-GB")}</strong> at {interview.time}<br />
+                    Location/Mode: Online Video Call
                   </p>
-                  {interview.location && (
+                  {interview.meetingLink && (
                     <a 
-                      href={interview.location} 
+                      href={interview.meetingLink} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="inline-flex items-center gap-1 text-xs font-bold text-blue-700 underline mt-1"
@@ -375,7 +375,7 @@ export default async function ApplicantApplicationDetailPage({
                   <div key={doc.id} className="p-3 rounded-xl border border-neutral-200/70 bg-neutral-50 flex items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <FileText size={16} className="text-[#27295B] shrink-0" />
-                      <span className="font-semibold text-neutral-800 truncate">{doc.name || doc.category}</span>
+                      <span className="font-semibold text-neutral-800 truncate">{doc.filename || doc.type}</span>
                     </div>
                     {doc.url && (
                       <a 
