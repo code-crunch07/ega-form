@@ -21,8 +21,8 @@ interface TemplateActionsDropdownProps {
     name: string;
     trigger: string;
     channel: string;
-    subject: string;
-    content: string;
+    subject?: string | null;
+    content?: string | null;
     status: string;
   };
 }
