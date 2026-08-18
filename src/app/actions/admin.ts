@@ -776,3 +776,25 @@ export async function changeAdminPassword(formData: FormData) {
     return { error: error.message || "Failed to update password." };
   }
 }
+
+export async function deleteApplicant(applicantId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: applicantId }
+    });
+
+    if (!user) {
+      return { error: "Applicant not found." };
+    }
+
+    await prisma.profile.deleteMany({ where: { userId: applicantId } });
+    await prisma.user.delete({ where: { id: applicantId } });
+
+    revalidatePath("/admin/applicants");
+    revalidatePath("/admin/applications");
+    revalidatePath("/admin");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete applicant." };
+  }
+}

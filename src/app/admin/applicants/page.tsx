@@ -4,10 +4,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Mail, MapPin, Phone, ShieldCheck, Download, Plus, Filter, Search, Eye, MoreHorizontal } from "lucide-react";
+import { Mail, MapPin, Phone, Eye } from "lucide-react";
 import Link from "next/link";
 import { AddApplicantDialog } from "./add-applicant-dialog";
+import { ApplicantsFilters } from "./applicants-filters";
+import { ApplicantActionsDropdown } from "./applicant-actions-dropdown";
 
 const getInitials = (name: string) => {
   if (!name) return "??";
@@ -22,9 +23,36 @@ const COLORS = [
   "bg-emerald-100 text-emerald-700"
 ];
 
-export default async function AdminApplicantsPage() {
+export default async function AdminApplicantsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ search?: string, status?: string }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const search = resolvedSearchParams?.search;
+  const status = resolvedSearchParams?.status;
+
+  const whereClause: any = { role: "APPLICANT" };
+
+  if (search) {
+    whereClause.OR = [
+      { email: { contains: search, mode: "insensitive" } },
+      { name: { contains: search, mode: "insensitive" } },
+      { profile: { firstName: { contains: search, mode: "insensitive" } } },
+      { profile: { lastName: { contains: search, mode: "insensitive" } } },
+      { profile: { phone: { contains: search, mode: "insensitive" } } },
+      { profile: { country: { contains: search, mode: "insensitive" } } },
+    ];
+  }
+
+  if (status === "Verified") {
+    whereClause.emailVerified = { not: null };
+  } else if (status === "Pending") {
+    whereClause.emailVerified = null;
+  }
+
   const applicants = await prisma.user.findMany({
-    where: { role: "APPLICANT" },
+    where: whereClause,
     include: {
       profile: true,
       _count: {
@@ -35,45 +63,35 @@ export default async function AdminApplicantsPage() {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 font-jost text-left">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 dark:text-white">Applicants Directory</h1>
-          <p className="text-neutral-500 mt-1.5 dark:text-neutral-400">Manage and view all registered student applicants.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading">Applicants Directory</h1>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Manage and view all registered student applicants.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative group">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400 group-focus-within:text-blue-500 transition-colors" size={18} />
-            <Input 
-              placeholder="Search applicants..." 
-              className="pl-10 h-10 w-full md:w-[280px] rounded-full border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm focus-visible:ring-1 focus-visible:ring-blue-500 transition-all" 
-            />
-          </div>
-          <Button variant="outline" className="h-10 rounded-full px-4 border-neutral-200 dark:border-neutral-800 shadow-sm hidden md:flex items-center gap-2">
-            <Filter size={16} className="text-neutral-500" />
-            <span>Filter</span>
-          </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <ApplicantsFilters />
           <AddApplicantDialog />
         </div>
       </div>
 
-      <div className="rounded-xl border border-neutral-200 bg-white dark:bg-neutral-900 dark:border-neutral-800 shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-neutral-50/80 dark:bg-neutral-900 hover:bg-transparent">
-              <TableHead className="py-4 px-6 text-xs font-semibold uppercase tracking-wider text-neutral-500">Applicant</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Contact Info</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Location</TableHead>
-              <TableHead className="py-4 text-center text-xs font-semibold uppercase tracking-wider text-neutral-500">Apps</TableHead>
-              <TableHead className="py-4 text-xs font-semibold uppercase tracking-wider text-neutral-500">Status</TableHead>
-              <TableHead className="py-4 text-right px-6 text-xs font-semibold uppercase tracking-wider text-neutral-500">Actions</TableHead>
+            <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
+              <TableHead className="py-4 px-6 text-xs font-bold uppercase tracking-wider text-slate-700">Applicant</TableHead>
+              <TableHead className="py-4 text-xs font-bold uppercase tracking-wider text-slate-700">Contact Info</TableHead>
+              <TableHead className="py-4 text-xs font-bold uppercase tracking-wider text-slate-700">Location</TableHead>
+              <TableHead className="py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-700">Apps</TableHead>
+              <TableHead className="py-4 text-xs font-bold uppercase tracking-wider text-slate-700">Status</TableHead>
+              <TableHead className="py-4 text-right px-6 text-xs font-bold uppercase tracking-wider text-slate-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {applicants.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-32 text-neutral-500">
-                  No applicants found in the database.
+                <TableCell colSpan={6} className="text-center h-32 text-slate-400 font-medium">
+                  No applicants found matching the current search / filter criteria.
                 </TableCell>
               </TableRow>
             ) : (
@@ -81,65 +99,72 @@ export default async function AdminApplicantsPage() {
                 const displayName = user.profile ? `${user.profile.firstName || ''} ${user.profile.lastName || ''}`.trim() : user.name || "Unknown";
                 const phone = user.profile?.phone || "No phone";
                 const country = user.profile?.country || "Unknown";
-                const status = user.emailVerified ? "Verified" : "Pending";
+                const isVerified = !!user.emailVerified;
                 const color = COLORS[i % COLORS.length];
                 
                 return (
-                  <TableRow key={user.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-800/50 transition-colors group">
+                  <TableRow key={user.id} className="hover:bg-slate-50/70 transition-colors border-b border-slate-100 group">
                     <TableCell className="py-3 px-6">
                       <div className="flex items-center gap-3">
-                        <div className={`h-9 w-9 rounded-full flex items-center justify-center font-bold text-sm ${color}`}>
+                        <div className={`h-9 w-9 rounded-full flex items-center justify-center font-bold text-xs ${color}`}>
                           {getInitials(displayName)}
                         </div>
-                        <span className="font-medium text-neutral-900 dark:text-neutral-100">{displayName}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400 hover:text-blue-600 transition-colors cursor-pointer">
-                          <Mail size={14} className="text-neutral-400" />
-                          {user.email}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs text-neutral-500">
-                          <Phone size={13} className="text-neutral-400" />
-                          {phone}
+                        <div>
+                          <Link href={`/admin/applicants/${user.id}`} className="font-bold text-sm text-slate-900 hover:text-[#252D65] transition-colors">
+                            {displayName}
+                          </Link>
+                          <p className="text-[11px] text-slate-400 font-mono">ID: {user.id.slice(0, 8)}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className="py-3">
-                      <div className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400">
-                        <MapPin size={14} className="text-neutral-400" />
-                        {country}
+                      <div className="flex flex-col gap-0.5">
+                        <a href={`mailto:${user.email}`} className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-[#252D65] transition-colors">
+                          <Mail size={13} className="text-slate-400" />
+                          <span>{user.email}</span>
+                        </a>
+                        <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
+                          <Phone size={12} className="text-slate-400" />
+                          <span>{phone}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-3">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                        <MapPin size={13} className="text-slate-400" />
+                        <span>{country}</span>
                       </div>
                     </TableCell>
                     <TableCell className="py-3 text-center">
-                      <div className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-neutral-100 dark:bg-neutral-800 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                        {user._count.applications}
-                      </div>
+                      <span className="inline-flex h-6 min-w-6 px-1.5 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-700">
+                        {user._count?.applications || 0}
+                      </span>
                     </TableCell>
                     <TableCell className="py-3">
-                      {status === "Verified" ? (
-                         <Badge className="bg-green-50 text-green-700 hover:bg-green-50 border border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-900/50 shadow-sm flex w-fit items-center gap-1.5 px-2.5 py-0.5">
-                           <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                      {isVerified ? (
+                         <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[11px] font-semibold flex w-fit items-center gap-1.5 px-2 py-0.5">
+                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                            Verified
                          </Badge>
                       ) : (
-                         <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-900/50 shadow-sm flex w-fit items-center gap-1.5 px-2.5 py-0.5">
-                           <span className="h-1.5 w-1.5 rounded-full bg-yellow-500 animate-pulse"></span>
+                         <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 text-[11px] font-semibold flex w-fit items-center gap-1.5 px-2 py-0.5">
+                           <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                            Pending
                          </Badge>
                       )}
                     </TableCell>
                     <TableCell className="py-3 px-6 text-right">
-                      <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg">
+                      <div className="flex justify-end items-center gap-1">
+                        <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-[#252D65] hover:bg-slate-100 rounded-lg" title="View Profile">
                           <Link href={`/admin/applicants/${user.id}`}>
                             <Eye size={16} />
                           </Link>
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-neutral-500 hover:text-neutral-900 dark:hover:text-white rounded-lg">
-                          <MoreHorizontal size={16} />
-                        </Button>
+                        <ApplicantActionsDropdown 
+                          applicantId={user.id} 
+                          applicantEmail={user.email} 
+                          applicantName={displayName} 
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
