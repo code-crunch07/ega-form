@@ -307,13 +307,13 @@ export function DashboardShell({
                 <DropdownMenuSeparator className="mb-2 bg-slate-100" />
                 <DropdownMenuGroup className="space-y-1">
                   <Link href="/dashboard/profile" className="w-full">
-                    <DropdownMenuItem className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition-colors focus:bg-[#27295B]/5 focus:text-[#27295B]">
+                    <DropdownMenuItem className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-[#27295B] focus:bg-slate-100 focus:text-[#27295B]">
                       <User className="mr-2.5 h-4 w-4 text-slate-400" />
                       My Profile
                     </DropdownMenuItem>
                   </Link>
                   <Link href="/dashboard/settings" className="w-full">
-                    <DropdownMenuItem className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition-colors focus:bg-[#27295B]/5 focus:text-[#27295B]">
+                    <DropdownMenuItem className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 hover:text-[#27295B] focus:bg-slate-100 focus:text-[#27295B]">
                       <Settings className="mr-2.5 h-4 w-4 text-slate-400" />
                       Settings
                     </DropdownMenuItem>
@@ -321,7 +321,7 @@ export function DashboardShell({
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="my-2 bg-slate-100" />
                 <DropdownMenuItem
-                  className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-red-600 transition-colors focus:bg-red-50 focus:text-red-700"
+                  className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 focus:bg-red-50 focus:text-red-700"
                   onClick={() => signOut({ callbackUrl: "/login" })}
                 >
                   <LogOut className="mr-2.5 h-4 w-4" />

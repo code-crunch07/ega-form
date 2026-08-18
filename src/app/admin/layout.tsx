@@ -404,14 +404,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <DropdownMenuSeparator className="bg-neutral-100 mb-1" />
                 <DropdownMenuGroup>
                   <Link href="/admin/profile" className="w-full">
-                    <DropdownMenuItem className="cursor-pointer py-2 px-2.5 rounded-lg text-sm text-neutral-700 focus:bg-neutral-50 transition-colors">
-                      <User className="mr-2.5 h-4 w-4 text-neutral-500" />
+                    <DropdownMenuItem className="cursor-pointer py-2.5 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#252D65] focus:bg-slate-100 focus:text-[#252D65] transition-colors">
+                      <User className="mr-2.5 h-4 w-4 text-slate-500" />
                       <span>Edit Profile</span>
                     </DropdownMenuItem>
                   </Link>
                   <Link href="/admin/profile/password" className="w-full">
-                    <DropdownMenuItem className="cursor-pointer py-2 px-2.5 rounded-lg text-sm text-neutral-700 focus:bg-neutral-50 transition-colors">
-                      <Key className="mr-2.5 h-4 w-4 text-neutral-500" />
+                    <DropdownMenuItem className="cursor-pointer py-2.5 px-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#252D65] focus:bg-slate-100 focus:text-[#252D65] transition-colors">
+                      <Key className="mr-2.5 h-4 w-4 text-slate-500" />
                       <span>Change Password</span>
                     </DropdownMenuItem>
                   </Link>
@@ -419,9 +419,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <DropdownMenuSeparator className="bg-neutral-100 my-1" />
                 <DropdownMenuItem 
                   onClick={() => signOut({ callbackUrl: "/admin/login" })}
-                  className="cursor-pointer py-2 px-2.5 rounded-lg text-sm text-red-600 focus:bg-red-50 focus:text-red-700 transition-colors"
+                  className="cursor-pointer py-2.5 px-3 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 hover:text-red-700 focus:bg-red-50 focus:text-red-700 transition-colors"
                 >
-                  <LogOut className="mr-2.5 h-4 w-4" />
+                  <LogOut className="mr-2.5 h-4 w-4 text-red-500" />
                   <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
