@@ -715,6 +715,64 @@ export async function searchAdminRecords(query: string) {
   }
 }
 
+export async function changeAdminPassword(formData: FormData) {
+  const currentPassword = formData.get("currentPassword") as string;
+  const newPassword = formData.get("newPassword") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
 
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { error: "All password fields are required." };
+  }
 
+  if (newPassword !== confirmPassword) {
+    return { error: "New password and confirmation do not match." };
+  }
 
+  if (newPassword.length < 8) {
+    return { error: "New password must be at least 8 characters long." };
+  }
+
+  try {
+    const session = await auth();
+    let email = session?.user?.email;
+
+    if (!email) {
+      const admin = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { role: "SUPER_ADMIN" },
+            { role: "ADMISSIONS_MANAGER" }
+          ]
+        }
+      });
+      email = admin?.email;
+    }
+
+    if (!email) {
+      return { error: "Authentication session expired. Please log in again." };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (!user) {
+      return { error: "User account not found." };
+    }
+
+    const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentValid) {
+      return { error: "Incorrect current password. Please try again." };
+    }
+
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { password: hashedNewPassword }
+    });
+
+    return { success: true, message: "Password updated successfully!" };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update password." };
+  }
+}
