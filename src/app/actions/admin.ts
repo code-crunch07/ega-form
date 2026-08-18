@@ -1121,6 +1121,108 @@ export async function searchAdminRecords(query: string) {
   }
 }
 
+export async function getAdminProfile() {
+  try {
+    const session = await auth();
+    let email = session?.user?.email;
+
+    if (!email) {
+      const admin = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { role: "SUPER_ADMIN" },
+            { role: "ADMISSIONS_MANAGER" }
+          ]
+        },
+        include: { profile: true }
+      });
+      return { user: admin };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: { profile: true }
+    });
+
+    return { user };
+  } catch (error: any) {
+    return { error: error.message || "Failed to fetch profile." };
+  }
+}
+
+export async function updateAdminProfile(formData: FormData) {
+  const firstName = (formData.get("firstName") as string || "").trim();
+  const lastName = (formData.get("lastName") as string || "").trim();
+  const email = (formData.get("email") as string || "").trim();
+  const avatar = formData.get("avatar") as string;
+
+  if (!email) {
+    return { error: "Email address is required." };
+  }
+
+  const fullName = `${firstName} ${lastName}`.trim() || firstName || "Admin User";
+
+  try {
+    const session = await auth();
+    let currentEmail = session?.user?.email;
+
+    let user = null;
+    if (currentEmail) {
+      user = await prisma.user.findUnique({ where: { email: currentEmail } });
+    }
+
+    if (!user) {
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { role: "SUPER_ADMIN" },
+            { role: "ADMISSIONS_MANAGER" }
+          ]
+        }
+      });
+    }
+
+    if (!user) {
+      return { error: "Admin user record not found." };
+    }
+
+    if (email !== user.email) {
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (existing && existing.id !== user.id) {
+        return { error: "Email is already taken by another account." };
+      }
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        name: fullName,
+        email: email,
+        image: avatar || user.image
+      }
+    });
+
+    await prisma.profile.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        firstName: firstName,
+        lastName: lastName
+      },
+      update: {
+        firstName: firstName,
+        lastName: lastName
+      }
+    });
+
+    revalidatePath("/admin/profile");
+    revalidatePath("/admin");
+    return { success: true, message: "Profile updated successfully!" };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update profile." };
+  }
+}
+
 export async function changeAdminPassword(formData: FormData) {
   const currentPassword = formData.get("currentPassword") as string;
   const newPassword = formData.get("newPassword") as string;
