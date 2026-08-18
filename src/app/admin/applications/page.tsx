@@ -14,30 +14,29 @@ import { ApplicationsFilters } from "./applications-filters";
 const getStatusBadge = (status: string) => {
   switch (status) {
     case "Pending Review":
-      return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800">Pending Review</Badge>;
+      return <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">Pending Review</Badge>;
     case "Interview Scheduled":
     case "Interview":
-      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">Interview</Badge>;
+      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Interview</Badge>;
     case "Offered":
-      return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800">Offered</Badge>;
+      return <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">Offered</Badge>;
     case "Rejected":
-      return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800">Rejected</Badge>;
+      return <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200">Rejected</Badge>;
     default:
-      return <Badge variant="outline" className="bg-neutral-50 text-neutral-700 border-neutral-200 dark:bg-neutral-900/30 dark:text-neutral-400 dark:border-neutral-800">{status || "Draft"}</Badge>;
+      return <Badge variant="outline" className="bg-slate-50 text-slate-700 border-slate-200">{status || "Draft"}</Badge>;
   }
 };
 
 export default async function AdminApplicationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string, status?: string, intake?: string, programme?: string, officer?: string }>;
+  searchParams: Promise<{ search?: string, status?: string, intake?: string, programme?: string }>;
 }) {
   const resolvedSearchParams = await searchParams;
   const search = resolvedSearchParams?.search;
   const status = resolvedSearchParams?.status;
   const intake = resolvedSearchParams?.intake;
   const programme = resolvedSearchParams?.programme;
-  const officer = resolvedSearchParams?.officer;
 
   const whereClause: any = {};
 
@@ -56,57 +55,71 @@ export default async function AdminApplicationsPage({
   }
 
   if (intake) {
-    whereClause.intake = intake;
+    whereClause.intake = { contains: intake, mode: 'insensitive' };
   }
 
   if (programme) {
-    whereClause.programmeId = programme; // Assuming we use exact match for ID
+    whereClause.OR = [
+      ...(whereClause.OR || []),
+      { programmeLevel: { contains: programme, mode: 'insensitive' } },
+      { programmeId: programme },
+    ];
   }
 
-  // Officer filtering can be added when AssignedOfficer is in the DB schema
-  // if (officer) { whereClause.assignedOfficer = officer; }
-
-  const applications = await prisma.application.findMany({
-    where: whereClause,
-    include: {
-      user: {
-        include: { profile: true }
+  const [applications, dynamicIntakes, dynamicProgrammes] = await Promise.all([
+    prisma.application.findMany({
+      where: whereClause,
+      include: {
+        user: {
+          include: { profile: true }
+        },
+        payments: true
       },
-      payments: true // To check fee status
-    },
-    orderBy: { createdAt: 'desc' }
-  });
+      orderBy: { createdAt: 'desc' }
+    }),
+    prisma.intake.findMany({
+      select: { id: true, name: true },
+      orderBy: { openDate: 'desc' }
+    }),
+    prisma.programme.findMany({
+      where: { status: 'Active' },
+      select: { id: true, name: true, code: true },
+      orderBy: { name: 'asc' }
+    })
+  ]);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 font-jost text-left">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Applications</h1>
-          <p className="text-neutral-500 mt-1 dark:text-neutral-400">Manage and review incoming student applications.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading">Applications</h1>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Manage and review incoming student applications.</p>
         </div>
       </div>
 
-      <ApplicationsFilters />
+      <ApplicationsFilters 
+        intakes={dynamicIntakes} 
+        programmes={dynamicProgrammes} 
+      />
 
-      <div className="rounded-md border bg-white dark:bg-black dark:border-neutral-800 shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-neutral-50 dark:bg-neutral-900/50 hover:bg-neutral-50 dark:hover:bg-neutral-900/50">
-              <TableHead className="w-[150px]">App ID</TableHead>
-              <TableHead>Applicant</TableHead>
-              <TableHead>Programme</TableHead>
-              <TableHead>Intake</TableHead>
-              <TableHead>Submitted</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Officer</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+            <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
+              <TableHead className="w-[160px] font-bold text-slate-700">App ID</TableHead>
+              <TableHead className="font-bold text-slate-700">Applicant</TableHead>
+              <TableHead className="font-bold text-slate-700">Programme</TableHead>
+              <TableHead className="font-bold text-slate-700">Intake</TableHead>
+              <TableHead className="font-bold text-slate-700">Submitted</TableHead>
+              <TableHead className="font-bold text-slate-700">Status</TableHead>
+              <TableHead className="text-right font-bold text-slate-700">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {applications.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center h-24 text-neutral-500">
-                  No applications found in the database.
+                <TableCell colSpan={7} className="text-center h-32 text-slate-400 font-medium">
+                  No applications found matching the selected filters.
                 </TableCell>
               </TableRow>
             ) : (
@@ -114,20 +127,26 @@ export default async function AdminApplicationsPage({
                 const applicantName = app.user?.profile 
                   ? `${app.user.profile.firstName || ''} ${app.user.profile.lastName || ''}`.trim()
                   : app.user?.name || "Unknown";
-                  
-                const isPaid = app.payments?.some(p => p.status === "Paid");
 
                 return (
-                  <TableRow key={app.id}>
-                    <TableCell className="font-medium">{app.appNumber}</TableCell>
-                    <TableCell>{applicantName}</TableCell>
-                    <TableCell>{app.programmeId || "Not Selected"}</TableCell>
-                    <TableCell>{app.intake || "N/A"}</TableCell>
-                    <TableCell className="text-neutral-500">
-                      {new Date(app.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  <TableRow key={app.id} className="hover:bg-slate-50/70 transition-colors border-b border-slate-100">
+                    <TableCell className="font-bold font-mono text-xs text-[#252D65]">{app.appNumber}</TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-bold text-sm text-slate-900">{applicantName}</p>
+                        <p className="text-xs text-slate-400 font-mono">{app.user?.email}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium text-sm text-slate-800">
+                      {app.programmeLevel || app.programmeId || "Not Selected"}
+                    </TableCell>
+                    <TableCell className="text-xs font-semibold text-slate-600">
+                      {app.intake || "N/A"}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-500 font-medium">
+                      {new Date(app.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </TableCell>
                     <TableCell>{getStatusBadge(app.status)}</TableCell>
-                    <TableCell className="text-neutral-500">Unassigned</TableCell>
                     <TableCell className="text-right">
                       <ActionsDropdown appId={app.id} />
                     </TableCell>
