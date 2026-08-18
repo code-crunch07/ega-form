@@ -5,22 +5,16 @@ import { Button } from "@/components/ui/button";
 import { 
   FileText, 
   CreditCard, 
-  MessageSquare, 
-  MoreHorizontal,
-  Download,
-  Send,
-  User,
-  Printer
+  Send, 
+  User, 
+  ArrowLeft,
+  Receipt
 } from "lucide-react";
 import { notFound } from "next/navigation";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import { EditInvoiceDialog } from "../edit-invoice-dialog";
+import { InvoiceActionsDropdown } from "../invoice-actions-dropdown";
 
 export default async function InvoiceDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -51,173 +45,147 @@ export default async function InvoiceDetailView({ params }: { params: Promise<{ 
   const dueDate = new Date(payment.createdAt);
   dueDate.setDate(dueDate.getDate() + 30);
 
-  const invoice = {
-    id: payment.id,
-    number: payment.invoiceNumber,
-    applicant: applicantName,
-    email: payment.application?.user?.email || "No email",
-    amount: payment.amount,
-    issueDate: issueDate.toLocaleDateString(),
-    dueDate: dueDate.toLocaleDateString(),
-    status: payment.status === "Paid" ? "Paid" : (new Date() > dueDate ? "Overdue" : "Unpaid"),
-    type: "Application Fee",
-    notes: `Billing statement for application ${payment.application?.appNumber || ''}`
-  };
-
-  if (!invoice) {
-    notFound();
-  }
+  const isOverdue = payment.status !== "Paid" && new Date() > dueDate;
+  const invoiceStatus = payment.status === "Paid" ? "Paid" : (isOverdue ? "Overdue" : "Unpaid");
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-16">
-      
+    <div className="space-y-6 animate-in fade-in duration-500 pb-16 font-jost text-left">
+      <div>
+        <Button asChild variant="ghost" size="sm" className="gap-2 text-slate-500 hover:text-[#252D65] -ml-2 mb-2 font-bold text-xs">
+          <Link href="/admin/invoices">
+            <ArrowLeft size={15} /> Back to Invoices
+          </Link>
+        </Button>
+      </div>
+
       {/* Detail Header Card */}
-      <div className="bg-slate-50/50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/60 rounded-3xl p-6 sm:p-8 shadow-2xs">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-mono font-bold bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400 px-2.5 py-1 rounded-lg border border-neutral-200/40 dark:border-neutral-700/40">
-                {invoice.number}
+              <span className="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200">
+                {payment.invoiceNumber}
               </span>
-              {invoice.status === "Paid" && <Badge className="bg-emerald-50 text-emerald-700 border-none px-2.5 font-semibold shadow-2xs">Paid</Badge>}
-              {invoice.status === "Unpaid" && <Badge className="bg-amber-50 text-amber-700 border-none px-2.5 font-semibold shadow-2xs">Unpaid</Badge>}
-              {invoice.status === "Overdue" && <Badge variant="destructive" className="border-none px-2.5 font-semibold shadow-2xs">Overdue</Badge>}
+              {invoiceStatus === "Paid" && (
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-2.5 font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                  Paid in Full
+                </Badge>
+              )}
+              {invoiceStatus === "Unpaid" && (
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 px-2.5 font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+                  Unpaid
+                </Badge>
+              )}
+              {invoiceStatus === "Overdue" && (
+                <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 px-2.5 font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500 mr-1.5"></span>
+                  Overdue
+                </Badge>
+              )}
             </div>
             
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-800 dark:text-neutral-100 flex items-center gap-3">
-              ${invoice.amount.toFixed(2)} 
-              <span className="text-lg font-medium text-neutral-400">USD</span>
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading flex items-center gap-3">
+              ${payment.amount.toFixed(2)} 
+              <span className="text-sm font-semibold text-slate-400">USD</span>
             </h1>
             
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-neutral-500 text-sm font-medium pt-1">
-              <span className="flex items-center gap-1.5">
-                <User size={15} className="text-neutral-400" />
-                {invoice.applicant}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-500 text-xs font-medium pt-1">
+              <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                <User size={15} className="text-slate-400" />
+                {applicantName}
               </span>
-              <span className="hidden sm:inline text-neutral-300">•</span>
-              <span className="flex items-center gap-1.5">
-                <FileText size={15} className="text-neutral-400" />
-                {invoice.type}
+              <span className="hidden sm:inline text-slate-300">•</span>
+              <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+                <FileText size={15} className="text-slate-400" />
+                Application Fee
+              </span>
+              <span className="hidden sm:inline text-slate-300">•</span>
+              <span className="flex items-center gap-1.5 text-slate-500 font-mono">
+                Due: {dueDate.toLocaleDateString('en-GB')}
               </span>
             </div>
           </div>
           
           {/* Action Row */}
           <div className="flex items-center gap-3 lg:self-center">
-            {invoice.status !== "Paid" && (
-              <Button className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
-                <Send size={16} /> Send Reminder
-              </Button>
-            )}
-            
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-11 w-11 p-0 rounded-xl border-neutral-200 dark:border-neutral-800">
-                  <MoreHorizontal size={16} className="text-neutral-500" />
+            <EditInvoiceDialog 
+              invoice={{
+                id: payment.id,
+                number: payment.invoiceNumber,
+                amount: payment.amount,
+                status: invoiceStatus
+              }}
+              trigger={
+                <Button className="gap-2 bg-[#252D65] hover:bg-[#1C224E] text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all text-xs">
+                  Edit Invoice
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 rounded-xl shadow-lg border-neutral-200 dark:border-neutral-800">
-                <DropdownMenuItem className="gap-2 text-neutral-600 dark:text-neutral-300 font-medium">
-                  <Download size={15} /> Download PDF
-                </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 text-neutral-600 dark:text-neutral-300 font-medium">
-                  <Printer size={15} /> Print Invoice
-                </DropdownMenuItem>
-                {invoice.status !== "Paid" && (
-                  <>
-                    <DropdownMenuSeparator className="bg-neutral-100 dark:bg-neutral-800" />
-                    <DropdownMenuItem className="gap-2 text-emerald-600 font-medium">
-                      <CreditCard size={15} /> Mark as Paid (Manual)
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              }
+            />
+            <InvoiceActionsDropdown invoice={{
+              id: payment.id,
+              number: payment.invoiceNumber,
+              amount: payment.amount,
+              status: invoiceStatus
+            }} />
           </div>
         </div>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="flex items-center gap-1 border-b border-neutral-200 dark:border-neutral-800 pb-px mb-6 overflow-x-auto w-full custom-scrollbar bg-transparent">
-          <TabsTrigger value="overview" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><FileText size={16}/> Overview</TabsTrigger>
-          <TabsTrigger value="payments" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><CreditCard size={16}/> Payment History</TabsTrigger>
-          <TabsTrigger value="communications" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><MessageSquare size={16}/> Communications</TabsTrigger>
+        <TabsList className="flex items-center gap-1 border-b border-slate-200 pb-px mb-6 overflow-x-auto w-full bg-transparent">
+          <TabsTrigger value="overview" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-xs font-bold text-slate-400 hover:text-slate-700 data-[state=active]:border-[#252D65] data-[state=active]:text-[#252D65] transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Receipt size={15}/> Statement Overview</TabsTrigger>
+          <TabsTrigger value="payer" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-xs font-bold text-slate-400 hover:text-slate-700 data-[state=active]:border-[#252D65] data-[state=active]:text-[#252D65] transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><User size={15}/> Payer & Account Info</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="m-0 focus-visible:outline-none">
-          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-neutral-850">Invoice Details</CardTitle>
+          <Card className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-5">
+              <CardTitle className="text-base font-bold text-slate-900 font-heading">Invoice Terms</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-                <div>
-                  <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Date Issued</p>
-                  <p className="font-semibold text-sm text-neutral-700 mt-1">{invoice.issueDate}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Invoice Date</p>
+                  <p className="font-bold text-sm text-slate-900 mt-1">{issueDate.toLocaleDateString('en-GB')}</p>
                 </div>
-                <div>
-                  <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Due Date</p>
-                  <p className="font-semibold text-sm text-neutral-700 mt-1">{invoice.dueDate}</p>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Due Date</p>
+                  <p className="font-bold text-sm text-slate-900 mt-1">{dueDate.toLocaleDateString('en-GB')}</p>
                 </div>
-                <div className="col-span-2">
-                  <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Applicant / Payer</p>
-                  <p className="font-semibold text-sm text-neutral-700 mt-1">{invoice.applicant} ({invoice.email})</p>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Total Billed</p>
+                  <p className="font-bold text-sm text-[#252D65] mt-1">${payment.amount.toFixed(2)} USD</p>
                 </div>
-              </div>
-              <div>
-                <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Notes / Memo</p>
-                <p className="font-medium text-sm text-neutral-700 mt-2 bg-neutral-50 dark:bg-neutral-900 p-4 rounded-xl border border-neutral-200 dark:border-neutral-800">{invoice.notes}</p>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="payments" className="m-0 focus-visible:outline-none">
-          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-neutral-850">Payment Attempts & Successes</CardTitle>
-              <CardDescription className="text-xs font-semibold text-neutral-400 mt-1">Transactions linked to this invoice.</CardDescription>
+        <TabsContent value="payer" className="m-0 focus-visible:outline-none">
+          <Card className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-5">
+              <CardTitle className="text-base font-bold text-slate-900 font-heading">Applicant & Application Details</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              {invoice.status === "Paid" ? (
-                <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50 dark:bg-emerald-900/10 dark:border-emerald-800 flex items-center justify-between">
-                  <div>
-                    <p className="font-bold text-sm text-emerald-800 dark:text-emerald-400">Paid in Full</p>
-                    <p className="text-xs font-medium text-emerald-600/70 dark:text-emerald-500 mt-0.5">Stripe Gateway • {invoice.dueDate}</p>
-                  </div>
-                  <p className="font-bold text-sm text-emerald-800 dark:text-emerald-400">${invoice.amount.toFixed(2)}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Student Name</p>
+                  <p className="font-bold text-sm text-slate-900 mt-1">{applicantName}</p>
                 </div>
-              ) : (
-                <p className="text-sm text-neutral-500">No successful payments recorded yet.</p>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="communications" className="m-0 focus-visible:outline-none">
-          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-neutral-850">Billing Communications</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                <div className="border-l-2 border-indigo-500 pl-4 py-1">
-                  <p className="text-xs text-neutral-400 font-mono mb-1">{invoice.issueDate}</p>
-                  <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">Invoice Generated & Sent</p>
-                  <p className="text-xs text-neutral-500 mt-1">Automated email sent to {invoice.email}</p>
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Student Email</p>
+                  <p className="font-bold text-sm text-slate-900 mt-1">{payment.application?.user?.email || "N/A"}</p>
                 </div>
-                {invoice.status === "Overdue" && (
-                  <div className="border-l-2 border-red-500 pl-4 py-1">
-                    <p className="text-xs text-neutral-400 font-mono mb-1">{invoice.dueDate}</p>
-                    <p className="text-sm font-medium text-neutral-800 dark:text-neutral-200">Payment Reminder Sent</p>
-                    <p className="text-xs text-neutral-500 mt-1">Automated overdue notice sent.</p>
-                  </div>
-                )}
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Linked Application</p>
+                  <p className="font-mono font-bold text-sm text-slate-900 mt-1">{payment.application?.appNumber || "N/A"}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
     </div>
   );

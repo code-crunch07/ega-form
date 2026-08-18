@@ -1082,9 +1082,108 @@ export async function deletePayment(id: string) {
     });
 
     revalidatePath("/admin/payments");
+    revalidatePath("/admin/invoices");
     revalidatePath("/admin/reports/financial");
     return { success: true };
   } catch (error: any) {
     return { error: error.message || "Failed to delete payment record." };
+  }
+}
+
+export async function generateInvoice(formData: FormData) {
+  const applicationId = formData.get("applicationId") as string;
+  const amountStr = formData.get("amount") as string;
+  const gateway = formData.get("gateway") as string || "manual";
+
+  if (!applicationId || !amountStr) {
+    return { error: "Application and Amount are required." };
+  }
+
+  try {
+    const app = await prisma.application.findUnique({
+      where: { id: applicationId },
+      include: { user: true }
+    });
+
+    if (!app) {
+      return { error: "Application not found." };
+    }
+
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const invoiceNumber = `INV-${new Date().getFullYear()}-${randomSuffix}`;
+
+    await prisma.payment.create({
+      data: {
+        invoiceNumber,
+        applicationId,
+        amount: parseFloat(amountStr),
+        currency: "USD",
+        gateway,
+        status: "Pending",
+      }
+    });
+
+    revalidatePath("/admin/invoices");
+    revalidatePath("/admin/payments");
+    return { success: true, message: `Invoice ${invoiceNumber} created successfully!` };
+  } catch (error: any) {
+    return { error: error.message || "Failed to generate invoice." };
+  }
+}
+
+export async function sendInvoiceReminder(paymentId: string) {
+  try {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { application: { include: { user: { include: { profile: true } } } } }
+    });
+
+    if (!payment || !payment.application?.user?.email) {
+      return { error: "Payment or applicant email not found." };
+    }
+
+    const applicantName = payment.application.user.profile
+      ? `${payment.application.user.profile.firstName || ''} ${payment.application.user.profile.lastName || ''}`.trim()
+      : payment.application.user.name || "Student";
+
+    await sendEmail({
+      to: payment.application.user.email,
+      subject: `Payment Reminder: Invoice #${payment.invoiceNumber} - EGA University`,
+      html: `<p>Dear ${applicantName},</p>
+        <p>This is a friendly reminder that invoice <strong>#${payment.invoiceNumber}</strong> for the amount of <strong>$${payment.amount.toFixed(2)} USD</strong> is currently pending settlement.</p>
+        <p>Please log in to your applicant portal to complete the payment.</p>
+        <p>Best regards,<br/>EGA University Finance Office</p>`,
+      actionName: "Invoice Payment Reminder"
+    });
+
+    return { success: true, message: "Payment reminder sent to applicant successfully!" };
+  } catch (error: any) {
+    return { error: error.message || "Failed to send invoice reminder." };
+  }
+}
+
+export async function updateInvoice(id: string, formData: FormData) {
+  const amountStr = formData.get("amount") as string;
+  const status = formData.get("status") as string || "Pending";
+
+  if (!id || !amountStr) {
+    return { error: "ID and Amount are required." };
+  }
+
+  try {
+    await prisma.payment.update({
+      where: { id },
+      data: {
+        amount: parseFloat(amountStr),
+        status: status === "Paid" ? "Paid" : "Pending"
+      }
+    });
+
+    revalidatePath("/admin/invoices");
+    revalidatePath(`/admin/invoices/${id}`);
+    revalidatePath("/admin/payments");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update invoice." };
   }
 }
