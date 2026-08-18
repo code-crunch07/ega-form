@@ -408,6 +408,47 @@ export async function createScholarship(formData: FormData) {
   }
 }
 
+export async function updateScholarship(id: string, formData: FormData) {
+  const name = formData.get("name") as string;
+  const description = formData.get("description") as string;
+  const amountStr = formData.get("amount") as string;
+  const status = formData.get("status") as string || "Active";
+
+  if (!id || !name) {
+    return { error: "Scholarship ID and Name are required." };
+  }
+
+  try {
+    await prisma.scholarship.update({
+      where: { id },
+      data: {
+        name,
+        description: description || null,
+        amount: amountStr ? parseFloat(amountStr) : null,
+        status
+      }
+    });
+
+    revalidatePath("/admin/scholarships");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update scholarship." };
+  }
+}
+
+export async function deleteScholarship(id: string) {
+  try {
+    await prisma.scholarship.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/scholarships");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete scholarship." };
+  }
+}
+
 export async function inviteStaff(formData: FormData) {
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
