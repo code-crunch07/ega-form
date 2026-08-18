@@ -544,6 +544,58 @@ export async function createCampus(formData: FormData) {
   }
 }
 
+export async function updateCampus(id: string, formData: FormData) {
+  const name = formData.get("name") as string;
+  const country = formData.get("country") as string;
+  const city = formData.get("city") as string;
+  const capacityStr = formData.get("capacity") as string;
+  const status = formData.get("status") as string || "Active";
+  const address = formData.get("address") as string;
+  const phone = formData.get("phone") as string;
+  const email = formData.get("email") as string;
+
+  if (!id || !name || !country || !city || !capacityStr) {
+    return { error: "ID, Name, Country, City, and Capacity are required." };
+  }
+
+  try {
+    await prisma.campus.update({
+      where: { id },
+      data: {
+        name,
+        country,
+        city,
+        capacity: parseInt(capacityStr) || 0,
+        status,
+        address: address || null,
+        phone: phone || null,
+        email: email || null
+      }
+    });
+
+    revalidatePath("/admin/campuses");
+    revalidatePath(`/admin/campuses/${id}`);
+    revalidatePath("/dashboard/applications/new");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update campus." };
+  }
+}
+
+export async function deleteCampus(id: string) {
+  try {
+    await prisma.campus.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/campuses");
+    revalidatePath("/dashboard/applications/new");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete campus." };
+  }
+}
+
 export async function createScholarship(formData: FormData) {
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
