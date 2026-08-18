@@ -30,6 +30,46 @@ export async function createSchool(formData: FormData) {
   }
 }
 
+export async function updateSchool(id: string, formData: FormData) {
+  const name = formData.get("name") as string;
+  const description = formData.get("description") as string;
+
+  if (!id || !name) {
+    return { error: "ID and School name are required." };
+  }
+
+  try {
+    await prisma.school.update({
+      where: { id },
+      data: {
+        name,
+        description: description || null,
+      },
+    });
+    
+    revalidatePath("/admin/schools");
+    revalidatePath(`/admin/schools/${id}`);
+    revalidatePath("/admin/programmes");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update school." };
+  }
+}
+
+export async function deleteSchool(id: string) {
+  try {
+    await prisma.school.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/schools");
+    revalidatePath("/admin/programmes");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete school." };
+  }
+}
+
 export async function createProgramme(formData: FormData) {
   const code = formData.get("code") as string;
   const name = formData.get("name") as string;
