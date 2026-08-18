@@ -756,8 +756,8 @@ export async function changeAdminPassword(formData: FormData) {
       where: { email }
     });
 
-    if (!user) {
-      return { error: "User account not found." };
+    if (!user || !user.password) {
+      return { error: "User account or password not found." };
     }
 
     const isCurrentValid = await bcrypt.compare(currentPassword, user.password);
