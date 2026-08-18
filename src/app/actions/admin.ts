@@ -733,6 +733,65 @@ export async function inviteStaff(formData: FormData) {
   }
 }
 
+export async function updateStaff(id: string, formData: FormData) {
+  const name = formData.get("name") as string;
+  const email = formData.get("email") as string;
+  const role = formData.get("role") as string;
+  const password = formData.get("password") as string;
+
+  if (!id || !name || !email || !role) {
+    return { error: "ID, Name, Email, and Role are required." };
+  }
+
+  const validRoles = ["SUPER_ADMIN", "ADMISSIONS_MANAGER", "ADMISSIONS_OFFICER", "FINANCE_OFFICER", "INTERVIEW_PANEL"];
+  if (!validRoles.includes(role)) {
+    return { error: "Invalid staff role selected." };
+  }
+
+  try {
+    const updateData: any = {
+      name,
+      email,
+      role: role as any
+    };
+
+    if (password && password.trim().length >= 6) {
+      updateData.password = await bcrypt.hash(password.trim(), 10);
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data: updateData
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update staff user." };
+  }
+}
+
+export async function deleteStaff(id: string) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (user?.role === "SUPER_ADMIN") {
+      const superAdminCount = await prisma.user.count({ where: { role: "SUPER_ADMIN" } });
+      if (superAdminCount <= 1) {
+        return { error: "Cannot delete the sole Super Admin account." };
+      }
+    }
+
+    await prisma.user.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/users");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete staff user." };
+  }
+}
+
 export async function createTemplate(formData: FormData) {
   const name = formData.get("name") as string;
   const trigger = formData.get("trigger") as string;
