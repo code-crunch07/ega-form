@@ -154,7 +154,7 @@ export function EditTemplateDialog({ template, trigger }: EditTemplateDialogProp
                   <Input 
                     id="subject" 
                     name="subject" 
-                    defaultValue={template.subject} 
+                    defaultValue={template.subject || ""} 
                     className="h-11 rounded-xl border-slate-200 text-slate-800" 
                     required 
                   />
@@ -166,7 +166,7 @@ export function EditTemplateDialog({ template, trigger }: EditTemplateDialogProp
                     id="content" 
                     name="content" 
                     rows={6}
-                    defaultValue={template.content} 
+                    defaultValue={template.content || ""} 
                     className="rounded-xl border-slate-200 text-slate-800 text-xs font-mono" 
                     required 
                   />

@@ -115,12 +115,12 @@ export default async function TemplateDetailView({ params }: { params: Promise<{
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700">Email Subject Line</label>
-                  <Input name="subject" defaultValue={template.subject} className="rounded-xl border-slate-200 font-medium" required />
+                  <Input name="subject" defaultValue={template.subject || ""} className="rounded-xl border-slate-200 font-medium" required />
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-slate-700">Body Content</label>
-                  <Textarea name="content" defaultValue={template.content} rows={12} className="rounded-xl border-slate-200 font-mono text-xs" required />
+                  <Textarea name="content" defaultValue={template.content || ""} rows={12} className="rounded-xl border-slate-200 font-mono text-xs" required />
                 </div>
               </CardContent>
             </Card>

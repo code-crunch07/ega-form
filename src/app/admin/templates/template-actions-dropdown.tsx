@@ -61,8 +61,8 @@ export function TemplateActionsDropdown({ template }: TemplateActionsDropdownPro
     formData.append("name", template.name);
     formData.append("trigger", template.trigger);
     formData.append("channel", template.channel);
-    formData.append("subject", template.subject);
-    formData.append("content", template.content);
+    formData.append("subject", template.subject || "");
+    formData.append("content", template.content || "");
     formData.append("status", newStatus);
 
     const res = await updateTemplate(template.id, formData);
