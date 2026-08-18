@@ -797,6 +797,68 @@ export async function updateTemplate(id: string, formData: FormData) {
   }
 }
 
+export async function duplicateTemplate(id: string) {
+  try {
+    const original = await prisma.template.findUnique({ where: { id } });
+    if (!original) {
+      return { error: "Template not found." };
+    }
+
+    await prisma.template.create({
+      data: {
+        name: `${original.name} (Copy)`,
+        trigger: original.trigger,
+        channel: original.channel,
+        subject: original.subject,
+        content: original.content,
+        status: "Draft"
+      }
+    });
+
+    revalidatePath("/admin/templates");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to duplicate template." };
+  }
+}
+
+export async function deleteTemplate(id: string) {
+  try {
+    await prisma.template.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/templates");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete template." };
+  }
+}
+
+export async function sendTestTemplateEmail(templateId: string, testEmail?: string) {
+  try {
+    const template = await prisma.template.findUnique({ where: { id: templateId } });
+    if (!template) {
+      return { error: "Template not found." };
+    }
+
+    const recipient = testEmail || "admin@ega.edu";
+    await sendEmail({
+      to: recipient,
+      subject: `[TEST] ${template.subject}`,
+      html: `<div style="font-family: sans-serif; padding: 20px; line-height: 1.6;">
+        <p style="color: #64748b; font-size: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">[Test Simulation - Template: ${template.name}]</p>
+        <div>${template.content.replace(/\n/g, '<br/>')}</div>
+      </div>`,
+      actionName: "Test Email Template"
+    });
+
+    return { success: true, message: `Test email sent to ${recipient} successfully!` };
+  } catch (error: any) {
+    return { error: error.message || "Failed to send test email." };
+  }
+}
+
 export async function getSidebarBadgeCounts() {
   try {
     const [pendingApps, pendingPayments, pendingInterviews] = await Promise.all([

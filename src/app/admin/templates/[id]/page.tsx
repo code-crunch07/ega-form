@@ -3,25 +3,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { 
   FileEdit, 
   Settings, 
   History, 
-  Save,
-  Send,
-  Wand2,
-  MoreHorizontal
+  Save, 
+  ArrowLeft,
+  Copy
 } from "lucide-react";
 import { notFound } from "next/navigation";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
 import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { updateTemplate } from "@/app/actions/admin";
+import { TemplateActionsDropdown } from "../template-actions-dropdown";
 
 export default async function TemplateDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -41,135 +36,148 @@ export default async function TemplateDetailView({ params }: { params: Promise<{
   };
 
   return (
-    <form action={updateAction} className="space-y-8 animate-in fade-in duration-500 pb-16">
-      <input type="hidden" name="name" value={template.name} />
-      <input type="hidden" name="trigger" value={template.trigger} />
-      <input type="hidden" name="channel" value={template.channel} />
-      <input type="hidden" name="status" value={template.status} />
+    <form action={updateAction} className="space-y-6 animate-in fade-in duration-500 pb-16 font-jost text-left">
+      <div>
+        <Button asChild variant="ghost" size="sm" className="gap-2 text-slate-500 hover:text-[#252D65] -ml-2 mb-2 font-bold text-xs">
+          <Link href="/admin/templates">
+            <ArrowLeft size={15} /> Back to Templates
+          </Link>
+        </Button>
+      </div>
 
       {/* Detail Header Card */}
-      <div className="bg-slate-50/50 dark:bg-neutral-900/50 border border-neutral-200/60 dark:border-neutral-800/60 rounded-3xl p-6 sm:p-8 shadow-2xs">
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xs">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-mono font-bold bg-slate-100 text-slate-600 dark:bg-neutral-800 dark:text-neutral-400 px-2.5 py-1 rounded-lg border border-neutral-200/40 dark:border-neutral-700/40">
-                {template.id.toUpperCase()}
+              <span className="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200">
+                TPL-{template.id.slice(-6).toUpperCase()}
               </span>
               {template.status === "Active" ? (
-                <Badge className="bg-emerald-50 text-emerald-700 border-none px-2.5 font-semibold shadow-2xs">Active</Badge>
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-2.5 font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
+                  Active
+                </Badge>
               ) : (
-                <Badge variant="outline" className="border-none px-2.5 font-semibold shadow-2xs">Draft</Badge>
+                <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 px-2.5 font-semibold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+                  Draft
+                </Badge>
               )}
             </div>
             
-            <h1 className="text-3xl font-bold tracking-tight text-neutral-800 dark:text-neutral-100 flex items-center gap-3">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading">
               {template.name}
             </h1>
             
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-neutral-500 text-sm font-medium pt-1">
-              <span className="flex items-center gap-1.5 font-mono">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-500 text-xs font-medium pt-1">
+              <span className="flex items-center gap-1.5 font-semibold text-slate-700">
                 Trigger: {template.trigger}
               </span>
-              <span className="hidden sm:inline text-neutral-300">•</span>
-              <span className="flex items-center gap-1.5">
+              <span className="hidden sm:inline text-slate-300">•</span>
+              <span className="flex items-center gap-1.5 font-semibold text-slate-700">
                 Channel: {template.channel}
+              </span>
+              <span className="hidden sm:inline text-slate-300">•</span>
+              <span className="flex items-center gap-1.5 text-slate-500">
+                Last modified: {new Date(template.updatedAt).toLocaleDateString('en-GB')}
               </span>
             </div>
           </div>
           
           {/* Action Row */}
           <div className="flex items-center gap-3 lg:self-center">
-            <Button type="button" variant="outline" className="gap-2 h-11 border-neutral-200 dark:border-neutral-800 rounded-xl shadow-xs px-5">
-              <Send size={16} /> Send Test
+            <Button type="submit" className="gap-2 bg-[#252D65] hover:bg-[#1C224E] text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all text-xs">
+              <Save size={15} /> Save Changes
             </Button>
-            <Button type="submit" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
-              <Save size={16} /> Save Changes
-            </Button>
+            <TemplateActionsDropdown template={template} />
           </div>
         </div>
       </div>
 
       <Tabs defaultValue="editor" className="w-full">
-        <TabsList className="flex items-center gap-1 border-b border-neutral-200 dark:border-neutral-800 pb-px mb-6 overflow-x-auto w-full custom-scrollbar bg-transparent">
-          <TabsTrigger value="editor" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><FileEdit size={16}/> Content Editor</TabsTrigger>
-          <TabsTrigger value="settings" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Settings size={16}/> Settings</TabsTrigger>
-          <TabsTrigger value="history" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-sm font-bold text-neutral-400 hover:text-neutral-700 data-[state=active]:border-indigo-600 data-[state=active]:text-indigo-600 transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><History size={16}/> Version History</TabsTrigger>
+        <TabsList className="flex items-center gap-1 border-b border-slate-200 pb-px mb-6 overflow-x-auto w-full bg-transparent">
+          <TabsTrigger value="editor" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-xs font-bold text-slate-400 hover:text-slate-700 data-[state=active]:border-[#252D65] data-[state=active]:text-[#252D65] transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><FileEdit size={15}/> Content Editor</TabsTrigger>
+          <TabsTrigger value="settings" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-xs font-bold text-slate-400 hover:text-slate-700 data-[state=active]:border-[#252D65] data-[state=active]:text-[#252D65] transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Settings size={15}/> Automation Rules</TabsTrigger>
         </TabsList>
 
         <TabsContent value="editor" className="m-0 focus-visible:outline-none">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2 border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-              <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5 flex flex-row items-center justify-between">
-                <CardTitle className="text-base font-bold text-neutral-850">Email Template Builder</CardTitle>
-                <Button type="button" variant="ghost" size="sm" className="h-8 gap-1.5 text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/20 dark:hover:bg-indigo-900/40">
-                  <Wand2 size={14} /> AI Assist
-                </Button>
+            <Card className="lg:col-span-2 border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-5">
+                <CardTitle className="text-base font-bold text-slate-900 font-heading">Template Subject & Body</CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Subject Line</label>
-                  <Input name="subject" defaultValue={template.subject || ""} className="font-medium bg-neutral-50 dark:bg-neutral-900/50" />
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Template Title</label>
+                  <Input name="name" defaultValue={template.name} className="rounded-xl border-slate-200" required />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-bold text-neutral-700 dark:text-neutral-300">Message Body</label>
-                  <div className="border border-neutral-200 dark:border-neutral-800 rounded-xl overflow-hidden bg-neutral-50 dark:bg-neutral-900/50">
-                    <div className="flex items-center gap-1 p-2 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8"><span className="font-bold">B</span></Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8"><span className="italic">I</span></Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8"><span className="underline">U</span></Button>
-                      <div className="w-px h-4 bg-neutral-300 dark:bg-neutral-700 mx-2"></div>
-                      <Button type="button" variant="outline" size="sm" className="h-8 text-xs">Insert Variable</Button>
-                    </div>
-                    <textarea 
-                      name="content"
-                      className="w-full h-64 p-4 bg-transparent outline-none resize-none font-mono text-sm leading-relaxed" 
-                      defaultValue={template.content}
-                    />
-                  </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Email Subject Line</label>
+                  <Input name="subject" defaultValue={template.subject} className="rounded-xl border-slate-200 font-medium" required />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-700">Body Content</label>
+                  <Textarea name="content" defaultValue={template.content} rows={12} className="rounded-xl border-slate-200 font-mono text-xs" required />
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden h-fit">
-              <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-                <CardTitle className="text-base font-bold text-neutral-850">Available Variables</CardTitle>
-                <CardDescription className="text-xs">Click to copy variables.</CardDescription>
+            <Card className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs h-fit">
+              <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-5">
+                <CardTitle className="text-base font-bold text-slate-900 font-heading">Dynamic Variables</CardTitle>
+                <CardDescription className="text-xs">Click copy to insert into template body.</CardDescription>
               </CardHeader>
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  {['{{first_name}}', '{{last_name}}', '{{application_id}}', '{{program_name}}', '{{status}}', '{{login_link}}'].map(v => (
-                    <div key={v} className="flex justify-between items-center p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer group">
-                      <code className="text-xs text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-900/20 px-2 py-1 rounded">{v}</code>
-                    </div>
-                  ))}
-                </div>
+              <CardContent className="p-5 space-y-2 text-xs">
+                {["{{first_name}}", "{{last_name}}", "{{application_id}}", "{{program_name}}", "{{portal_link}}"].map((variable) => (
+                  <div key={variable} className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl flex items-center justify-between font-mono">
+                    <span className="text-slate-700 font-semibold">{variable}</span>
+                    <Badge variant="outline" className="text-[10px] bg-white">Dynamic</Badge>
+                  </div>
+                ))}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
         <TabsContent value="settings" className="m-0 focus-visible:outline-none">
-          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-neutral-850">Template Settings</CardTitle>
+          <Card className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs max-w-xl">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-5">
+              <CardTitle className="text-base font-bold text-slate-900 font-heading">Trigger & Status Setup</CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
-              <p className="text-sm text-neutral-500">Configure from email address, bcc rules, and attachment settings.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="history" className="m-0 focus-visible:outline-none">
-          <Card className="border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-            <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-neutral-850">Version History</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <p className="text-sm text-neutral-500">Track changes to this template over time.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <CardContent className="p-6 space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Trigger Event</label>
+                <select name="trigger" defaultValue={template.trigger} className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-800">
+                  <option value="Manual">Manual</option>
+                  <option value="On Application Submission">On Application Submission</option>
+                  <option value="On Status Change -> Offer">On Status Change - Offer</option>
+                  <option value="On Status Change -> Rejected">On Status Change - Rejected</option>
+                  <option value="Manual / Scheduled">Manual / Scheduled</option>
+                </select>
+              </div>
 
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Channel</label>
+                <select name="channel" defaultValue={template.channel} className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-800">
+                  <option value="Email">Email</option>
+                  <option value="Email + PDF">Email + PDF</option>
+                  <option value="SMS">SMS</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Publication Status</label>
+                <select name="status" defaultValue={template.status} className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-800">
+                  <option value="Active">Active</option>
+                  <option value="Draft">Draft</option>
+                </select>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     </form>
   );
