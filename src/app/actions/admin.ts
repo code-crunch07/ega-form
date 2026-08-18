@@ -1117,7 +1117,6 @@ export async function generateInvoice(formData: FormData) {
         invoiceNumber,
         applicationId,
         amount: parseFloat(amountStr),
-        currency: "USD",
         gateway,
         status: "Pending",
       }
