@@ -884,10 +884,14 @@ export async function createFee(formData: FormData) {
 export async function updateFee(id: string, formData: FormData) {
   const name = formData.get("name") as string;
   const amountStr = formData.get("amount") as string;
-  const currency = formData.get("currency") as string;
+  const currency = formData.get("currency") as string || "USD";
   const type = formData.get("type") as string;
   const appliesTo = formData.get("appliesTo") as string;
-  const status = formData.get("status") as string;
+  const status = formData.get("status") as string || "Active";
+
+  if (!id || !name || !amountStr || !type || !appliesTo) {
+    return { error: "ID, Name, Amount, Type, and Target (Applies To) are required." };
+  }
 
   try {
     await prisma.fee.update({
@@ -902,11 +906,24 @@ export async function updateFee(id: string, formData: FormData) {
       }
     });
 
-    revalidatePath(`/admin/fees/${id}`);
     revalidatePath("/admin/fees");
+    revalidatePath(`/admin/fees/${id}`);
     return { success: true };
   } catch (error: any) {
     return { error: error.message || "Failed to update fee rule." };
+  }
+}
+
+export async function deleteFee(id: string) {
+  try {
+    await prisma.fee.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/fees");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete fee rule." };
   }
 }
 
