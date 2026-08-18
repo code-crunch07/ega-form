@@ -149,6 +149,76 @@ export async function createIntake(formData: FormData) {
   }
 }
 
+export async function updateIntake(id: string, formData: FormData) {
+  const name = formData.get("name") as string;
+  const openDateStr = formData.get("openDate") as string;
+  const closeDateStr = formData.get("closeDate") as string;
+  const capacityStr = formData.get("capacity") as string;
+  const status = formData.get("status") as string || "Open";
+
+  if (!id || !name || !openDateStr || !closeDateStr) {
+    return { error: "ID, Name, Open Date, and Close Date are required." };
+  }
+
+  try {
+    await prisma.intake.update({
+      where: { id },
+      data: {
+        name,
+        openDate: new Date(openDateStr),
+        closeDate: new Date(closeDateStr),
+        capacity: capacityStr ? parseInt(capacityStr) : null,
+        status
+      }
+    });
+
+    revalidatePath("/admin/intakes");
+    revalidatePath(`/admin/intakes/${id}`);
+    revalidatePath("/dashboard/applications/new");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update intake." };
+  }
+}
+
+export async function extendIntakeDeadline(id: string, newCloseDateStr: string) {
+  if (!id || !newCloseDateStr) {
+    return { error: "Intake ID and New Close Date are required." };
+  }
+
+  try {
+    const newCloseDate = new Date(newCloseDateStr);
+    await prisma.intake.update({
+      where: { id },
+      data: {
+        closeDate: newCloseDate,
+        status: newCloseDate > new Date() ? "Open" : undefined
+      }
+    });
+
+    revalidatePath("/admin/intakes");
+    revalidatePath(`/admin/intakes/${id}`);
+    revalidatePath("/dashboard/applications/new");
+    return { success: true, message: "Deadline extended successfully!" };
+  } catch (error: any) {
+    return { error: error.message || "Failed to extend intake deadline." };
+  }
+}
+
+export async function deleteIntake(id: string) {
+  try {
+    await prisma.intake.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/intakes");
+    revalidatePath("/dashboard/applications/new");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete intake." };
+  }
+}
+
 export async function updateApplicationStatus(id: string, status: string) {
   try {
     await prisma.application.update({
