@@ -1689,7 +1689,7 @@ export async function bulkImportCourses(
       if (!targetSchoolId) {
         // Create standard school if none exists
         const newSchool = await prisma.school.create({
-          data: { name: row.schoolName || "Educare Global Academy", code: "EGA" }
+          data: { name: row.schoolName || "Educare Global Academy" }
         });
         targetSchoolId = newSchool.id;
       }
