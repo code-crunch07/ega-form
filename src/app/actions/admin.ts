@@ -1521,3 +1521,124 @@ export async function deleteStudyLevel(name: string) {
     return { error: error.message || "Failed to delete study level." };
   }
 }
+
+export async function getAgents(filter?: { search?: string; country?: string; status?: string }) {
+  try {
+    const where: any = {};
+    if (filter?.search) {
+      where.OR = [
+        { agencyName: { contains: filter.search, mode: "insensitive" } },
+        { contactPerson: { contains: filter.search, mode: "insensitive" } },
+        { email: { contains: filter.search, mode: "insensitive" } },
+        { city: { contains: filter.search, mode: "insensitive" } },
+      ];
+    }
+    if (filter?.country && filter.country !== "all") {
+      where.country = filter.country;
+    }
+    if (filter?.status && filter.status !== "all") {
+      where.status = filter.status;
+    }
+
+    // @ts-ignore
+    const agents = await prisma.agent.findMany({
+      where,
+      orderBy: { createdAt: "desc" }
+    });
+    return agents;
+  } catch (error) {
+    return [];
+  }
+}
+
+export async function createAgent(formData: FormData) {
+  const agencyName = formData.get("agencyName") as string;
+  const contactPerson = formData.get("contactPerson") as string;
+  const email = formData.get("email") as string;
+  const phone = formData.get("phone") as string;
+  const country = formData.get("country") as string || "Singapore";
+  const city = formData.get("city") as string;
+  const commissionRateStr = formData.get("commissionRate") as string;
+  const notes = formData.get("notes") as string;
+
+  if (!agencyName || !contactPerson || !email) {
+    return { error: "Agency Name, Contact Person, and Email are required." };
+  }
+
+  try {
+    // @ts-ignore
+    await prisma.agent.create({
+      data: {
+        agencyName,
+        contactPerson,
+        email,
+        phone,
+        country,
+        city,
+        commissionRate: commissionRateStr ? parseFloat(commissionRateStr) : 10.0,
+        status: "Active",
+        notes
+      }
+    });
+
+    revalidatePath("/admin/agents");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to create agent." };
+  }
+}
+
+export async function updateAgent(id: string, formData: FormData) {
+  const agencyName = formData.get("agencyName") as string;
+  const contactPerson = formData.get("contactPerson") as string;
+  const email = formData.get("email") as string;
+  const phone = formData.get("phone") as string;
+  const country = formData.get("country") as string;
+  const city = formData.get("city") as string;
+  const commissionRateStr = formData.get("commissionRate") as string;
+  const status = formData.get("status") as string || "Active";
+  const notes = formData.get("notes") as string;
+
+  if (!id || !agencyName || !contactPerson || !email) {
+    return { error: "ID, Agency Name, Contact Person, and Email are required." };
+  }
+
+  try {
+    // @ts-ignore
+    await prisma.agent.update({
+      where: { id },
+      data: {
+        agencyName,
+        contactPerson,
+        email,
+        phone,
+        country,
+        city,
+        commissionRate: commissionRateStr ? parseFloat(commissionRateStr) : 10.0,
+        status,
+        notes
+      }
+    });
+
+    revalidatePath("/admin/agents");
+    revalidatePath(`/admin/agents/${id}`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to update agent." };
+  }
+}
+
+export async function deleteAgent(id: string) {
+  try {
+    // @ts-ignore
+    await prisma.agent.delete({
+      where: { id }
+    });
+
+    revalidatePath("/admin/agents");
+    return { success: true };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete agent." };
+  }
+}
+

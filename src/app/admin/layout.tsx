@@ -33,6 +33,7 @@ import {
   ChevronDown,
   Award,
   Mail,
+  Briefcase,
   BookOpen,
   CalendarDays,
   MapPin,
@@ -77,6 +78,7 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
     links: [
       { href: "/admin/applications", icon: FileCheck, label: "Applications" },
       { href: "/admin/applicants", icon: Users, label: "Applicants" },
+      { href: "/admin/agents", icon: Briefcase, label: "Recruitment Agents" },
       { href: "/admin/documents", icon: Folder, label: "Documents" },
       { href: "/admin/interviews", icon: Calendar, label: "Interviews" },
       { href: "/admin/offers", icon: Award, label: "Offers" },
