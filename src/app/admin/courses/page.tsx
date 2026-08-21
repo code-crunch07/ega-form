@@ -10,6 +10,7 @@ import { AddProgrammeDialog } from "../programmes/add-programme-dialog";
 import { EditProgrammeDialog } from "../programmes/edit-programme-dialog";
 import { ProgrammeActionsDropdown } from "../programmes/programme-actions-dropdown";
 import { ProgrammesFilters } from "../programmes/programmes-filters";
+import { ImportCoursesButton } from "./import-courses-button";
 import { getStudyLevels } from "@/app/actions/admin";
 
 export default async function AdminCoursesPage({
@@ -68,6 +69,7 @@ export default async function AdminCoursesPage({
           <p className="text-slate-500 mt-1 text-sm font-medium">Manage academic programs, curriculums, and entry requirements.</p>
         </div>
         <div className="flex items-center gap-3">
+          <ImportCoursesButton />
           <AddProgrammeDialog schools={schools} studyLevels={studyLevels} />
         </div>
       </div>

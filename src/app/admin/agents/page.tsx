@@ -23,6 +23,7 @@ import { AddAgentDialog } from "./add-agent-dialog";
 import { EditAgentDialog } from "./edit-agent-dialog";
 import { AgentActionsDropdown } from "./agent-actions-dropdown";
 import { AgentsFilters } from "./agents-filters";
+import { ImportAgentsButton } from "./import-agents-button";
 
 export const dynamic = "force-dynamic";
 
@@ -72,6 +73,7 @@ export default async function AdminAgentsPage({
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <ImportAgentsButton />
           <AddAgentDialog />
         </div>
       </div>

@@ -1642,3 +1642,181 @@ export async function deleteAgent(id: string) {
   }
 }
 
+export async function bulkImportCourses(
+  rows: Array<{
+    code: string;
+    name: string;
+    schoolName?: string;
+    level?: string;
+    duration?: string;
+    credits?: number | string;
+    applicationFee?: number | string;
+    status?: string;
+  }>
+) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { error: "No course rows found to import." };
+  }
+
+  try {
+    let imported = 0;
+    let updated = 0;
+
+    // Fetch existing schools
+    const schools = await prisma.school.findMany();
+    const defaultSchool = schools[0];
+
+    for (const row of rows) {
+      if (!row.code || !row.name) continue;
+
+      const code = String(row.code).trim();
+      const name = String(row.name).trim();
+      const level = String(row.level || "Diploma").trim();
+      const duration = String(row.duration || "2 Years").trim();
+      const credits = parseInt(String(row.credits || "120"), 10) || 120;
+      const applicationFee = parseFloat(String(row.applicationFee || "160.00")) || 160.0;
+      const status = row.status === "Inactive" ? "Inactive" : "Active";
+
+      // Match school by name or fallback to default
+      let targetSchoolId = defaultSchool?.id;
+      if (row.schoolName) {
+        const foundSchool = schools.find(
+          s => s.name.toLowerCase().includes(String(row.schoolName).toLowerCase().trim())
+        );
+        if (foundSchool) targetSchoolId = foundSchool.id;
+      }
+
+      if (!targetSchoolId) {
+        // Create standard school if none exists
+        const newSchool = await prisma.school.create({
+          data: { name: row.schoolName || "Educare Global Academy", code: "EGA" }
+        });
+        targetSchoolId = newSchool.id;
+      }
+
+      const existing = await prisma.programme.findUnique({
+        where: { code }
+      });
+
+      if (existing) {
+        await prisma.programme.update({
+          where: { code },
+          data: {
+            name,
+            schoolId: targetSchoolId,
+            level,
+            duration,
+            credits,
+            applicationFee,
+            status
+          }
+        });
+        updated++;
+      } else {
+        await prisma.programme.create({
+          data: {
+            code,
+            name,
+            schoolId: targetSchoolId,
+            level,
+            duration,
+            credits,
+            applicationFee,
+            status
+          }
+        });
+        imported++;
+      }
+    }
+
+    revalidatePath("/admin/courses");
+    revalidatePath("/admin/programmes");
+    revalidatePath("/dashboard/applications/new");
+    return { success: true, imported, updated, total: imported + updated };
+  } catch (error: any) {
+    return { error: error.message || "Failed to bulk import courses." };
+  }
+}
+
+export async function bulkImportAgents(
+  rows: Array<{
+    agencyName: string;
+    contactPerson: string;
+    email: string;
+    phone?: string;
+    country?: string;
+    city?: string;
+    commissionRate?: number | string;
+    status?: string;
+    notes?: string;
+  }>
+) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { error: "No agent rows found to import." };
+  }
+
+  try {
+    let imported = 0;
+    let updated = 0;
+
+    for (const row of rows) {
+      if (!row.agencyName || !row.contactPerson || !row.email) continue;
+
+      const agencyName = String(row.agencyName).trim();
+      const contactPerson = String(row.contactPerson).trim();
+      const email = String(row.email).trim().toLowerCase();
+      const phone = row.phone ? String(row.phone).trim() : null;
+      const country = String(row.country || "Singapore").trim();
+      const city = row.city ? String(row.city).trim() : null;
+      const commissionRate = parseFloat(String(row.commissionRate || "10.0")) || 10.0;
+      const status = row.status === "Inactive" ? "Inactive" : row.status === "Pending" ? "Pending" : "Active";
+      const notes = row.notes ? String(row.notes).trim() : null;
+
+      // @ts-ignore
+      const existing = await prisma.agent.findUnique({
+        where: { email }
+      });
+
+      if (existing) {
+        // @ts-ignore
+        await prisma.agent.update({
+          where: { email },
+          data: {
+            agencyName,
+            contactPerson,
+            phone,
+            country,
+            city,
+            commissionRate,
+            status,
+            notes
+          }
+        });
+        updated++;
+      } else {
+        // @ts-ignore
+        await prisma.agent.create({
+          data: {
+            agencyName,
+            contactPerson,
+            email,
+            phone,
+            country,
+            city,
+            commissionRate,
+            status,
+            notes
+          }
+        });
+        imported++;
+      }
+    }
+
+    revalidatePath("/admin/agents");
+    return { success: true, imported, updated, total: imported + updated };
+  } catch (error: any) {
+    return { error: error.message || "Failed to bulk import agents." };
+  }
+}
+
+
