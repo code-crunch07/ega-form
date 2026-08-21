@@ -527,15 +527,23 @@ export default function ApplicationWizard({
 
         {/* Active Step Form Content Area */}
         <div className="space-y-6 min-h-[450px]">
-            
-            {/* STEP 1: Mandatory Student Type, Programme Selection & Pre-Course Counselling */}
+                    {/* STEP 1: Mandatory Student Type, Programme Selection & Pre-Course Counselling */}
             {step === 1 && (
-              <div className="space-y-6 animate-in fade-in duration-300">
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-8 animate-in fade-in duration-300">
                 
-                {/* Mandatory Student Type Selection (CR-02 & Section 6) */}
-                <FormAccordion title="Mandatory Student Type Selection *" defaultOpen={true} badgeText="Prerequisite">
-                  <p className="text-xs text-slate-500 font-medium">Select your applicant classification before proceeding with programme selection.</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                {/* 1. Mandatory Student Type Selection */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-bold text-base text-slate-900 font-heading">Mandatory Student Type Selection *</h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">Select your applicant classification before proceeding with programme selection.</p>
+                    </div>
+                    <span className="text-[11px] font-bold bg-[#252D65]/10 text-[#252D65] px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
+                      Prerequisite
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
                       { value: "Local Student", label: "Local Student", desc: "Singapore Citizens & Permanent Residents" },
                       { value: "International Student", label: "International Student", desc: "Foreign Passport Holders & Student Pass Applicants" }
@@ -567,10 +575,17 @@ export default function ApplicationWizard({
                       );
                     })}
                   </div>
-                </FormAccordion>
+                </div>
 
-                {/* Accordion 1: Partner & Mode */}
-                <FormAccordion title="1. University Partner & Study Mode" defaultOpen={true}>
+                <div className="h-px bg-slate-100" />
+
+                {/* 2. University Partner & Study Mode */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 font-heading">1. University Partner & Study Mode</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Choose your awarding university partner institution and attendance format.</p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">University Partner *</Label>
@@ -599,32 +614,18 @@ export default function ApplicationWizard({
                         )}
                       />
                     </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
-                      <Controller
-                        name="studyMode"
-                        control={control}
-                        defaultValue="Full Time"
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value || "Full Time"}>
-                            <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#252D65]/15">
-                              <SelectValue placeholder="Select Mode of Study" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Full Time">Full Time</SelectItem>
-                              <SelectItem value="Part Time">Part Time</SelectItem>
-                              <SelectItem value="E-Learning">E-Learning</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
                   </div>
-                </FormAccordion>
+                </div>
 
-                {/* Accordion 2: Course Type & Dynamic Package Logic (CR-13 & Section 7.3 - 7.6) */}
-                <FormAccordion title="2. Course Type & Target Programme *" defaultOpen={true}>
+                <div className="h-px bg-slate-100" />
+
+                {/* 3. Course Type & Target Programme */}
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 font-heading">2. Course Type & Target Programme *</h3>
+                    <p className="text-xs text-slate-500 font-medium mt-0.5">Select standalone enrollment or a packaged qualification pathway.</p>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {[
                       { value: "Standalone Course", title: "Standalone Course", desc: "Single programme selection at your target academic level." },
@@ -661,7 +662,6 @@ export default function ApplicationWizard({
                     })}
                   </div>
 
-                  {/* Standalone vs Package Dynamic Logic */}
                   {watchCourseType === "Standalone Course" ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
                       <div className="space-y-2">
@@ -753,45 +753,77 @@ export default function ApplicationWizard({
                       </div>
                     </div>
                   ) : (
-                    /* Dynamic Package Course Logic (CR-13 & Section 7.3 - 7.7) */
-                    <div className="space-y-4 pt-2 animate-in fade-in duration-300">
-                      <div className="p-4 rounded-2xl bg-[#252D65]/5 border border-[#252D65]/15 text-xs text-slate-700 leading-relaxed font-medium">
-                        <p className="font-bold text-[#252D65] mb-1">Dynamic Package Pathway Rule (Version 1.2 Baseline)</p>
-                        Select Programme 1 Academic Level below. If <strong>Foundation</strong> is selected, 3 programme slots are displayed (Foundation → Diploma → Undergraduate). If <strong>Diploma / Advanced Diploma</strong> is selected, 2 programme slots are displayed (Diploma → Undergraduate).
-                      </div>
+                    <div className="space-y-6 pt-2">
+                      <div className="p-5 rounded-2xl border border-slate-200 bg-slate-50/70 space-y-4">
+                        <div>
+                          <h4 className="font-bold text-sm text-slate-900">Configure Package Programme Pathway</h4>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Select Programme 1 Academic Level below. If <strong>Foundation</strong> is selected, 3 programme slots are displayed (Foundation → Diploma → Undergraduate). If <strong>Diploma / Advanced Diploma</strong> is selected, 2 programme slots are displayed (Diploma → Undergraduate).
+                          </p>
+                        </div>
 
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label className="text-slate-800 font-bold text-xs">Programme 1 Academic Level (Student Selects) *</Label>
-                          <Controller
-                            name="packageProgrammes.prog1Level"
-                            control={control}
-                            defaultValue="Foundation"
-                            render={({ field }) => (
-                              <Select onValueChange={(val) => {
-                                field.onChange(val);
-                                // Clear dependent package selections on change (7.7 Reset Logic)
-                                setValue("packageProgrammes.prog1Id", "");
-                                setValue("packageProgrammes.prog2Id", "");
-                                setValue("packageProgrammes.prog3Id", "");
-                              }} value={field.value || "Foundation"}>
-                                <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
-                                  <SelectValue placeholder="Select Programme 1 Level" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Foundation">Foundation (Variation 1 — 3 Slot Pathway)</SelectItem>
-                                  <SelectItem value="Diploma / Advanced Diploma / Higher Diploma">Diploma / Advanced / Higher Diploma (Variation 2 — 2 Slot Pathway)</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            )}
-                          />
+                        {/* Programme 1 Level Selector */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-slate-700 font-bold text-xs">Programme 1 Academic Level (Driver) *</Label>
+                            <Controller
+                              name="packageCourse.prog1Level"
+                              control={control}
+                              defaultValue="Foundation"
+                              render={({ field }) => (
+                                <Select onValueChange={(val) => {
+                                  field.onChange(val);
+                                  if (val === "Foundation") {
+                                    setValue("packageCourse.prog2Level", "Diploma Family (Assigned)");
+                                    setValue("packageCourse.prog3Level", "Undergraduate (Assigned)");
+                                  } else {
+                                    setValue("packageCourse.prog2Level", "Undergraduate (Assigned)");
+                                    setValue("packageCourse.prog3Level", "");
+                                  }
+                                }} value={field.value || "Foundation"}>
+                                  <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold">
+                                    <SelectValue placeholder="Select Programme 1 Level" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Foundation">Foundation (Variation 1 — 3 Slot Pathway)</SelectItem>
+                                    <SelectItem value="Diploma / Advanced Diploma / Higher Diploma">Diploma / Advanced / Higher Diploma (Variation 2 — 2 Slot Pathway)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-slate-700 font-bold text-xs">Primary Pathway Intake *</Label>
+                            <Controller
+                              name="intake"
+                              control={control}
+                              defaultValue={intakes[0]?.name || "Upcoming Intake"}
+                              render={({ field }) => (
+                                <Select onValueChange={field.onChange} value={field.value || (intakes[0]?.name || "Upcoming Intake")}>
+                                  <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold">
+                                    <SelectValue placeholder="Select Intake" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {intakes && intakes.length > 0 ? (
+                                      intakes.map(i => (
+                                        <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
+                                      ))
+                                    ) : (
+                                      <SelectItem value="Upcoming Intake">Upcoming Intake</SelectItem>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                          </div>
                         </div>
 
                         {/* Package Slots Grid */}
                         <div className={cn("grid grid-cols-1 gap-4", watchProg1Level === "Foundation" ? "md:grid-cols-3" : "md:grid-cols-2")}>
                           
                           {/* Slot 1 */}
-                          <div className="p-4.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
+                          <div className="p-4.5 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs">
                             <div className="flex justify-between items-center">
                               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 1 Slot</span>
                               <span className="text-xs font-bold text-[#252D65] bg-[#252D65]/10 px-2 py-0.5 rounded-md">{watchProg1Level}</span>
@@ -814,7 +846,7 @@ export default function ApplicationWizard({
                           </div>
 
                           {/* Slot 2 (Read-only Academic Level) */}
-                          <div className="p-4.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-3">
+                          <div className="p-4.5 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs">
                             <div className="flex justify-between items-center">
                               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 2 Slot</span>
                               <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
@@ -840,7 +872,7 @@ export default function ApplicationWizard({
 
                           {/* Slot 3 (Variation 1 Only - Read-only Academic Level = Undergraduate) */}
                           {watchProg1Level === "Foundation" && (
-                            <div className="p-4.5 rounded-2xl border border-slate-200 bg-slate-50 space-y-3 animate-in fade-in duration-300">
+                            <div className="p-4.5 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs animate-in fade-in duration-300">
                               <div className="flex justify-between items-center">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 3 Slot</span>
                                 <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">Undergraduate (Assigned)</span>
@@ -867,20 +899,25 @@ export default function ApplicationWizard({
                       </div>
                     </div>
                   )}
-                </FormAccordion>
+                </div>
 
-                {/* Accordion 3: Pre-Course Counselling */}
-                <FormAccordion title="3. Pre-Course Counselling Declaration *" defaultOpen={true}>
-                  <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                    Kindly ensure that you understand the key points regarding your choice of study at {watchPartner} before making your declaration statement below:
-                  </p>
+                <div className="h-px bg-slate-100" />
+
+                {/* 4. Pre-Course Counselling */}
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="font-bold text-base text-slate-900 font-heading">3. Pre-Course Counselling Declaration *</h3>
+                    <p className="text-xs text-slate-600 font-medium leading-relaxed mt-0.5">
+                      Kindly ensure that you understand the key points regarding your choice of study at {watchPartner} before making your declaration statement below:
+                    </p>
+                  </div>
 
                   <Controller
                     name="counsellingDeclaration"
                     control={control}
                     defaultValue="counselled"
                     render={({ field }) => (
-                      <div className="space-y-2.5 pt-2">
+                      <div className="space-y-2.5 pt-1">
                         {[
                           { val: "counselled", label: "I have been counselled by EGA / EGA Appointed Agents regarding this information." },
                           { val: "read_contacted", label: "I have read sufficient information and, where applicable, I have contacted EGA / EGA Appointed Agents for clarification." },
@@ -901,7 +938,8 @@ export default function ApplicationWizard({
                       </div>
                     )}
                   />
-                </FormAccordion>
+                </div>
+
               </div>
             )}
 
