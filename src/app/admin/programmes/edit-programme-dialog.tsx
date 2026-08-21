@@ -51,7 +51,12 @@ function SubmitButton() {
   );
 }
 
-export function EditProgrammeDialog({ programme, schools, trigger }: EditProgrammeDialogProps) {
+export function EditProgrammeDialog({ 
+  programme, 
+  schools, 
+  studyLevels,
+  trigger 
+}: EditProgrammeDialogProps) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
