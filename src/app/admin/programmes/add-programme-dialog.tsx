@@ -22,7 +22,20 @@ interface School {
   name: string;
 }
 
-export function AddProgrammeDialog({ schools }: { schools: School[] }) {
+export function AddProgrammeDialog({ 
+  schools,
+  studyLevels = [
+    "Foundation / Certificate",
+    "Diploma",
+    "Advanced / Higher Diploma",
+    "Undergraduate / Bachelor's Degree",
+    "Postgraduate / Master's Degree",
+    "Doctorate / PhD"
+  ]
+}: { 
+  schools: School[];
+  studyLevels?: string[];
+}) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,19 +52,19 @@ export function AddProgrammeDialog({ schools }: { schools: School[] }) {
 
   return (
     <>
-      <Button onClick={() => setOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white gap-2 flex-shrink-0">
+      <Button onClick={() => setOpen(true)} className="h-11 px-5 bg-[#252D65] hover:bg-[#1C224E] text-white font-bold rounded-xl shadow-xs gap-2 flex-shrink-0">
         <PlusCircle size={16} /> Add Programme
       </Button>
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-neutral-900 w-full max-w-lg rounded-xl shadow-lg border border-neutral-200 dark:border-neutral-800 overflow-hidden animate-in zoom-in-95 duration-200 font-jost text-left">
             <div className="flex justify-between items-center p-6 border-b border-neutral-100 dark:border-neutral-800">
               <div>
-                <h2 className="text-lg font-semibold">Add New Programme</h2>
-                <p className="text-sm text-neutral-500">Create a new academic course or degree.</p>
+                <h2 className="text-lg font-bold text-slate-900 font-heading">Add New Programme</h2>
+                <p className="text-xs text-neutral-500">Create a new academic course or degree.</p>
               </div>
-              <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="rounded-full h-8 w-8">
+              <Button variant="ghost" size="icon" onClick={() => setOpen(false)} className="rounded-full h-8 w-8 text-slate-400 hover:text-slate-600">
                 <X size={18} />
               </Button>
             </div>
@@ -100,11 +113,9 @@ export function AddProgrammeDialog({ schools }: { schools: School[] }) {
                       required
                       className="flex h-10 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-800 dark:bg-neutral-950 dark:ring-offset-neutral-950 dark:focus-visible:ring-neutral-300"
                     >
-                      <option value="Undergraduate">Undergraduate</option>
-                      <option value="Postgraduate">Postgraduate</option>
-                      <option value="Doctorate">Doctorate</option>
-                      <option value="Diploma">Diploma</option>
-                      <option value="Certificate">Certificate</option>
+                      {studyLevels.map((lvl) => (
+                        <option key={lvl} value={lvl}>{lvl}</option>
+                      ))}
                     </select>
                   </div>
                   

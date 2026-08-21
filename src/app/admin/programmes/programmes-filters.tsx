@@ -20,9 +20,20 @@ interface School {
 
 interface ProgrammesFiltersProps {
   schools?: School[];
+  studyLevels?: string[];
 }
 
-export function ProgrammesFilters({ schools = [] }: ProgrammesFiltersProps) {
+export function ProgrammesFilters({ 
+  schools = [],
+  studyLevels = [
+    "Foundation / Certificate",
+    "Diploma",
+    "Advanced / Higher Diploma",
+    "Undergraduate / Bachelor's Degree",
+    "Postgraduate / Master's Degree",
+    "Doctorate / PhD"
+  ]
+}: ProgrammesFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -74,7 +85,7 @@ export function ProgrammesFilters({ schools = [] }: ProgrammesFiltersProps) {
       <div className="relative flex-1">
         <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
         <Input 
-          placeholder="Search programme by code or name..." 
+          placeholder="Search by programme code, title, school..." 
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10 pr-8 h-11 bg-white border-slate-200 rounded-xl text-slate-800 text-sm shadow-2xs focus:border-[#252D65] focus:ring-[#252D65]/10"
@@ -97,7 +108,10 @@ export function ProgrammesFilters({ schools = [] }: ProgrammesFiltersProps) {
           onValueChange={(val: string | null) => createQueryString("school", val || "all")}
         >
           <SelectTrigger className="w-[160px] h-11 bg-white border-slate-200 rounded-xl text-slate-700 font-medium text-xs shadow-2xs focus:border-[#252D65]">
-            <SelectValue placeholder="All Schools" />
+            <div className="flex items-center gap-1.5 truncate">
+              <Filter size={14} className="text-slate-400 shrink-0" />
+              <SelectValue placeholder="All Schools" />
+            </div>
           </SelectTrigger>
           <SelectContent className="rounded-xl border-slate-200 bg-white shadow-xl max-h-60">
             <SelectItem value="all">All Schools</SelectItem>
@@ -114,16 +128,16 @@ export function ProgrammesFilters({ schools = [] }: ProgrammesFiltersProps) {
           value={currentLevel || "all"}
           onValueChange={(val: string | null) => createQueryString("level", val || "all")}
         >
-          <SelectTrigger className="w-[140px] h-11 bg-white border-slate-200 rounded-xl text-slate-700 font-medium text-xs shadow-2xs focus:border-[#252D65]">
+          <SelectTrigger className="w-[160px] h-11 bg-white border-slate-200 rounded-xl text-slate-700 font-medium text-xs shadow-2xs focus:border-[#252D65]">
             <SelectValue placeholder="All Levels" />
           </SelectTrigger>
-          <SelectContent className="rounded-xl border-slate-200 bg-white shadow-xl">
+          <SelectContent className="rounded-xl border-slate-200 bg-white shadow-xl max-h-60">
             <SelectItem value="all">All Levels</SelectItem>
-            <SelectItem value="Diploma">Diploma</SelectItem>
-            <SelectItem value="Undergraduate">Undergraduate</SelectItem>
-            <SelectItem value="Postgraduate">Postgraduate</SelectItem>
-            <SelectItem value="Doctorate">Doctorate</SelectItem>
-            <SelectItem value="Certificate">Certificate</SelectItem>
+            {studyLevels.map((lvl) => (
+              <SelectItem key={lvl} value={lvl}>
+                {lvl}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
 

@@ -28,6 +28,7 @@ interface Programme {
 interface EditProgrammeDialogProps {
   programme: Programme;
   schools: School[];
+  studyLevels?: string[];
   trigger?: React.ReactNode;
 }
 
@@ -151,11 +152,16 @@ export function EditProgrammeDialog({ programme, schools, trigger }: EditProgram
                       className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#252D65]/20 focus-visible:border-[#252D65]"
                       required
                     >
-                      <option value="Diploma">Diploma</option>
-                      <option value="Undergraduate">Undergraduate</option>
-                      <option value="Postgraduate">Postgraduate</option>
-                      <option value="Doctorate">Doctorate</option>
-                      <option value="Certificate">Certificate</option>
+                      {(studyLevels && studyLevels.length > 0 ? studyLevels : [
+                        "Foundation / Certificate",
+                        "Diploma",
+                        "Advanced / Higher Diploma",
+                        "Undergraduate / Bachelor's Degree",
+                        "Postgraduate / Master's Degree",
+                        "Doctorate / PhD"
+                      ]).map((lvl) => (
+                        <option key={lvl} value={lvl}>{lvl}</option>
+                      ))}
                     </select>
                   </div>
                   

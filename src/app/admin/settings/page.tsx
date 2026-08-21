@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,13 +23,64 @@ import {
   ExternalLink,
   Upload,
   RefreshCw,
-  Copy
+  Copy,
+  GraduationCap,
+  Plus,
+  Trash2,
+  X
 } from "lucide-react";
 import Link from "next/link";
+import { getStudyLevels, addStudyLevel, deleteStudyLevel } from "@/app/actions/admin";
 
 export default function AdminSettingsPage() {
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Study levels state
+  const [studyLevels, setStudyLevels] = useState<string[]>([
+    "Foundation / Certificate",
+    "Diploma",
+    "Advanced / Higher Diploma",
+    "Undergraduate / Bachelor's Degree",
+    "Postgraduate / Master's Degree",
+    "Doctorate / PhD"
+  ]);
+  const [newLevelInput, setNewLevelInput] = useState("");
+  const [isAddingLevel, setIsAddingLevel] = useState(false);
+
+  useEffect(() => {
+    async function loadLevels() {
+      const levels = await getStudyLevels();
+      if (levels && levels.length > 0) {
+        setStudyLevels(levels);
+      }
+    }
+    loadLevels();
+  }, []);
+
+  const handleAddStudyLevel = async () => {
+    if (!newLevelInput.trim()) return;
+    setIsAddingLevel(true);
+    const res = await addStudyLevel(newLevelInput.trim());
+    setIsAddingLevel(false);
+    if (res?.error) {
+      alert("Error: " + res.error);
+    } else if (res?.levels) {
+      setStudyLevels(res.levels);
+      setNewLevelInput("");
+    }
+  };
+
+  const handleDeleteStudyLevel = async (level: string) => {
+    if (confirm(`Are you sure you want to remove study level "${level}"?`)) {
+      const res = await deleteStudyLevel(level);
+      if (res?.error) {
+        alert("Error: " + res.error);
+      } else if (res?.levels) {
+        setStudyLevels(res.levels);
+      }
+    }
+  };
 
   // Form states with sensible production defaults
   const [institutionName, setInstitutionName] = useState("EGA University & Global Academy");
@@ -251,6 +302,75 @@ export default function AdminSettingsPage() {
                 <div className="space-y-1.5">
                   <Label className="text-xs font-bold text-slate-700">Offer Acceptance Window (Days)</Label>
                   <Input defaultValue="30" type="number" className="h-11 rounded-xl border-slate-200 text-slate-800" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dynamic Study & Academic Levels Card */}
+          <Card className="border border-slate-200 rounded-2xl bg-white shadow-xs overflow-hidden">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-5 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900 font-heading flex items-center gap-2">
+                  <GraduationCap size={18} className="text-[#252D65]" />
+                  Study & Academic Levels
+                </CardTitle>
+                <CardDescription className="text-xs">Manage active qualification levels available across courses, admissions forms, and filters.</CardDescription>
+              </div>
+              <Button asChild variant="outline" size="sm" className="rounded-xl border-slate-200 gap-1.5 text-xs font-bold">
+                <Link href="/admin/courses">
+                  <span>View Courses</span>
+                  <ExternalLink size={13} />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-6 space-y-5">
+              {/* Add Level Form */}
+              <div className="flex gap-2">
+                <Input 
+                  placeholder="Enter new study level (e.g., Postgraduate Diploma, Professional Certificate)..." 
+                  value={newLevelInput}
+                  onChange={(e) => setNewLevelInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddStudyLevel();
+                    }
+                  }}
+                  className="h-11 rounded-xl border-slate-200 text-slate-800 text-xs font-medium"
+                />
+                <Button 
+                  type="button"
+                  onClick={handleAddStudyLevel}
+                  disabled={isAddingLevel || !newLevelInput.trim()}
+                  className="h-11 px-5 rounded-xl bg-[#252D65] hover:bg-[#1C224E] text-white font-bold text-xs gap-1.5 shrink-0"
+                >
+                  <Plus size={15} />
+                  <span>{isAddingLevel ? "Adding..." : "Add Level"}</span>
+                </Button>
+              </div>
+
+              {/* Active Levels List */}
+              <div className="space-y-2">
+                <Label className="text-xs font-bold text-slate-600">Active Study Levels ({studyLevels.length})</Label>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {studyLevels.map((lvl) => (
+                    <div 
+                      key={lvl}
+                      className="group flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-800 hover:border-[#252D65] transition-all shadow-2xs"
+                    >
+                      <GraduationCap size={13} className="text-[#252D65]" />
+                      <span>{lvl}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteStudyLevel(lvl)}
+                        className="ml-1 text-slate-400 hover:text-red-600 p-0.5 rounded-full hover:bg-red-50 transition-colors"
+                        title={`Delete ${lvl}`}
+                      >
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
                 </div>
               </div>
             </CardContent>

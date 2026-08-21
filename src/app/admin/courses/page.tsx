@@ -10,6 +10,7 @@ import { AddProgrammeDialog } from "../programmes/add-programme-dialog";
 import { EditProgrammeDialog } from "../programmes/edit-programme-dialog";
 import { ProgrammeActionsDropdown } from "../programmes/programme-actions-dropdown";
 import { ProgrammesFilters } from "../programmes/programmes-filters";
+import { getStudyLevels } from "@/app/actions/admin";
 
 export default async function AdminCoursesPage({
   searchParams,
@@ -44,7 +45,7 @@ export default async function AdminCoursesPage({
     whereClause.status = status;
   }
 
-  const [courses, schools] = await Promise.all([
+  const [courses, schools, studyLevels] = await Promise.all([
     prisma.programme.findMany({
       where: whereClause,
       include: {
@@ -55,7 +56,8 @@ export default async function AdminCoursesPage({
     prisma.school.findMany({
       select: { id: true, name: true },
       orderBy: { name: 'asc' }
-    })
+    }),
+    getStudyLevels()
   ]);
 
   return (
@@ -66,11 +68,11 @@ export default async function AdminCoursesPage({
           <p className="text-slate-500 mt-1 text-sm font-medium">Manage academic programs, curriculums, and entry requirements.</p>
         </div>
         <div className="flex items-center gap-3">
-          <AddProgrammeDialog schools={schools} />
+          <AddProgrammeDialog schools={schools} studyLevels={studyLevels} />
         </div>
       </div>
 
-      <ProgrammesFilters schools={schools} />
+      <ProgrammesFilters schools={schools} studyLevels={studyLevels} />
 
       <div className="rounded-2xl border border-slate-200 bg-white shadow-xs overflow-hidden">
         <Table>
@@ -138,7 +140,7 @@ export default async function AdminCoursesPage({
                   </TableCell>
                   <TableCell className="py-3 px-6 text-right">
                     <div className="flex justify-end items-center gap-1">
-                      <EditProgrammeDialog programme={course} schools={schools} />
+                      <EditProgrammeDialog programme={course} schools={schools} studyLevels={studyLevels} />
                       <ProgrammeActionsDropdown programme={course} schools={schools} />
                     </div>
                   </TableCell>

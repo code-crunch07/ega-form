@@ -1438,3 +1438,86 @@ export async function updateInvoice(id: string, formData: FormData) {
     return { error: error.message || "Failed to update invoice." };
   }
 }
+
+const DEFAULT_STUDY_LEVELS = [
+  "Foundation / Certificate",
+  "Diploma",
+  "Advanced / Higher Diploma",
+  "Undergraduate / Bachelor's Degree",
+  "Postgraduate / Master's Degree",
+  "Doctorate / PhD"
+];
+
+export async function getStudyLevels(): Promise<string[]> {
+  try {
+    const setting = await prisma.systemSetting.findUnique({
+      where: { key: "study_levels" }
+    });
+
+    if (setting && setting.value) {
+      const parsed = JSON.parse(setting.value);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+
+    // Seed default if not exists
+    await prisma.systemSetting.upsert({
+      where: { key: "study_levels" },
+      create: { key: "study_levels", value: JSON.stringify(DEFAULT_STUDY_LEVELS) },
+      update: {}
+    });
+
+    return DEFAULT_STUDY_LEVELS;
+  } catch (error) {
+    return DEFAULT_STUDY_LEVELS;
+  }
+}
+
+export async function addStudyLevel(name: string) {
+  const trimmed = name?.trim();
+  if (!trimmed) {
+    return { error: "Level name is required." };
+  }
+
+  try {
+    const currentLevels = await getStudyLevels();
+    if (currentLevels.includes(trimmed)) {
+      return { error: "Study level already exists." };
+    }
+
+    const updated = [...currentLevels, trimmed];
+    await prisma.systemSetting.upsert({
+      where: { key: "study_levels" },
+      create: { key: "study_levels", value: JSON.stringify(updated) },
+      update: { value: JSON.stringify(updated) }
+    });
+
+    revalidatePath("/admin/settings");
+    revalidatePath("/admin/courses");
+    revalidatePath("/admin/programmes");
+    return { success: true, levels: updated };
+  } catch (error: any) {
+    return { error: error.message || "Failed to add study level." };
+  }
+}
+
+export async function deleteStudyLevel(name: string) {
+  try {
+    const currentLevels = await getStudyLevels();
+    const updated = currentLevels.filter(l => l !== name);
+
+    await prisma.systemSetting.upsert({
+      where: { key: "study_levels" },
+      create: { key: "study_levels", value: JSON.stringify(updated) },
+      update: { value: JSON.stringify(updated) }
+    });
+
+    revalidatePath("/admin/settings");
+    revalidatePath("/admin/courses");
+    revalidatePath("/admin/programmes");
+    return { success: true, levels: updated };
+  } catch (error: any) {
+    return { error: error.message || "Failed to delete study level." };
+  }
+}
