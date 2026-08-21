@@ -26,6 +26,19 @@ import { AgentsFilters } from "./agents-filters";
 
 export const dynamic = "force-dynamic";
 
+interface AgentRecord {
+  id: string;
+  agencyName: string;
+  contactPerson: string;
+  email: string;
+  phone?: string | null;
+  country: string;
+  city?: string | null;
+  commissionRate?: number | null;
+  status: string;
+  notes?: string | null;
+}
+
 export default async function AdminAgentsPage({
   searchParams,
 }: {
@@ -36,13 +49,13 @@ export default async function AdminAgentsPage({
   const country = resolvedSearchParams?.country;
   const status = resolvedSearchParams?.status;
 
-  const agents = await getAgents({ search, country, status });
+  const agents: AgentRecord[] = await getAgents({ search, country, status });
 
   const totalAgents = agents.length;
-  const activeAgents = agents.filter(a => a.status === "Active").length;
-  const uniqueCountries = new Set(agents.map(a => a.country)).size;
+  const activeAgents = agents.filter((a: AgentRecord) => a.status === "Active").length;
+  const uniqueCountries = new Set(agents.map((a: AgentRecord) => a.country)).size;
   const avgCommission = agents.length > 0
-    ? (agents.reduce((acc, a) => acc + (a.commissionRate || 10), 0) / agents.length).toFixed(1)
+    ? (agents.reduce((acc: number, a: AgentRecord) => acc + (a.commissionRate || 10), 0) / agents.length).toFixed(1)
     : "10.0";
 
   return (
