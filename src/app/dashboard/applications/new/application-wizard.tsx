@@ -577,20 +577,23 @@ export default function ApplicationWizard({
                       <Controller
                         name="universityPartner"
                         control={control}
-                        defaultValue="Educare Global Academy"
+                        defaultValue={schools[0]?.name || "Educare Global Academy"}
                         render={({ field }) => (
                           <Select onValueChange={(val) => {
                             field.onChange(val);
                             setValue("programmeId", "");
-                          }} value={field.value || "Educare Global Academy"}>
+                          }} value={field.value || (schools[0]?.name || "Educare Global Academy")}>
                             <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#252D65]/15">
                               <SelectValue placeholder="Select University Partner" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Educare Global Academy">Educare Global Academy (EGA)</SelectItem>
-                              <SelectItem value="Glasgow Caledonian University (UK)">Glasgow Caledonian University (UK)</SelectItem>
-                              <SelectItem value="Kingston University (UK)">Kingston University (UK)</SelectItem>
-                              <SelectItem value="NCC">NCC Education</SelectItem>
+                              {schools && schools.length > 0 ? (
+                                schools.map((school) => (
+                                  <SelectItem key={school.id} value={school.name}>{school.name}</SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="Educare Global Academy">Educare Global Academy (EGA)</SelectItem>
+                              )}
                             </SelectContent>
                           </Select>
                         )}
@@ -696,16 +699,13 @@ export default function ApplicationWizard({
                             const selectedProg = programmes.find(p => p.id === field.value);
                             const displayName = selectedProg 
                               ? `${selectedProg.name} (${selectedProg.code})`
-                              : field.value === "p1" ? "Diploma in International Hotel and Tourism Management"
-                              : field.value === "p2" ? "Diploma in Business Administration"
-                              : field.value === "p3" ? "Higher Diploma in Computer Science"
-                              : field.value;
+                              : "";
 
                             return (
                               <Select onValueChange={field.onChange} value={field.value || ""}>
                                 <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
                                   <span className="truncate text-left font-semibold">
-                                    {field.value ? displayName : <span className="text-slate-400 font-normal">Select Programme</span>}
+                                    {field.value && displayName ? displayName : <span className="text-slate-400 font-normal">Select Programme</span>}
                                   </span>
                                 </SelectTrigger>
                                 <SelectContent className="w-[320px] max-w-md">
@@ -713,12 +713,12 @@ export default function ApplicationWizard({
                                     filteredProgrammes.map(p => (
                                       <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
                                     ))
+                                  ) : programmes.length > 0 ? (
+                                    programmes.map(p => (
+                                      <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
+                                    ))
                                   ) : (
-                                    <>
-                                      <SelectItem value="p1">Diploma in International Hotel and Tourism Management</SelectItem>
-                                      <SelectItem value="p2">Diploma in Business Administration</SelectItem>
-                                      <SelectItem value="p3">Higher Diploma in Computer Science</SelectItem>
-                                    </>
+                                    <div className="p-3 text-xs text-slate-500 font-medium">No programmes available</div>
                                   )}
                                 </SelectContent>
                               </Select>
@@ -732,9 +732,9 @@ export default function ApplicationWizard({
                         <Controller
                           name="intake"
                           control={control}
-                          defaultValue="January 2026"
+                          defaultValue={intakes[0]?.name || "Upcoming Intake"}
                           render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value || "January 2026"}>
+                            <Select onValueChange={field.onChange} value={field.value || (intakes[0]?.name || "Upcoming Intake")}>
                               <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
                                 <SelectValue placeholder="Select Intake" />
                               </SelectTrigger>
@@ -744,12 +744,7 @@ export default function ApplicationWizard({
                                     <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
                                   ))
                                 ) : (
-                                  <>
-                                    <SelectItem value="January 2026">January 2026</SelectItem>
-                                    <SelectItem value="April 2026">April 2026</SelectItem>
-                                    <SelectItem value="July 2026">July 2026</SelectItem>
-                                    <SelectItem value="October 2026">October 2026</SelectItem>
-                                  </>
+                                  <SelectItem value="Upcoming Intake">Upcoming Intake</SelectItem>
                                 )}
                               </SelectContent>
                             </Select>
@@ -802,13 +797,18 @@ export default function ApplicationWizard({
                               <span className="text-xs font-bold text-[#252D65] bg-[#252D65]/10 px-2 py-0.5 rounded-md">{watchProg1Level}</span>
                             </div>
                             <Label className="text-slate-800 font-bold text-xs">Programme 1 Selection *</Label>
-                            <Select defaultValue="p1_1">
+                            <Select defaultValue={programmes[0]?.id || ""}>
                               <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
                                 <SelectValue placeholder="Select Programme 1" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="p1_1">{watchProg1Level === "Foundation" ? "International Foundation Certificate" : "Diploma in International Hotel and Tourism Management"}</SelectItem>
-                                <SelectItem value="p1_2">{watchProg1Level === "Foundation" ? "Foundation Diploma in Higher Education" : "Diploma in Business Administration"}</SelectItem>
+                                {programmes.length > 0 ? (
+                                  programmes.map((p) => (
+                                    <SelectItem key={`p1_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="none">No programmes found</SelectItem>
+                                )}
                               </SelectContent>
                             </Select>
                           </div>
@@ -822,13 +822,18 @@ export default function ApplicationWizard({
                               </span>
                             </div>
                             <Label className="text-slate-800 font-bold text-xs">Programme 2 Selection *</Label>
-                            <Select defaultValue="p2_1">
+                            <Select defaultValue={programmes[1]?.id || programmes[0]?.id || ""}>
                               <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
                                 <SelectValue placeholder="Select Programme 2" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="p2_1">{watchProg1Level === "Foundation" ? "Diploma in Business Administration" : "BSc (Hons) International Tourism Management"}</SelectItem>
-                                <SelectItem value="p2_2">{watchProg1Level === "Foundation" ? "Higher Diploma in Computer Science" : "BA (Hons) Business & Management Top-Up"}</SelectItem>
+                                {programmes.length > 0 ? (
+                                  programmes.map((p) => (
+                                    <SelectItem key={`p2_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="none">No programmes found</SelectItem>
+                                )}
                               </SelectContent>
                             </Select>
                           </div>
@@ -841,13 +846,18 @@ export default function ApplicationWizard({
                                 <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">Undergraduate (Assigned)</span>
                               </div>
                               <Label className="text-slate-800 font-bold text-xs">Programme 3 Selection *</Label>
-                              <Select defaultValue="p3_1">
+                              <Select defaultValue={programmes[2]?.id || programmes[0]?.id || ""}>
                                 <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
                                   <SelectValue placeholder="Select Programme 3" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="p3_1">BSc (Hons) International Tourism & Hospitality Management</SelectItem>
-                                  <SelectItem value="p3_2">BA (Hons) Business & Management Top-Up</SelectItem>
+                                  {programmes.length > 0 ? (
+                                    programmes.map((p) => (
+                                      <SelectItem key={`p3_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
+                                    ))
+                                  ) : (
+                                    <SelectItem value="none">No programmes found</SelectItem>
+                                  )}
                                 </SelectContent>
                               </Select>
                             </div>
