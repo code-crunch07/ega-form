@@ -12,7 +12,7 @@ import {
   GraduationCap,
   FolderOpen,
   CreditCard,
-  MessageSquare,
+  BellRing,
   UserIcon,
 } from "lucide-react";
 import { getMockSessionUser } from "@/lib/auth";
