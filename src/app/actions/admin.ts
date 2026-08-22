@@ -1643,20 +1643,18 @@ export async function deleteAgent(id: string) {
 }
 
 export async function bulkImportCourses(
-  rows: Array<{
-    code: string;
-    name: string;
-    schoolName?: string;
-    level?: string;
-    duration?: string;
-    credits?: number | string;
-    applicationFee?: number | string;
-    status?: string;
-  }>
+  rows: Array<Record<string, any>>
 ) {
   if (!Array.isArray(rows) || rows.length === 0) {
     return { error: "No course rows found to import." };
   }
+
+  const partnerMap: Record<string, string> = {
+    "EGA": "Educare Global Academy",
+    "NCC": "NCC Education",
+    "GCU": "Glasgow Caledonian University",
+    "KU": "Kingston University"
+  };
 
   try {
     let imported = 0;
@@ -1666,33 +1664,51 @@ export async function bulkImportCourses(
     const schools = await prisma.school.findMany();
     const defaultSchool = schools[0];
 
-    for (const row of rows) {
-      if (!row.code || !row.name) continue;
-
-      const code = String(row.code).trim();
-      const name = String(row.name).trim();
-      const level = String(row.level || "Diploma").trim();
-      const duration = String(row.duration || "2 Years").trim();
-      const credits = parseInt(String(row.credits || "120"), 10) || 120;
-      const applicationFee = parseFloat(String(row.applicationFee || "160.00")) || 160.0;
-      const status = row.status === "Inactive" ? "Inactive" : "Active";
-
-      // Match school by name or fallback to default
-      let targetSchoolId = defaultSchool?.id;
-      if (row.schoolName) {
-        const foundSchool = schools.find(
-          s => s.name.toLowerCase().includes(String(row.schoolName).toLowerCase().trim())
-        );
-        if (foundSchool) targetSchoolId = foundSchool.id;
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      // Auto-detect course name across various potential spreadsheet headers
+      const rawName = row.name || row["Course"] || row["Course Title"] || row["Preparatory and Foundation Course"] || row["Diploma Course"] || row["Undergraduate Course"] || row["Postgraduate Course"] || row["Programme"];
+      if (!rawName || typeof rawName !== "string" || rawName.trim() === "" || rawName.toLowerCase().includes("course")) {
+        // Skip header section rows like "Diploma Course" if no partner or level
+        if (!row["University Partner"] && !row.schoolName && !row["Academic Level"]) continue;
       }
 
-      if (!targetSchoolId) {
-        // Create standard school if none exists
+      const name = String(rawName).trim();
+      
+      // Auto-detect Partner / School
+      const rawPartner = row.schoolName || row["University Partner"] || row["Partner"] || row["School"] || "EGA";
+      const partnerKey = String(rawPartner).trim().toUpperCase();
+      const schoolFullName = partnerMap[partnerKey] || rawPartner;
+
+      let targetSchoolId = defaultSchool?.id;
+      const foundSchool = schools.find(
+        s => s.name.toLowerCase().includes(String(schoolFullName).toLowerCase().trim()) || s.name.toLowerCase().includes(partnerKey.toLowerCase())
+      );
+      if (foundSchool) {
+        targetSchoolId = foundSchool.id;
+      } else {
         const newSchool = await prisma.school.create({
-          data: { name: row.schoolName || "Educare Global Academy" }
+          data: { name: schoolFullName || "Educare Global Academy" }
         });
         targetSchoolId = newSchool.id;
+        schools.push(newSchool);
       }
+
+      // Auto-detect Academic Level
+      let level = String(row.level || row["Academic Level"] || row["Study Level"] || "Diploma").trim();
+      if (level.includes("Diploma")) level = "Diploma";
+      else if (level.includes("Foundation")) level = "Foundation";
+      else if (level.includes("Preparatory")) level = "Preparatory";
+      else if (level.includes("Postgraduate")) level = "Postgraduate";
+      else if (level.includes("Undergraduate")) level = "Undergraduate";
+
+      // Auto-generate or read Code
+      const code = String(row.code || `${partnerKey.substring(0, 3)}-${level.substring(0, 3).toUpperCase()}-${String(i + 1).padStart(3, '0')}`).trim();
+
+      const duration = String(row.duration || (level === "Preparatory" ? "6 Months" : level === "Foundation" ? "1 Year" : level === "Diploma" ? "2 Years" : level === "Undergraduate" ? "3 Years" : "1.5 Years")).trim();
+      const credits = parseInt(String(row.credits || (level === "Postgraduate" ? 180 : level === "Undergraduate" ? 120 : 80)), 10) || 120;
+      const applicationFee = parseFloat(String(row.applicationFee || (level === "Postgraduate" ? 320.0 : 160.0))) || 160.0;
+      const status = row.status === "Inactive" ? "Inactive" : "Active";
 
       const existing = await prisma.programme.findUnique({
         where: { code }
@@ -1728,6 +1744,15 @@ export async function bulkImportCourses(
         imported++;
       }
     }
+
+    revalidatePath("/admin/courses");
+    revalidatePath("/admin/programmes");
+    revalidatePath("/dashboard/applications/new");
+    return { success: true, imported, updated, total: imported + updated };
+  } catch (error: any) {
+    return { error: error.message || "Failed to bulk import courses." };
+  }
+}
 
     revalidatePath("/admin/courses");
     revalidatePath("/admin/programmes");
