@@ -107,7 +107,6 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     title: "COMMUNICATION",
     links: [
-      { href: "/admin/messages", icon: MessageSquare, label: "Messages" },
       { href: "/admin/notifications", icon: Bell, label: "Notifications" },
       { href: "/admin/templates", icon: Mail, label: "Email Templates" },
     ]
@@ -208,7 +207,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     if (path.startsWith("/admin/intakes")) return "Intakes";
     if (path.startsWith("/admin/payments")) return "Payments";
     if (path.startsWith("/admin/documents")) return "Documents";
-    if (path.startsWith("/admin/messages")) return "Messages";
     if (path.startsWith("/admin/reports")) return "Reports";
     if (path.startsWith("/admin/users")) return "Users";
     return "Admissions";
@@ -285,11 +283,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                         {badgeCounts.notifications}
                       </span>
                     )}
-                    {link.href === "/admin/messages" && badgeCounts.messages > 0 && !isCollapsed && (
-                      <span className="h-5 px-1.5 rounded-full bg-[#252D65] text-white text-[11px] font-bold flex items-center justify-center min-w-5">
-                        {badgeCounts.messages}
-                      </span>
-                    )}
                   </Link>
                 );
               })}
@@ -352,21 +345,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           
           {/* Right Profile Dropdown and Actions */}
           <div className="flex items-center gap-3 sm:gap-4">
-            
-            {/* Messages Icon (Navigates to /admin/messages) */}
-            <Link 
-              href="/admin/messages"
-              className="relative p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-all group"
-              title="View Messages"
-            >
-              <MessageSquare size={19} className="group-hover:scale-110 transition-transform" />
-              {badgeCounts.messages > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 rounded-full bg-[#252D65] text-white text-[9px] font-bold flex items-center justify-center border border-white">
-                  {badgeCounts.messages}
-                </span>
-              )}
-            </Link>
-
             {/* Notifications Icon (Navigates to /admin/notifications) */}
             <Link 
               href="/admin/notifications"

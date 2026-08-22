@@ -68,7 +68,6 @@ const NAV_SECTIONS = [
   {
     label: "COMMUNICATION",
     items: [
-      { href: "/dashboard/messages", icon: MessageSquare, label: "Messages" },
       { href: "/dashboard/notifications", icon: BellRing, label: "Notifications" },
     ],
   },
@@ -88,7 +87,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/dashboard/applications": "My Applications",
   "/dashboard/documents": "Documents",
   "/dashboard/payments": "Payments",
-  "/dashboard/messages": "Messages",
   "/dashboard/notifications": "Notifications",
   "/dashboard/settings": "Settings",
 };
@@ -259,13 +257,13 @@ export function DashboardShell({
           </div>
 
           <div className="flex items-center gap-3 sm:gap-5">
-            <Link
-              href="/dashboard/messages"
+            <a
+              href="mailto:admissions@ega.edu.sg"
               className="hidden items-center gap-2 text-xs font-bold text-slate-600 hover:text-[#27295B] sm:inline-flex transition-colors"
             >
               <HelpCircle size={17} className="text-slate-400" />
               <span>Need Help?</span>
-            </Link>
+            </a>
 
             <Link
               href="/dashboard/notifications"

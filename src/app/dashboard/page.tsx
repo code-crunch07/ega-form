@@ -89,8 +89,7 @@ export default async function DashboardOverview() {
   const quickLinks = [
     { href: "/dashboard/applications/new", icon: PlusCircle, label: "Apply", desc: "New application" },
     { href: "/dashboard/documents", icon: FolderOpen, label: "Documents", desc: "Upload files" },
-    { href: "/dashboard/payments", icon: CreditCard, label: "Payments", desc: "View receipts" },
-    { href: "/dashboard/messages", icon: MessageSquare, label: "Support", desc: "Get help" },
+    { href: "/dashboard/notifications", icon: BellRing, label: "Alerts", desc: "View notifications" },
     { href: "/dashboard/profile", icon: UserIcon, label: "Profile", desc: "Update details" },
   ];
 

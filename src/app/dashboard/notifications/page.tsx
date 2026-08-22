@@ -120,7 +120,7 @@ export default async function NotificationsPage() {
       time: new Date(int.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
       timestamp: int.createdAt,
       read: false,
-      href: "/dashboard/messages",
+      href: "/dashboard/applications",
     });
   });
 
