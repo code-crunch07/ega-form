@@ -1754,15 +1754,6 @@ export async function bulkImportCourses(
   }
 }
 
-    revalidatePath("/admin/courses");
-    revalidatePath("/admin/programmes");
-    revalidatePath("/dashboard/applications/new");
-    return { success: true, imported, updated, total: imported + updated };
-  } catch (error: any) {
-    return { error: error.message || "Failed to bulk import courses." };
-  }
-}
-
 export async function bulkImportAgents(
   rows: Array<{
     agencyName: string;
