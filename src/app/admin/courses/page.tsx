@@ -115,7 +115,7 @@ export default async function AdminCoursesPage({
                   </TableCell>
                   <TableCell className="py-3">
                     <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                      {course.modeOfStudy || "FT / PT"}
+                      {(course as any).modeOfStudy || "FT / PT"}
                     </span>
                   </TableCell>
                   <TableCell className="py-3">
