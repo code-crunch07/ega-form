@@ -76,7 +76,7 @@ export async function createProgramme(formData: FormData) {
   const schoolId = formData.get("schoolId") as string;
   const level = formData.get("level") as string;
   const duration = formData.get("duration") as string;
-  const creditsStr = formData.get("credits") as string;
+  const modeOfStudy = (formData.get("modeOfStudy") as string) || "Full Time / Part Time";
   const feeStr = formData.get("applicationFee") as string;
 
   if (!name || !schoolId || !level) {
@@ -93,7 +93,8 @@ export async function createProgramme(formData: FormData) {
         schoolId,
         level,
         duration: duration || "12 Months",
-        credits: parseInt(creditsStr) || 0,
+        modeOfStudy: modeOfStudy || "Full Time / Part Time",
+        credits: 120,
         applicationFee: parseFloat(feeStr) || 0,
         status: "Active"
       },
@@ -115,7 +116,7 @@ export async function updateProgramme(id: string, formData: FormData) {
   const schoolId = formData.get("schoolId") as string;
   const level = formData.get("level") as string;
   const duration = formData.get("duration") as string;
-  const creditsStr = formData.get("credits") as string;
+  const modeOfStudy = formData.get("modeOfStudy") as string;
   const feeStr = formData.get("applicationFee") as string;
   const status = formData.get("status") as string || "Active";
 
@@ -129,10 +130,13 @@ export async function updateProgramme(id: string, formData: FormData) {
       schoolId: schoolId || undefined,
       level: level || "Diploma",
       duration: duration || "12 Months",
-      credits: parseInt(creditsStr) || 0,
       applicationFee: parseFloat(feeStr) || 0,
       status
     };
+
+    if (modeOfStudy) {
+      updateData.modeOfStudy = modeOfStudy;
+    }
 
     if (code && code.trim()) {
       updateData.code = code.trim();
@@ -1709,11 +1713,19 @@ export async function bulkImportCourses(
       else if (level.includes("Postgraduate")) level = "Postgraduate";
       else if (level.includes("Undergraduate")) level = "Undergraduate";
 
+      // Auto-detect Mode of Study (FT, PT, FT / PT, E-learning)
+      let rawMode = String(row["Mode of Study"] || row.modeOfStudy || row.mode || "FT / PT").trim();
+      let modeOfStudy = "Full Time / Part Time";
+      if (rawMode === "FT" || rawMode.toLowerCase() === "full time") modeOfStudy = "Full Time";
+      else if (rawMode === "PT" || rawMode.toLowerCase() === "part time") modeOfStudy = "Part Time";
+      else if (rawMode.toLowerCase().includes("e-learning") || rawMode.toLowerCase().includes("elearning") || rawMode.toLowerCase().includes("online")) modeOfStudy = "E-learning";
+      else modeOfStudy = "Full Time / Part Time";
+
       // Auto-generate or read Code
       const code = String(row.code || `${partnerKey.substring(0, 3)}-${level.substring(0, 3).toUpperCase()}-${String(i + 1).padStart(3, '0')}`).trim();
 
       const duration = String(row.duration || (level === "Preparatory" ? "6 Months" : level === "Foundation" ? "1 Year" : level === "Diploma" ? "2 Years" : level === "Undergraduate" ? "3 Years" : "1.5 Years")).trim();
-      const credits = parseInt(String(row.credits || (level === "Postgraduate" ? 180 : level === "Undergraduate" ? 120 : 80)), 10) || 120;
+      const credits = 120;
       const applicationFee = parseFloat(String(row.applicationFee || (level === "Postgraduate" ? 320.0 : 160.0))) || 160.0;
       const status = row.status === "Inactive" ? "Inactive" : "Active";
 
@@ -1729,6 +1741,7 @@ export async function bulkImportCourses(
             schoolId: targetSchoolId,
             level,
             duration,
+            modeOfStudy,
             credits,
             applicationFee,
             status
@@ -1743,6 +1756,7 @@ export async function bulkImportCourses(
             schoolId: targetSchoolId,
             level,
             duration,
+            modeOfStudy,
             credits,
             applicationFee,
             status

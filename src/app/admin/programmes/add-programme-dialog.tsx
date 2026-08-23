@@ -118,9 +118,26 @@ export function AddProgrammeDialog({
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="applicationFee">Application Fee ($)</Label>
-                  <Input id="applicationFee" name="applicationFee" type="number" step="0.01" placeholder="e.g. 160.00" defaultValue="160.00" required />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="modeOfStudy">Mode of Study *</Label>
+                    <select 
+                      id="modeOfStudy" 
+                      name="modeOfStudy" 
+                      defaultValue="Full Time / Part Time"
+                      className="flex h-10 w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                    >
+                      <option value="Full Time">Full Time (FT)</option>
+                      <option value="Part Time">Part Time (PT)</option>
+                      <option value="Full Time / Part Time">Full Time / Part Time (FT / PT)</option>
+                      <option value="E-learning">E-learning / Online</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="applicationFee">Application Fee ($)</Label>
+                    <Input id="applicationFee" name="applicationFee" type="number" step="0.01" placeholder="e.g. 160.00" defaultValue="160.00" required />
+                  </div>
                 </div>
               </div>
               

@@ -20,6 +20,7 @@ interface Programme {
   schoolId?: string | null;
   level: string;
   duration: string;
+  modeOfStudy?: string | null;
   credits?: number | null;
   applicationFee?: number | null;
   status: string;
@@ -173,7 +174,22 @@ export function EditProgrammeDialog({
 
                 <input type="hidden" name="credits" defaultValue={programme.credits || 120} />
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="modeOfStudy" className="text-xs font-bold text-slate-700">Mode of Study</Label>
+                    <select 
+                      id="modeOfStudy" 
+                      name="modeOfStudy" 
+                      defaultValue={programme.modeOfStudy || "Full Time / Part Time"}
+                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#252D65]/20 focus-visible:border-[#252D65]"
+                    >
+                      <option value="Full Time">Full Time (FT)</option>
+                      <option value="Part Time">Part Time (PT)</option>
+                      <option value="Full Time / Part Time">Full Time / Part Time (FT / PT)</option>
+                      <option value="E-learning">E-learning / Online</option>
+                    </select>
+                  </div>
+
                   <div className="space-y-1.5">
                     <Label htmlFor="applicationFee" className="text-xs font-bold text-slate-700">App Fee ($)</Label>
                     <Input 

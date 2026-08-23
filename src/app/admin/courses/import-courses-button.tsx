@@ -12,6 +12,7 @@ export function ImportCoursesButton() {
       columns={[
         { key: "name", label: "Course Title", required: true },
         { key: "schoolName", label: "University Partner (EGA/NCC/GCU/KU)" },
+        { key: "modeOfStudy", label: "Mode of Study (FT / PT / E-learning)" },
         { key: "level", label: "Academic Level" },
         { key: "duration", label: "Duration" },
         { key: "applicationFee", label: "App Fee ($)" },
@@ -21,6 +22,7 @@ export function ImportCoursesButton() {
         {
           name: "Bachelor of Science (Honours) Artificial Intelligence",
           schoolName: "KU",
+          modeOfStudy: "FT / PT",
           level: "Undergraduate",
           duration: "3 Years",
           applicationFee: "160.00",
@@ -29,14 +31,16 @@ export function ImportCoursesButton() {
         {
           name: "Master of Business Administration (MBA)",
           schoolName: "GCU",
+          modeOfStudy: "FT / PT",
           level: "Postgraduate",
           duration: "1 Year",
           applicationFee: "320.00",
           status: "Active"
         },
         {
-          name: "Diploma in Business Management",
+          name: "Diploma in Business Management (E-learning)",
           schoolName: "EGA",
+          modeOfStudy: "E-learning",
           level: "Diploma",
           duration: "2 Years",
           applicationFee: "160.00",

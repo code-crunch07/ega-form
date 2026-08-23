@@ -233,7 +233,8 @@ model Programme {
   school          School   @relation(fields: [schoolId], references: [id])
   level           String
   duration        String
-  credits         Int
+  modeOfStudy     String   @default("Full Time / Part Time") // Full Time, Part Time, Full Time / Part Time, E-learning
+  credits         Int      @default(120)
   applicationFee  Float
   status          String   @default("Active")
 

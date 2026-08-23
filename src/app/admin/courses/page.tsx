@@ -82,6 +82,7 @@ export default async function AdminCoursesPage({
             <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
               <TableHead className="py-4 px-6 font-bold text-slate-700">Course Title & School</TableHead>
               <TableHead className="py-4 font-bold text-slate-700">Level</TableHead>
+              <TableHead className="py-4 font-bold text-slate-700">Mode of Study</TableHead>
               <TableHead className="py-4 font-bold text-slate-700">Duration</TableHead>
               <TableHead className="py-4 font-bold text-slate-700">App Fee</TableHead>
               <TableHead className="py-4 font-bold text-slate-700">Status</TableHead>
@@ -91,7 +92,7 @@ export default async function AdminCoursesPage({
           <TableBody>
             {courses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-32 text-slate-400 font-medium">
+                <TableCell colSpan={7} className="text-center h-32 text-slate-400 font-medium">
                   No courses/programs found matching the selected filters.
                 </TableCell>
               </TableRow>
@@ -111,6 +112,11 @@ export default async function AdminCoursesPage({
                   </TableCell>
                   <TableCell className="py-3">
                     <span className="text-xs font-semibold text-slate-700">{course.level}</span>
+                  </TableCell>
+                  <TableCell className="py-3">
+                    <span className="text-xs font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                      {course.modeOfStudy || "FT / PT"}
+                    </span>
                   </TableCell>
                   <TableCell className="py-3">
                     <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
