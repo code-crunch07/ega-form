@@ -118,16 +118,9 @@ export function AddProgrammeDialog({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="credits">Total Credits</Label>
-                    <Input id="credits" name="credits" type="number" placeholder="e.g. 120" defaultValue="120" required />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="applicationFee">Application Fee ($)</Label>
-                    <Input id="applicationFee" name="applicationFee" type="number" step="0.01" placeholder="e.g. 50.00" defaultValue="50.00" required />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="applicationFee">Application Fee ($)</Label>
+                  <Input id="applicationFee" name="applicationFee" type="number" step="0.01" placeholder="e.g. 160.00" defaultValue="160.00" required />
                 </div>
               </div>
               

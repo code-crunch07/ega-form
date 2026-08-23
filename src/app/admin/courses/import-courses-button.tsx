@@ -14,7 +14,6 @@ export function ImportCoursesButton() {
         { key: "schoolName", label: "University Partner (EGA/NCC/GCU/KU)" },
         { key: "level", label: "Academic Level" },
         { key: "duration", label: "Duration" },
-        { key: "credits", label: "Credits" },
         { key: "applicationFee", label: "App Fee ($)" },
         { key: "status", label: "Status" },
       ]}
@@ -24,7 +23,6 @@ export function ImportCoursesButton() {
           schoolName: "KU",
           level: "Undergraduate",
           duration: "3 Years",
-          credits: "120",
           applicationFee: "160.00",
           status: "Active"
         },
@@ -33,7 +31,6 @@ export function ImportCoursesButton() {
           schoolName: "GCU",
           level: "Postgraduate",
           duration: "1 Year",
-          credits: "180",
           applicationFee: "320.00",
           status: "Active"
         },
@@ -42,7 +39,6 @@ export function ImportCoursesButton() {
           schoolName: "EGA",
           level: "Diploma",
           duration: "2 Years",
-          credits: "80",
           applicationFee: "160.00",
           status: "Active"
         }

@@ -171,18 +171,9 @@ export function EditProgrammeDialog({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="credits" className="text-xs font-bold text-slate-700">Total Credits</Label>
-                    <Input 
-                      id="credits" 
-                      name="credits" 
-                      type="number" 
-                      defaultValue={programme.credits || 120} 
-                      className="h-11 rounded-xl border-slate-200 text-slate-800" 
-                    />
-                  </div>
-                  
+                <input type="hidden" name="credits" defaultValue={programme.credits || 120} />
+                
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="applicationFee" className="text-xs font-bold text-slate-700">App Fee ($)</Label>
                     <Input 
@@ -201,7 +192,7 @@ export function EditProgrammeDialog({
                     <select 
                       id="status" 
                       name="status"
-                      defaultValue={programme.status}
+                      defaultValue={programme.status || "Active"}
                       className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#252D65]/20 focus-visible:border-[#252D65]"
                     >
                       <option value="Active">Active</option>

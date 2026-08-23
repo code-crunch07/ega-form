@@ -53,9 +53,6 @@ export default async function CourseDetailView({ params }: { params: Promise<{ i
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-mono font-bold bg-slate-100 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200">
-                {course.code}
-              </span>
               {course.status === "Active" ? (
                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 px-2.5 font-semibold">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mr-1.5"></span>
@@ -78,49 +75,41 @@ export default async function CourseDetailView({ params }: { params: Promise<{ i
                 <BookOpen size={15} className="text-slate-400" />
                 {course.school?.name || "Unassigned School"}
               </span>
-              <span className="hidden sm:inline text-slate-300">•</span>
-              <span className="flex items-center gap-1.5 font-semibold text-slate-700">
+              <span>•</span>
+              <span className="flex items-center gap-1.5">
                 <Clock size={15} className="text-slate-400" />
-                Duration: {course.duration}
+                {course.duration}
               </span>
-              <span className="hidden sm:inline text-slate-300">•</span>
-              <span className="flex items-center gap-1.5 font-semibold text-slate-700">
-                <Banknote size={15} className="text-slate-400" />
-                Application Fee: ${course.applicationFee}
+              <span>•</span>
+              <span className="flex items-center gap-1.5">
+                <Calendar size={15} className="text-slate-400" />
+                Created {new Date(course.createdAt).toLocaleDateString()}
               </span>
             </div>
           </div>
           
-          {/* Action Row */}
-          <div className="flex items-center gap-3 lg:self-center">
-            <EditProgrammeDialog 
-              programme={course} 
-              schools={schools}
-              trigger={
-                <Button className="gap-2 bg-[#252D65] hover:bg-[#1C224E] text-white font-bold rounded-xl shadow-xs px-5 h-11 transition-all">
-                  <Edit size={16} /> Edit Course
-                </Button>
-              }
-            />
+          <div className="flex items-center gap-3">
+            <EditProgrammeDialog programme={course} schools={schools} />
             <ProgrammeActionsDropdown programme={course} schools={schools} />
           </div>
         </div>
       </div>
 
-      <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="flex items-center gap-1 border-b border-slate-200 pb-px mb-6 overflow-x-auto w-full bg-transparent">
-          <TabsTrigger value="overview" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-xs font-bold text-slate-400 hover:text-slate-700 data-[state=active]:border-[#252D65] data-[state=active]:text-[#252D65] transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><BookOpen size={15}/> Overview</TabsTrigger>
-          <TabsTrigger value="curriculum" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-xs font-bold text-slate-400 hover:text-slate-700 data-[state=active]:border-[#252D65] data-[state=active]:text-[#252D65] transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><GraduationCap size={15}/> Curriculum Structure</TabsTrigger>
-          <TabsTrigger value="settings" className="inline-flex items-center gap-2 px-4 py-3 border-b-2 border-transparent text-xs font-bold text-slate-400 hover:text-slate-700 data-[state=active]:border-[#252D65] data-[state=active]:text-[#252D65] transition-all cursor-pointer whitespace-nowrap bg-transparent shadow-none rounded-none"><Settings size={15}/> Entry Criteria & Rules</TabsTrigger>
+      {/* Tabs */}
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="bg-white p-1 rounded-2xl border border-slate-200 shadow-2xs h-12">
+          <TabsTrigger value="overview" className="rounded-xl px-5 text-xs font-bold data-[state=active]:bg-[#252D65] data-[state=active]:text-white">Overview</TabsTrigger>
+          <TabsTrigger value="curriculum" className="rounded-xl px-5 text-xs font-bold data-[state=active]:bg-[#252D65] data-[state=active]:text-white">Curriculum</TabsTrigger>
+          <TabsTrigger value="requirements" className="rounded-xl px-5 text-xs font-bold data-[state=active]:bg-[#252D65] data-[state=active]:text-white">Entry Requirements</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="m-0 focus-visible:outline-none">
+        <TabsContent value="overview" className="space-y-6 m-0 focus-visible:outline-none">
           <Card className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
             <CardHeader className="border-b border-slate-100 bg-slate-50/50 p-5">
-              <CardTitle className="text-base font-bold text-slate-900 font-heading">Course Key Parameters</CardTitle>
+              <CardTitle className="text-base font-bold text-slate-900 font-heading">Key Academic Metrics</CardTitle>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Level</p>
                   <p className="font-bold text-sm text-slate-900 mt-1">{course.level}</p>
@@ -128,10 +117,6 @@ export default async function CourseDetailView({ params }: { params: Promise<{ i
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Duration</p>
                   <p className="font-bold text-sm text-slate-900 mt-1">{course.duration}</p>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Total Credits</p>
-                  <p className="font-bold text-sm text-slate-900 mt-1">{course.credits || 120} Credits</p>
                 </div>
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">Application Fee</p>
