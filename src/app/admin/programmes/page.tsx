@@ -71,9 +71,8 @@ export default async function AdminProgrammesPage({
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
-              <TableHead className="w-[120px] font-bold text-slate-700">Code</TableHead>
-              <TableHead className="font-bold text-slate-700">Name</TableHead>
-              <TableHead className="font-bold text-slate-700">School</TableHead>
+              <TableHead className="font-bold text-slate-700 px-6">Programme Name</TableHead>
+              <TableHead className="font-bold text-slate-700">School / Partner</TableHead>
               <TableHead className="font-bold text-slate-700">Level</TableHead>
               <TableHead className="font-bold text-slate-700">Duration</TableHead>
               <TableHead className="font-bold text-slate-700">App Fee</TableHead>
@@ -84,15 +83,14 @@ export default async function AdminProgrammesPage({
           <TableBody>
             {programmes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center h-32 text-slate-400 font-medium">
+                <TableCell colSpan={7} className="text-center h-32 text-slate-400 font-medium">
                   No programmes found matching the selected filters.
                 </TableCell>
               </TableRow>
             ) : (
               programmes.map((prog) => (
                 <TableRow key={prog.id} className="hover:bg-slate-50/70 transition-colors border-b border-slate-100 group">
-                  <TableCell className="font-bold font-mono text-xs text-slate-600">{prog.code}</TableCell>
-                  <TableCell className="font-bold text-sm text-[#252D65]">{prog.name}</TableCell>
+                  <TableCell className="font-bold text-sm text-[#252D65] px-6">{prog.name}</TableCell>
                   <TableCell className="text-xs text-slate-600 font-medium">{prog.school?.name || "Unassigned"}</TableCell>
                   <TableCell className="text-xs text-slate-700">{prog.level}</TableCell>
                   <TableCell className="text-xs text-slate-500">{prog.duration}</TableCell>

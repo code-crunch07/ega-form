@@ -79,18 +79,20 @@ export async function createProgramme(formData: FormData) {
   const creditsStr = formData.get("credits") as string;
   const feeStr = formData.get("applicationFee") as string;
 
-  if (!code || !name || !schoolId || !level) {
-    return { error: "Code, Name, School, and Level are required." };
+  if (!name || !schoolId || !level) {
+    return { error: "Name, School, and Level are required." };
   }
+
+  const finalCode = code?.trim() || (name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 8) + '-' + Date.now().toString().slice(-4));
 
   try {
     await prisma.programme.create({
       data: {
-        code,
+        code: finalCode,
         name,
         schoolId,
         level,
-        duration: duration || "TBD",
+        duration: duration || "12 Months",
         credits: parseInt(creditsStr) || 0,
         applicationFee: parseFloat(feeStr) || 0,
         status: "Active"
@@ -117,23 +119,28 @@ export async function updateProgramme(id: string, formData: FormData) {
   const feeStr = formData.get("applicationFee") as string;
   const status = formData.get("status") as string || "Active";
 
-  if (!id || !code || !name) {
-    return { error: "ID, Code, and Name are required." };
+  if (!id || !name) {
+    return { error: "ID and Name are required." };
   }
 
   try {
+    const updateData: any = {
+      name,
+      schoolId: schoolId || undefined,
+      level: level || "Diploma",
+      duration: duration || "12 Months",
+      credits: parseInt(creditsStr) || 0,
+      applicationFee: parseFloat(feeStr) || 0,
+      status
+    };
+
+    if (code && code.trim()) {
+      updateData.code = code.trim();
+    }
+
     await prisma.programme.update({
       where: { id },
-      data: {
-        code,
-        name,
-        schoolId: schoolId || undefined,
-        level: level || "Diploma",
-        duration: duration || "12 Months",
-        credits: parseInt(creditsStr) || 0,
-        applicationFee: parseFloat(feeStr) || 0,
-        status
-      }
+      data: updateData
     });
 
     revalidatePath("/admin/programmes");

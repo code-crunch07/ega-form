@@ -10,10 +10,9 @@ export function ImportCoursesButton() {
       description="Upload a CSV spreadsheet to import multiple academic programmes at once."
       templateFileName="courses_import_template.csv"
       columns={[
-        { key: "code", label: "Course Code", required: true },
         { key: "name", label: "Course Title", required: true },
-        { key: "schoolName", label: "School / Faculty" },
-        { key: "level", label: "Study Level" },
+        { key: "schoolName", label: "University Partner (EGA/NCC/GCU/KU)" },
+        { key: "level", label: "Academic Level" },
         { key: "duration", label: "Duration" },
         { key: "credits", label: "Credits" },
         { key: "applicationFee", label: "App Fee ($)" },
@@ -21,29 +20,26 @@ export function ImportCoursesButton() {
       ]}
       sampleRows={[
         {
-          code: "BCS-101",
-          name: "BSc (Hons) Computer Science",
-          schoolName: "Kingston University",
-          level: "Undergraduate / Bachelor's Degree",
+          name: "Bachelor of Science (Honours) Artificial Intelligence",
+          schoolName: "KU",
+          level: "Undergraduate",
           duration: "3 Years",
           credits: "120",
           applicationFee: "160.00",
           status: "Active"
         },
         {
-          code: "MBA-201",
           name: "Master of Business Administration (MBA)",
-          schoolName: "Glasgow Caledonian University",
-          level: "Postgraduate / Master's Degree",
+          schoolName: "GCU",
+          level: "Postgraduate",
           duration: "1 Year",
           credits: "180",
           applicationFee: "320.00",
           status: "Active"
         },
         {
-          code: "DHM-301",
-          name: "Diploma in International Hotel and Tourism Management",
-          schoolName: "Educare Global Academy",
+          name: "Diploma in Business Management",
+          schoolName: "EGA",
           level: "Diploma",
           duration: "2 Years",
           credits: "80",

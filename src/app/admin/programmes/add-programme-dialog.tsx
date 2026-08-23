@@ -77,16 +77,9 @@ export function AddProgrammeDialog({
                   </div>
                 )}
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="code">Programme Code</Label>
-                    <Input id="code" name="code" placeholder="e.g. BCS-01" required />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Programme Name</Label>
-                    <Input id="name" name="name" placeholder="e.g. Bachelor of CS" required />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Programme Name *</Label>
+                  <Input id="name" name="name" placeholder="e.g. Bachelor of Science in Artificial Intelligence" required />
                 </div>
 
                 <div className="space-y-2">

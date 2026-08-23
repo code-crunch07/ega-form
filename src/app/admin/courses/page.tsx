@@ -80,8 +80,7 @@ export default async function AdminCoursesPage({
         <Table>
           <TableHeader>
             <TableRow className="bg-slate-50 hover:bg-slate-50 border-b border-slate-200">
-              <TableHead className="py-4 px-6 font-bold text-slate-700 w-[130px]">Code</TableHead>
-              <TableHead className="py-4 font-bold text-slate-700">Title & School</TableHead>
+              <TableHead className="py-4 px-6 font-bold text-slate-700">Course Title & School</TableHead>
               <TableHead className="py-4 font-bold text-slate-700">Level</TableHead>
               <TableHead className="py-4 font-bold text-slate-700">Duration</TableHead>
               <TableHead className="py-4 font-bold text-slate-700">App Fee</TableHead>
@@ -92,7 +91,7 @@ export default async function AdminCoursesPage({
           <TableBody>
             {courses.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center h-32 text-slate-400 font-medium">
+                <TableCell colSpan={6} className="text-center h-32 text-slate-400 font-medium">
                   No courses/programs found matching the selected filters.
                 </TableCell>
               </TableRow>
@@ -100,11 +99,6 @@ export default async function AdminCoursesPage({
               courses.map((course) => (
                 <TableRow key={course.id} className="hover:bg-slate-50/70 transition-colors border-b border-slate-100 group">
                   <TableCell className="py-3 px-6">
-                    <span className="font-mono font-bold text-xs text-slate-700 bg-slate-100 px-2 py-1 rounded-md border border-slate-200">
-                      {course.code}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-3">
                     <div className="flex flex-col gap-0.5">
                       <Link href={`/admin/courses/${course.id}`} className="font-bold text-sm text-[#252D65] hover:text-[#1C224E]">
                         {course.name}

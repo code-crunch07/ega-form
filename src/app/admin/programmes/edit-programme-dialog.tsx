@@ -108,28 +108,17 @@ export function EditProgrammeDialog({
                   </div>
                 )}
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="code" className="text-xs font-bold text-slate-700">Programme Code *</Label>
-                    <Input 
-                      id="code" 
-                      name="code" 
-                      defaultValue={programme.code} 
-                      className="h-11 rounded-xl border-slate-200 text-slate-800" 
-                      required 
-                    />
-                  </div>
-                  
-                  <div className="space-y-1.5">
-                    <Label htmlFor="name" className="text-xs font-bold text-slate-700">Programme Name *</Label>
-                    <Input 
-                      id="name" 
-                      name="name" 
-                      defaultValue={programme.name} 
-                      className="h-11 rounded-xl border-slate-200 text-slate-800" 
-                      required 
-                    />
-                  </div>
+                <input type="hidden" name="code" defaultValue={programme.code} />
+                
+                <div className="space-y-1.5">
+                  <Label htmlFor="name" className="text-xs font-bold text-slate-700">Programme Name *</Label>
+                  <Input 
+                    id="name" 
+                    name="name" 
+                    defaultValue={programme.name} 
+                    className="h-11 rounded-xl border-slate-200 text-slate-800" 
+                    required 
+                  />
                 </div>
 
                 <div className="space-y-1.5">
