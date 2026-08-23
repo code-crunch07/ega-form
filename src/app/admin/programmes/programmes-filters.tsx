@@ -107,10 +107,14 @@ export function ProgrammesFilters({
           value={currentSchool || "all"}
           onValueChange={(val: string | null) => createQueryString("school", val || "all")}
         >
-          <SelectTrigger className="w-[160px] h-11 bg-white border-slate-200 rounded-xl text-slate-700 font-medium text-xs shadow-2xs focus:border-[#252D65]">
+          <SelectTrigger className="w-[200px] h-11 bg-white border-slate-200 rounded-xl text-slate-700 font-medium text-xs shadow-2xs focus:border-[#252D65]">
             <div className="flex items-center gap-1.5 truncate">
               <Filter size={14} className="text-slate-400 shrink-0" />
-              <SelectValue placeholder="All Schools" />
+              <span className="truncate">
+                {currentSchool && currentSchool !== "all"
+                  ? (schools.find((s) => s.id === currentSchool)?.name || "All Schools")
+                  : "All Schools"}
+              </span>
             </div>
           </SelectTrigger>
           <SelectContent className="rounded-xl border-slate-200 bg-white shadow-xl max-h-60">
@@ -129,7 +133,9 @@ export function ProgrammesFilters({
           onValueChange={(val: string | null) => createQueryString("level", val || "all")}
         >
           <SelectTrigger className="w-[160px] h-11 bg-white border-slate-200 rounded-xl text-slate-700 font-medium text-xs shadow-2xs focus:border-[#252D65]">
-            <SelectValue placeholder="All Levels" />
+            <span className="truncate">
+              {currentLevel && currentLevel !== "all" ? currentLevel : "All Levels"}
+            </span>
           </SelectTrigger>
           <SelectContent className="rounded-xl border-slate-200 bg-white shadow-xl max-h-60">
             <SelectItem value="all">All Levels</SelectItem>
@@ -147,7 +153,9 @@ export function ProgrammesFilters({
           onValueChange={(val: string | null) => createQueryString("status", val || "all")}
         >
           <SelectTrigger className="w-[130px] h-11 bg-white border-slate-200 rounded-xl text-slate-700 font-medium text-xs shadow-2xs focus:border-[#252D65]">
-            <SelectValue placeholder="All Status" />
+            <span className="truncate">
+              {currentStatus && currentStatus !== "all" ? currentStatus : "All Status"}
+            </span>
           </SelectTrigger>
           <SelectContent className="rounded-xl border-slate-200 bg-white shadow-xl">
             <SelectItem value="all">All Status</SelectItem>
