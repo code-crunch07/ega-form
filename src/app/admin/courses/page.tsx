@@ -65,8 +65,8 @@ export default async function AdminCoursesPage({
     <div className="space-y-6 animate-in fade-in duration-500 font-jost text-left">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading">Courses (Programs)</h1>
-          <p className="text-slate-500 mt-1 text-sm font-medium">Manage academic programs, curriculums, and entry requirements.</p>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 font-heading">Courses & Programmes</h1>
+          <p className="text-slate-500 mt-1 text-sm font-medium">Manage all academic courses, partner degrees, study modes, and fees.</p>
         </div>
         <div className="flex items-center gap-3">
           <ImportCoursesButton />

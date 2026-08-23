@@ -88,11 +88,10 @@ const SIDEBAR_GROUPS: SidebarGroup[] = [
   {
     title: "ACADEMICS",
     links: [
-      { href: "/admin/programmes", icon: BookOpen, label: "Programs" },
+      { href: "/admin/courses", icon: BookOpen, label: "Courses & Programmes" },
       { href: "/admin/intakes", icon: CalendarDays, label: "Intakes" },
       { href: "/admin/schools", icon: Building, label: "Schools / Faculties" },
       { href: "/admin/campuses", icon: MapPin, label: "Campuses" },
-      { href: "/admin/courses", icon: Award, label: "Courses" },
     ]
   },
   {
