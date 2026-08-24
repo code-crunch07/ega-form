@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Edit, X, Loader2 } from "lucide-react";
+import { Edit, X, Loader2, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -40,6 +40,7 @@ function SubmitButton() {
 export function EditStaffDialog({ user, trigger }: EditStaffDialogProps) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function action(formData: FormData) {
     setError(null);
@@ -131,13 +132,24 @@ export function EditStaffDialog({ user, trigger }: EditStaffDialogProps) {
 
                   <div className="space-y-1.5">
                     <Label htmlFor="password" className="text-xs font-bold text-slate-700">Reset Password</Label>
-                    <Input 
-                      id="password" 
-                      name="password" 
-                      type="password" 
-                      placeholder="Leave blank to keep" 
-                      className="h-11 rounded-xl border-slate-200 text-slate-800" 
-                    />
+                    <div className="relative">
+                      <Input 
+                        id="password" 
+                        name="password" 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Leave blank to keep" 
+                        className="h-11 rounded-xl border-slate-200 text-slate-800 pr-10" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                        tabIndex={-1}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

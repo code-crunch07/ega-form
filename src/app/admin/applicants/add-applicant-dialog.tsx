@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ function SubmitButton() {
 export function AddApplicantDialog() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function action(formData: FormData) {
     setError(null);
@@ -87,7 +88,24 @@ export function AddApplicantDialog() {
 
                 <div className="space-y-2">
                   <Label htmlFor="password">Temporary Password</Label>
-                  <Input id="password" name="password" type="password" placeholder="Defaults to 'applicant123' if empty" />
+                  <div className="relative">
+                    <Input 
+                      id="password" 
+                      name="password" 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="Defaults to 'applicant123' if empty" 
+                      className="pr-10"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 transition-colors"
+                      tabIndex={-1}
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
                 </div>
               </div>
               

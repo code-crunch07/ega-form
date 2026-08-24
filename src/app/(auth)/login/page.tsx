@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Logo } from "@/components/ui/logo";
+import { Eye, EyeOff } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -22,6 +23,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -72,13 +74,24 @@ export default function LoginPage() {
           </div>
           
           <div className="space-y-1">
-            <Input
-              id="password"
-              type="password"
-              placeholder="Password"
-              {...register("password")}
-              className={`bg-white border-gray-300 text-black h-11 ${errors.password ? "border-red-500" : ""}`}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                {...register("password")}
+                className={`bg-white border-gray-300 text-black h-11 pr-10 ${errors.password ? "border-red-500" : ""}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                tabIndex={-1}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password.message}</p>}
             
             <div className="flex items-center justify-start mt-2">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, Bell, Shield, Globe, Moon, Sun, Monitor } from "lucide-react";
+import { Settings, Bell, Shield, Globe, Moon, Sun, Monitor, Eye, EyeOff } from "lucide-react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,8 @@ export default function SettingsPage() {
   );
   const [theme, setTheme] = useState<"light" | "dark" | "system">("light");
   const [saved, setSaved] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const handleSave = () => {
     setSaved(true);
@@ -119,11 +121,41 @@ export default function SettingsPage() {
           <div className="grid grid-cols-1 gap-6 p-6 md:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-neutral-700">Current Password</Label>
-              <Input type="password" placeholder="••••••••" className="h-11 rounded-xl border-neutral-200 bg-neutral-50/80" />
+              <div className="relative">
+                <Input 
+                  type={showCurrentPassword ? "text" : "password"} 
+                  placeholder="••••••••" 
+                  className="h-11 rounded-xl border-neutral-200 bg-neutral-50/80 pr-10" 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 transition-colors"
+                  tabIndex={-1}
+                  aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                >
+                  {showCurrentPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label className="text-sm font-semibold text-neutral-700">New Password</Label>
-              <Input type="password" placeholder="••••••••" className="h-11 rounded-xl border-neutral-200 bg-neutral-50/80" />
+              <div className="relative">
+                <Input 
+                  type={showNewPassword ? "text" : "password"} 
+                  placeholder="••••••••" 
+                  className="h-11 rounded-xl border-neutral-200 bg-neutral-50/80 pr-10" 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600 transition-colors"
+                  tabIndex={-1}
+                  aria-label={showNewPassword ? "Hide password" : "Show password"}
+                >
+                  {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
           </div>
         </section>
