@@ -1237,11 +1237,18 @@ export default function ApplicationWizard({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
-                    <div className="md:col-span-2 space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Address Line 1 *</Label>
                       <Input {...register("address.addressLine1")} placeholder="123 Orchard Road" className="h-12 rounded-xl" />
                     </div>
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Address (Line 2)</Label>
+                      <Input {...register("address.addressLine2")} placeholder="Apartment, suite, unit, building, floor, etc." className="h-12 rounded-xl" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Unit No.</Label>
                       <Input {...register("address.unitNo")} placeholder="#05-01" className="h-12 rounded-xl" />
@@ -1287,7 +1294,7 @@ export default function ApplicationWizard({
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
                         <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
-                          <th className="px-5 py-3.5">Country</th>
+                          <th className="px-5 py-3.5">Country of Awarding Institution</th>
                           <th className="px-5 py-3.5">Awarding Institution / Examination Board</th>
                           <th className="px-5 py-3.5">Qualification Title / Level</th>
                           <th className="px-5 py-3.5 text-center">Action</th>
@@ -1301,7 +1308,7 @@ export default function ApplicationWizard({
                             <td className="px-5 py-3.5 font-bold text-[#252D65]">{item.qualificationTitle}</td>
                             <td className="px-5 py-3.5 text-center">
                               <button 
-                                type="button"
+                                type="button" 
                                 onClick={() => {
                                   if (educationList.length > 1) {
                                     setEducationList(educationList.filter(el => el.id !== item.id));
@@ -1323,54 +1330,77 @@ export default function ApplicationWizard({
 
                 {/* 11.2 English Language Proficiency Test */}
                 <FormAccordion title="2. English Language Proficiency Test" defaultOpen={true}>
-                  <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
-                    <input 
-                      type="checkbox" 
-                      id="hasTakenTest" 
-                      {...register("englishTest.hasTakenTest")} 
-                      className="w-4 h-4 text-[#252D65] border-slate-300 rounded focus:ring-[#252D65]" 
+                  <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                    <p className="text-xs font-bold text-slate-900 mb-2">
+                      Have you taken a formal English Language Test? *
+                    </p>
+                    <Controller
+                      name="englishTest.hasTakenTest"
+                      control={control}
+                      defaultValue={false}
+                      render={({ field }) => (
+                        <div className="flex items-center gap-6 text-xs font-bold text-slate-800">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="radio" 
+                              name="hasTakenEnglishTest" 
+                              checked={field.value === true} 
+                              onChange={() => field.onChange(true)} 
+                              className="w-4 h-4 text-[#252D65]" 
+                            />
+                            Yes
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input 
+                              type="radio" 
+                              name="hasTakenEnglishTest" 
+                              checked={field.value === false} 
+                              onChange={() => field.onChange(false)} 
+                              className="w-4 h-4 text-[#252D65]" 
+                            />
+                            No
+                          </label>
+                        </div>
+                      )}
                     />
-                    <Label htmlFor="hasTakenTest" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
-                      I have taken (or registered for) a formal English Language Proficiency Test
-                    </Label>
                   </div>
 
-                  <div className={cn("grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 transition-opacity duration-300", !watchHasTakenTest && "opacity-40 pointer-events-none")}>
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Awarding Body / Test Type</Label>
-                      <Controller
-                        name="englishTest.testType"
-                        control={control}
-                        defaultValue="IELTS"
-                        render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value || "IELTS"}>
-                            <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
-                              <SelectValue placeholder="Select Test" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="IELTS">IELTS Academic</SelectItem>
-                              <SelectItem value="TOFEL">TOFEL (iBT)</SelectItem>
-                              <SelectItem value="PTE">PTE Academic</SelectItem>
-                              <SelectItem value="Duolingo">Duolingo English Test</SelectItem>
-                              <SelectItem value="Other">Other Test</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
+                  {watchHasTakenTest && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 animate-in fade-in duration-200">
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Awarding Body / Test Type *</Label>
+                        <Controller
+                          name="englishTest.testType"
+                          control={control}
+                          defaultValue="IELTS"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value || "IELTS"}>
+                              <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                                <SelectValue placeholder="Select Test" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="IELTS">IELTS</SelectItem>
+                                <SelectItem value="TOFEL">TOFEL</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                      </div>
 
-                    <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Actual / Tentative Test Date</Label>
-                      <Input type="date" {...register("englishTest.testDate")} className="h-12 rounded-xl" />
-                    </div>
+                      <div className="space-y-2">
+                        <Label className="text-slate-700 font-semibold text-xs">Actual / Tentative Test Date</Label>
+                        <Input type="date" {...register("englishTest.testDate")} className="h-12 rounded-xl" />
+                      </div>
 
-                    <div className="space-y-2 flex flex-col justify-end pb-2">
-                      <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-700">
-                        <input type="checkbox" {...register("englishTest.isTentativeDate")} className="w-4 h-4 text-[#252D65]" />
-                        <span>This is a tentative / upcoming test date</span>
-                      </label>
+                      <div className="space-y-2 flex flex-col justify-end pb-2">
+                        <label className="flex items-center gap-2 cursor-pointer font-semibold text-xs text-slate-700">
+                          <input type="checkbox" {...register("englishTest.isTentativeDate")} className="w-4 h-4 text-[#252D65]" />
+                          <span>This is a tentative / upcoming test date</span>
+                        </label>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </FormAccordion>
               </div>
             )}
