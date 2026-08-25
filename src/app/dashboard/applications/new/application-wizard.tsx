@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import { submitApplication, calculateApplicationFee } from "@/app/actions/application";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -1057,7 +1058,18 @@ export default function ApplicationWizard({
 
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Nationality *</Label>
-                      <Input {...register("personal.nationality")} placeholder="e.g. Singaporean" className="h-12 rounded-xl" />
+                      <Controller
+                        name="personal.nationality"
+                        control={control}
+                        defaultValue="Singapore"
+                        render={({ field }) => (
+                          <SearchableCountrySelect
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select Nationality / Country..."
+                          />
+                        )}
+                      />
                     </div>
                   </div>
 
@@ -1198,12 +1210,34 @@ export default function ApplicationWizard({
 
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Passport Country of Issue *</Label>
-                      <Input {...register("passport.countryOfIssue")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
+                      <Controller
+                        name="passport.countryOfIssue"
+                        control={control}
+                        defaultValue="Singapore"
+                        render={({ field }) => (
+                          <SearchableCountrySelect
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select Country of Issue / Search..."
+                          />
+                        )}
+                      />
                     </div>
 
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Country of Birth *</Label>
-                      <Input {...register("passport.countryOfBirth")} placeholder="e.g. Singapore" className="h-12 rounded-xl" />
+                      <Controller
+                        name="passport.countryOfBirth"
+                        control={control}
+                        defaultValue="Singapore"
+                        render={({ field }) => (
+                          <SearchableCountrySelect
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select Country of Birth / Search..."
+                          />
+                        )}
+                      />
                     </div>
                   </div>
 
@@ -1225,7 +1259,18 @@ export default function ApplicationWizard({
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Country *</Label>
-                      <Input {...register("address.country")} placeholder="Singapore" className="h-12 rounded-xl" />
+                      <Controller
+                        name="address.country"
+                        control={control}
+                        defaultValue="Singapore"
+                        render={({ field }) => (
+                          <SearchableCountrySelect
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select Country / Search..."
+                          />
+                        )}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">State / Region</Label>
@@ -1784,7 +1829,11 @@ export default function ApplicationWizard({
             <div className="space-y-4 text-xs">
               <div className="space-y-1.5">
                 <Label className="text-slate-700 font-semibold text-xs">Country of Awarding Institution *</Label>
-                <Input value={qualForm.country} onChange={e => setQualForm({...qualForm, country: e.target.value})} placeholder="e.g. Singapore" className="h-11 rounded-xl" />
+                <SearchableCountrySelect
+                  value={qualForm.country}
+                  onChange={(val) => setQualForm({ ...qualForm, country: val })}
+                  placeholder="Select Country / Search..."
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-slate-700 font-semibold text-xs">Awarding Institution / Examination Board *</Label>
