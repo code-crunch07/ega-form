@@ -94,7 +94,7 @@ export default function AdminLoginPage() {
       {/* Main Single Centered Card */}
       <div className="w-full max-w-[440px] z-10 space-y-6">
         
-        <Card className="border-none bg-white/90 backdrop-blur-xl shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] rounded-3xl overflow-hidden py-6 px-4">
+        <Card className="border-0 border-none ring-0 bg-white/90 backdrop-blur-xl shadow-[0_20px_50px_-20px_rgba(0,0,0,0.08)] rounded-3xl overflow-hidden py-6 px-4">
           <CardContent className="space-y-6 text-left p-2">
             
             {/* Logo Container */}

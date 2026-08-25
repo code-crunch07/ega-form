@@ -240,10 +240,21 @@ export default function ApplicationWizard({
   const watchMarketingChannel = watch("additionalInfo.marketingChannel");
   const watchIsAgent = watch("agent.isAgentRepresented");
   const watchIsSameAsEmergency = watch("guardian.isSameAsEmergency");
+  const watchIsUnder18 = watch("guardian.isUnder18");
 
   // Calculate age for under-18 guardian requirement (CR-05)
-  const applicantAge = watchDob ? Math.floor((new Date().getTime() - new Date(watchDob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : 22;
-  const isUnder18 = applicantAge < 18;
+  const applicantAge = watchDob ? Math.floor((new Date().getTime() - new Date(watchDob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
+  const isUnder18 = typeof watchIsUnder18 === "boolean" ? watchIsUnder18 : (applicantAge !== null ? applicantAge < 18 : false);
+
+  // Sync DOB age calculation to guardian.isUnder18
+  useEffect(() => {
+    if (watchDob) {
+      const calculatedAge = Math.floor((new Date().getTime() - new Date(watchDob).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+      if (!isNaN(calculatedAge)) {
+        setValue("guardian.isUnder18", calculatedAge < 18);
+      }
+    }
+  }, [watchDob, setValue]);
 
   // CR-09 Application Fee Calculation (EGA = SGD 160, NCC/GCU/KU = SGD 320)
   const feeAmount = (watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC")) ? 320 : 160;
@@ -336,7 +347,7 @@ export default function ApplicationWizard({
         case 2:
           fieldsToValidate = ['personal.fullName', 'personal.surname', 'personal.dob', 'personal.gender', 'personal.maritalStatus', 'emergencyContact.fullName', 'emergencyContact.phone', 'emergencyContact.relation', 'passport.passportNumber', 'passport.countryOfIssue', 'passport.countryOfBirth', 'address.country', 'address.addressLine1', 'address.postalCode'];
           if (isUnder18 && !watchIsSameAsEmergency) {
-            fieldsToValidate.push('guardian.fullName', 'guardian.email', 'guardian.phone');
+            fieldsToValidate.push('guardian.fullName', 'guardian.email', 'guardian.phone', 'guardian.relation');
           }
           break;
         case 3:
@@ -989,6 +1000,18 @@ export default function ApplicationWizard({
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Date of Birth *</Label>
                       <Input type="date" {...register("personal.dob")} className="h-12 rounded-xl" />
+                      <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          id="under18Checkbox"
+                          checked={Boolean(isUnder18)}
+                          onChange={(e) => {
+                            setValue("guardian.isUnder18", e.target.checked);
+                          }}
+                          className="w-4 h-4 rounded text-[#252D65] focus:ring-[#252D65] border-slate-300 cursor-pointer"
+                        />
+                        <span className="text-xs font-semibold text-slate-700">Applicant is below 18 years of age (Under 18)</span>
+                      </label>
                     </div>
 
                     <div className="space-y-2">
@@ -1106,7 +1129,11 @@ export default function ApplicationWizard({
 
                 {/* 9.3 Parent / Legal Guardian Details (CR-03 & CR-05 Conditional Under-18) */}
                 {isUnder18 && (
-                  <FormAccordion title="3. Parent / Legal Guardian Details *" defaultOpen={true} badgeText={`Age: ${applicantAge} Years (Under-18 Rule)`}>
+                  <FormAccordion 
+                    title="3. Parent / Legal Guardian Details *" 
+                    defaultOpen={true} 
+                    badgeText={applicantAge !== null && !isNaN(applicantAge) ? `Age: ${applicantAge} Years (Under-18 Rule)` : `Under-18 Rule`}
+                  >
                     <div className="space-y-4">
                       <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                         <p className="text-xs font-bold text-slate-900 mb-2">

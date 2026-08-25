@@ -53,7 +53,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Card className="w-full max-w-[420px] mx-auto shadow-2xl border-none bg-white text-black rounded-lg overflow-hidden py-4 px-2 animate-entrance">
+    <Card className="w-full max-w-[420px] mx-auto shadow-2xl border-0 border-none ring-0 bg-white text-black rounded-lg overflow-hidden py-4 px-2 animate-entrance">
       <CardHeader className="space-y-6 flex flex-col items-center pb-2">
         <Logo className="mb-2" iconSize={120} textClass="hidden" />
         <div className="w-full">

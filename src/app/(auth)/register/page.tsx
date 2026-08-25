@@ -81,7 +81,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <Card className="w-full max-w-[420px] mx-auto shadow-2xl border-none bg-white text-black rounded-lg overflow-hidden py-4 px-2 relative animate-entrance">
+    <Card className="w-full max-w-[420px] mx-auto shadow-2xl border-0 border-none ring-0 bg-white text-black rounded-lg overflow-hidden py-4 px-2 relative animate-entrance">
       
       {/* Cancel Link */}
       <div className="absolute top-4 left-4">
