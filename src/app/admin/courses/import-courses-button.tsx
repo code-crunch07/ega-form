@@ -15,6 +15,7 @@ export function ImportCoursesButton() {
         { key: "modeOfStudy", label: "Mode of Study (FT / PT / E-learning)" },
         { key: "level", label: "Academic Level" },
         { key: "duration", label: "Duration" },
+        { key: "intakes", label: "Intake Dates (Separate multiple with ; )" },
         { key: "applicationFee", label: "App Fee ($)" },
         { key: "status", label: "Status" },
       ]}
@@ -25,6 +26,7 @@ export function ImportCoursesButton() {
           modeOfStudy: "FT / PT",
           level: "Undergraduate",
           duration: "3 Years",
+          intakes: "January 2026; May 2026; September 2026",
           applicationFee: "160.00",
           status: "Active"
         },
@@ -34,6 +36,7 @@ export function ImportCoursesButton() {
           modeOfStudy: "FT / PT",
           level: "Postgraduate",
           duration: "1 Year",
+          intakes: "January 2026; September 2026",
           applicationFee: "320.00",
           status: "Active"
         },
@@ -43,6 +46,7 @@ export function ImportCoursesButton() {
           modeOfStudy: "E-learning",
           level: "Diploma",
           duration: "2 Years",
+          intakes: "January 2026; March 2026; July 2026; October 2026",
           applicationFee: "160.00",
           status: "Active"
         }

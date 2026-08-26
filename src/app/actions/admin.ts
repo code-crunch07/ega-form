@@ -1764,6 +1764,27 @@ export async function bulkImportCourses(
         });
         imported++;
       }
+
+      // Auto-register multiple intake dates if provided in course row
+      const rawIntakes = row.intakes || row["Intakes"] || row["Intake Dates"] || row["Intake"];
+      if (rawIntakes && typeof rawIntakes === "string") {
+        const intakeList = rawIntakes.split(/[;,|]/).map((s: string) => s.trim()).filter(Boolean);
+        for (const intakeName of intakeList) {
+          const existingIntake = await prisma.intake.findFirst({
+            where: { name: { equals: intakeName, mode: "insensitive" } }
+          });
+          if (!existingIntake) {
+            await prisma.intake.create({
+              data: {
+                name: intakeName,
+                openDate: new Date(),
+                closeDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
+                status: "Open"
+              }
+            });
+          }
+        }
+      }
     }
 
     revalidatePath("/admin/courses");
@@ -1853,6 +1874,92 @@ export async function bulkImportAgents(
     return { success: true, imported, updated, total: imported + updated };
   } catch (error: any) {
     return { error: error.message || "Failed to bulk import agents." };
+  }
+}
+
+export async function bulkImportIntakes(
+  rows: Array<Record<string, any>>
+) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { error: "No intake rows found to import." };
+  }
+
+  try {
+    let imported = 0;
+    let updated = 0;
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const name = String(row.name || row["Intake Name"] || row["Cohort"] || row["Intake"] || "").trim();
+      if (!name) continue;
+
+      // Parse Open Date
+      let rawOpen = row.openDate || row["Open Date"] || row["Opening Date"] || row["Start Date"];
+      let openDate: Date;
+      if (rawOpen) {
+        openDate = new Date(rawOpen);
+        if (isNaN(openDate.getTime())) openDate = new Date();
+      } else {
+        openDate = new Date();
+      }
+
+      // Parse Close Date / Deadline
+      let rawClose = row.closeDate || row["Close Date"] || row["Closing Date"] || row["Deadline"] || row["End Date"];
+      let closeDate: Date;
+      if (rawClose) {
+        closeDate = new Date(rawClose);
+        if (isNaN(closeDate.getTime())) {
+          closeDate = new Date(openDate.getTime() + 60 * 24 * 60 * 60 * 1000); // 60 days default
+        }
+      } else {
+        closeDate = new Date(openDate.getTime() + 60 * 24 * 60 * 60 * 1000);
+      }
+
+      // Parse Capacity
+      const rawCapacity = row.capacity || row["Capacity"] || row["Capacity Limit"] || row["Seats"];
+      const capacity = rawCapacity && !isNaN(parseInt(String(rawCapacity))) ? parseInt(String(rawCapacity)) : null;
+
+      // Parse Status
+      let rawStatus = String(row.status || row["Status"] || "Open").trim();
+      let status = "Open";
+      if (rawStatus.toLowerCase() === "upcoming") status = "Upcoming";
+      else if (rawStatus.toLowerCase() === "closed") status = "Closed";
+
+      const existing = await prisma.intake.findFirst({
+        where: { name: { equals: name, mode: "insensitive" } }
+      });
+
+      if (existing) {
+        await prisma.intake.update({
+          where: { id: existing.id },
+          data: {
+            name,
+            openDate,
+            closeDate,
+            capacity,
+            status
+          }
+        });
+        updated++;
+      } else {
+        await prisma.intake.create({
+          data: {
+            name,
+            openDate,
+            closeDate,
+            capacity,
+            status
+          }
+        });
+        imported++;
+      }
+    }
+
+    revalidatePath("/admin/intakes");
+    revalidatePath("/dashboard/applications/new");
+    return { success: true, imported, updated, total: imported + updated };
+  } catch (error: any) {
+    return { error: error.message || "Failed to bulk import intakes." };
   }
 }
 

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarDays, Users } from "lucide-react";
 import Link from "next/link";
 import { AddIntakeDialog } from "./add-intake-dialog";
+import { ImportIntakesButton } from "./import-intakes-button";
 import { EditIntakeDialog } from "./edit-intake-dialog";
 import { ExtendDeadlineDialog } from "./extend-deadline-dialog";
 import { IntakeActionsDropdown } from "./intake-actions-dropdown";
@@ -41,6 +42,7 @@ export default async function AdminIntakesPage({
           <p className="text-slate-500 mt-1 text-sm font-medium">Manage admission periods, deadlines, and student capacity limits.</p>
         </div>
         <div className="flex items-center gap-3">
+          <ImportIntakesButton />
           <AddIntakeDialog />
         </div>
       </div>
