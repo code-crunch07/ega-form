@@ -419,6 +419,57 @@ export default function ApplicationWizard({
     }
   }, [currentAvailableIntakes, setValue, getValues]);
 
+  // Programmes filtered by level for package slots
+  const foundationProgrammes = useMemo(() => {
+    const list = programmes.filter(p => 
+      p.level?.toLowerCase().includes("foundation") || 
+      p.name?.toLowerCase().includes("foundation") || 
+      p.level?.toLowerCase().includes("certificate")
+    );
+    return list.length > 0 ? list : programmes;
+  }, [programmes]);
+
+  const diplomaProgrammes = useMemo(() => {
+    const list = programmes.filter(p => 
+      p.level?.toLowerCase().includes("diploma") || 
+      p.name?.toLowerCase().includes("diploma")
+    );
+    return list.length > 0 ? list : programmes;
+  }, [programmes]);
+
+  const degreeProgrammes = useMemo(() => {
+    const list = programmes.filter(p => 
+      p.level?.toLowerCase().includes("undergraduate") || 
+      p.level?.toLowerCase().includes("bachelor") || 
+      p.name?.toLowerCase().includes("bachelor") || 
+      p.name?.toLowerCase().includes("bsc") || 
+      p.name?.toLowerCase().includes("degree")
+    );
+    return list.length > 0 ? list : programmes;
+  }, [programmes]);
+
+  // Ensure default package programme IDs are populated if empty
+  useEffect(() => {
+    if (watchCourseType === "Package Courses") {
+      const currentP1 = getValues("packageProgrammes.prog1Id");
+      const currentP2 = getValues("packageProgrammes.prog2Id");
+      const currentP3 = getValues("packageProgrammes.prog3Id");
+
+      if (!currentP1) {
+        const defaultP1 = (watchProg1Level === "Foundation" ? foundationProgrammes[0] : diplomaProgrammes[0])?.id || programmes[0]?.id || "";
+        setValue("packageProgrammes.prog1Id", defaultP1, { shouldValidate: true });
+      }
+      if (!currentP2) {
+        const defaultP2 = (watchProg1Level === "Foundation" ? diplomaProgrammes[0] : degreeProgrammes[0])?.id || programmes[1]?.id || "";
+        setValue("packageProgrammes.prog2Id", defaultP2, { shouldValidate: true });
+      }
+      if (watchProg1Level === "Foundation" && !currentP3) {
+        const defaultP3 = degreeProgrammes[0]?.id || programmes[2]?.id || "";
+        setValue("packageProgrammes.prog3Id", defaultP3, { shouldValidate: true });
+      }
+    }
+  }, [watchCourseType, watchProg1Level, foundationProgrammes, diplomaProgrammes, degreeProgrammes, programmes, setValue, getValues]);
+
   useEffect(() => {
     setValue("education", educationList);
   }, [educationList, setValue]);
@@ -937,18 +988,23 @@ export default function ApplicationWizard({
                           <div className="space-y-2">
                             <Label className="text-slate-700 font-bold text-xs">Programme 1 Academic Level (Driver) *</Label>
                             <Controller
-                              name="packageCourse.prog1Level"
+                              name="packageProgrammes.prog1Level"
                               control={control}
                               defaultValue="Foundation"
                               render={({ field }) => (
                                 <Select onValueChange={(val) => {
                                   field.onChange(val);
                                   if (val === "Foundation") {
-                                    setValue("packageCourse.prog2Level", "Diploma Family (Assigned)");
-                                    setValue("packageCourse.prog3Level", "Undergraduate (Assigned)");
+                                    setValue("packageProgrammes.prog2Level", "Diploma Family (Assigned)");
+                                    setValue("packageProgrammes.prog3Level", "Undergraduate (Assigned)");
+                                    setValue("packageProgrammes.prog1Id", foundationProgrammes[0]?.id || programmes[0]?.id || "");
+                                    setValue("packageProgrammes.prog2Id", diplomaProgrammes[0]?.id || programmes[1]?.id || "");
+                                    setValue("packageProgrammes.prog3Id", degreeProgrammes[0]?.id || programmes[2]?.id || "");
                                   } else {
-                                    setValue("packageCourse.prog2Level", "Undergraduate (Assigned)");
-                                    setValue("packageCourse.prog3Level", "");
+                                    setValue("packageProgrammes.prog2Level", "Undergraduate (Assigned)");
+                                    setValue("packageProgrammes.prog3Level", "");
+                                    setValue("packageProgrammes.prog1Id", diplomaProgrammes[0]?.id || programmes[0]?.id || "");
+                                    setValue("packageProgrammes.prog2Id", degreeProgrammes[0]?.id || programmes[1]?.id || "");
                                   }
                                 }} value={field.value || "Foundation"}>
                                   <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold">
@@ -1006,20 +1062,37 @@ export default function ApplicationWizard({
                               <span className="text-xs font-bold text-[#252D65] bg-[#252D65]/10 px-2 py-0.5 rounded-md">{watchProg1Level}</span>
                             </div>
                             <Label className="text-slate-800 font-bold text-xs">Programme 1 Selection *</Label>
-                            <Select defaultValue={programmes[0]?.id || ""}>
-                              <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
-                                <SelectValue placeholder="Select Programme 1" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {programmes.length > 0 ? (
-                                  programmes.map((p) => (
-                                    <SelectItem key={`p1_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
-                                  ))
-                                ) : (
-                                  <SelectItem value="none">No programmes found</SelectItem>
-                                )}
-                              </SelectContent>
-                            </Select>
+                            <Controller
+                              name="packageProgrammes.prog1Id"
+                              control={control}
+                              render={({ field }) => {
+                                const slot1List = watchProg1Level === "Foundation" ? foundationProgrammes : diplomaProgrammes;
+                                const selected = programmes.find(p => p.id === field.value);
+                                const displayName = selected ? `${selected.name} (${selected.code})` : "";
+
+                                return (
+                                  <Select 
+                                    onValueChange={field.onChange} 
+                                    value={field.value || slot1List[0]?.id || ""}
+                                  >
+                                    <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
+                                      <span className="truncate text-left font-semibold text-slate-800">
+                                        {displayName || (slot1List[0] ? `${slot1List[0].name} (${slot1List[0].code})` : "Select Programme 1")}
+                                      </span>
+                                    </SelectTrigger>
+                                    <SelectContent className="w-[320px] max-w-md">
+                                      {slot1List.length > 0 ? (
+                                        slot1List.map((p) => (
+                                          <SelectItem key={`p1_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
+                                        ))
+                                      ) : (
+                                        <SelectItem value="none">No programmes found</SelectItem>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                );
+                              }}
+                            />
                           </div>
 
                           {/* Slot 2 (Read-only Academic Level) */}
@@ -1031,20 +1104,37 @@ export default function ApplicationWizard({
                               </span>
                             </div>
                             <Label className="text-slate-800 font-bold text-xs">Programme 2 Selection *</Label>
-                            <Select defaultValue={programmes[1]?.id || programmes[0]?.id || ""}>
-                              <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
-                                <SelectValue placeholder="Select Programme 2" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {programmes.length > 0 ? (
-                                  programmes.map((p) => (
-                                    <SelectItem key={`p2_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
-                                  ))
-                                ) : (
-                                  <SelectItem value="none">No programmes found</SelectItem>
-                                )}
-                              </SelectContent>
-                            </Select>
+                            <Controller
+                              name="packageProgrammes.prog2Id"
+                              control={control}
+                              render={({ field }) => {
+                                const slot2List = watchProg1Level === "Foundation" ? diplomaProgrammes : degreeProgrammes;
+                                const selected = programmes.find(p => p.id === field.value);
+                                const displayName = selected ? `${selected.name} (${selected.code})` : "";
+
+                                return (
+                                  <Select 
+                                    onValueChange={field.onChange} 
+                                    value={field.value || slot2List[0]?.id || ""}
+                                  >
+                                    <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
+                                      <span className="truncate text-left font-semibold text-slate-800">
+                                        {displayName || (slot2List[0] ? `${slot2List[0].name} (${slot2List[0].code})` : "Select Programme 2")}
+                                      </span>
+                                    </SelectTrigger>
+                                    <SelectContent className="w-[320px] max-w-md">
+                                      {slot2List.length > 0 ? (
+                                        slot2List.map((p) => (
+                                          <SelectItem key={`p2_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
+                                        ))
+                                      ) : (
+                                        <SelectItem value="none">No programmes found</SelectItem>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                );
+                              }}
+                            />
                           </div>
 
                           {/* Slot 3 (Variation 1 Only - Read-only Academic Level = Undergraduate) */}
@@ -1055,20 +1145,37 @@ export default function ApplicationWizard({
                                 <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">Undergraduate (Assigned)</span>
                               </div>
                               <Label className="text-slate-800 font-bold text-xs">Programme 3 Selection *</Label>
-                              <Select defaultValue={programmes[2]?.id || programmes[0]?.id || ""}>
-                                <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
-                                  <SelectValue placeholder="Select Programme 3" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {programmes.length > 0 ? (
-                                    programmes.map((p) => (
-                                      <SelectItem key={`p3_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
-                                    ))
-                                  ) : (
-                                    <SelectItem value="none">No programmes found</SelectItem>
-                                  )}
-                                </SelectContent>
-                              </Select>
+                              <Controller
+                                name="packageProgrammes.prog3Id"
+                                control={control}
+                                render={({ field }) => {
+                                  const slot3List = degreeProgrammes;
+                                  const selected = programmes.find(p => p.id === field.value);
+                                  const displayName = selected ? `${selected.name} (${selected.code})` : "";
+
+                                  return (
+                                    <Select 
+                                      onValueChange={field.onChange} 
+                                      value={field.value || slot3List[0]?.id || ""}
+                                    >
+                                      <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
+                                        <span className="truncate text-left font-semibold text-slate-800">
+                                          {displayName || (slot3List[0] ? `${slot3List[0].name} (${slot3List[0].code})` : "Select Programme 3")}
+                                        </span>
+                                      </SelectTrigger>
+                                      <SelectContent className="w-[320px] max-w-md">
+                                        {slot3List.length > 0 ? (
+                                          slot3List.map((p) => (
+                                            <SelectItem key={`p3_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
+                                          ))
+                                        ) : (
+                                          <SelectItem value="none">No programmes found</SelectItem>
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  );
+                                }}
+                              />
                             </div>
                           )}
 
