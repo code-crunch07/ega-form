@@ -8,6 +8,7 @@ export async function updateProfile(formData: FormData) {
   const user = await getMockSessionUser();
 
   try {
+    const title = formData.get("title") as string;
     const firstName = formData.get("firstName") as string;
     const lastName = formData.get("lastName") as string;
     const dateOfBirthStr = formData.get("dateOfBirth") as string;
@@ -21,6 +22,7 @@ export async function updateProfile(formData: FormData) {
       where: { userId: user.id },
       create: {
         userId: user.id,
+        title,
         firstName,
         lastName,
         dob: dateOfBirth,
@@ -29,6 +31,7 @@ export async function updateProfile(formData: FormData) {
         passportNumber,
       },
       update: {
+        title,
         firstName,
         lastName,
         dob: dateOfBirth,

@@ -77,6 +77,18 @@ function FormAccordion({
   );
 }
 
+const normalizeTitle = (val?: string | null) => {
+  if (!val) return "Mr.";
+  const lower = val.toLowerCase().trim();
+  if (lower === "mr" || lower === "mr.") return "Mr.";
+  if (lower === "ms" || lower === "ms.") return "Ms.";
+  if (lower === "mrs" || lower === "mrs.") return "Mrs.";
+  if (lower === "miss") return "Miss";
+  if (lower === "dr" || lower === "dr.") return "Dr.";
+  if (lower === "other") return "Other";
+  return val;
+};
+
 export default function ApplicationWizard({ 
   user, 
   programmes = [], 
@@ -141,7 +153,7 @@ export default function ApplicationWizard({
       counsellingDeclaration: "counselled",
 
       personal: {
-        title: user.profile?.title || "mr",
+        title: normalizeTitle(user.profile?.title),
         fullName: user.profile?.firstName ? `${user.profile.firstName} ${user.profile.lastName || ''}`.trim() : "",
         surname: user.profile?.lastName || ".",
         dob: user.profile?.dob ? new Date(user.profile.dob).toISOString().split('T')[0] : "2002-05-15",
@@ -967,19 +979,19 @@ export default function ApplicationWizard({
                       <Controller
                         name="personal.title"
                         control={control}
-                        defaultValue="mr"
+                        defaultValue="Mr."
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value || "mr"}>
+                          <Select onValueChange={field.onChange} value={normalizeTitle(field.value)}>
                             <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
                               <SelectValue placeholder="Title" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="mr">Mr.</SelectItem>
-                              <SelectItem value="ms">Ms.</SelectItem>
-                              <SelectItem value="mrs">Mrs.</SelectItem>
-                              <SelectItem value="miss">Miss</SelectItem>
-                              <SelectItem value="dr">Dr.</SelectItem>
-                              <SelectItem value="other">Other</SelectItem>
+                              <SelectItem value="Mr.">Mr.</SelectItem>
+                              <SelectItem value="Ms.">Ms.</SelectItem>
+                              <SelectItem value="Mrs.">Mrs.</SelectItem>
+                              <SelectItem value="Miss">Miss</SelectItem>
+                              <SelectItem value="Dr.">Dr.</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         )}

@@ -30,6 +30,7 @@ type ProfileUser = {
   email: string;
   name?: string | null;
   profile?: {
+    title?: string | null;
     firstName?: string | null;
     lastName?: string | null;
     dateOfBirth?: Date | null;
@@ -37,6 +38,18 @@ type ProfileUser = {
     phone?: string | null;
     country?: string | null;
   } | null;
+};
+
+const normalizeTitle = (val?: string | null) => {
+  if (!val) return "Mr.";
+  const lower = val.toLowerCase().trim();
+  if (lower === "mr" || lower === "mr.") return "Mr.";
+  if (lower === "ms" || lower === "ms.") return "Ms.";
+  if (lower === "mrs" || lower === "mrs.") return "Mrs.";
+  if (lower === "miss") return "Miss";
+  if (lower === "dr" || lower === "dr.") return "Dr.";
+  if (lower === "other") return "Other";
+  return val;
 };
 
 export default function ProfileForm({ user }: { user: ProfileUser }) {
@@ -200,15 +213,17 @@ export default function ProfileForm({ user }: { user: ProfileUser }) {
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-sm font-semibold text-neutral-700">Title</Label>
-                  <Select name="title" defaultValue="mr">
+                  <Select name="title" defaultValue={normalizeTitle(profile.title)}>
                     <SelectTrigger className="h-11 rounded-xl border-neutral-200 bg-neutral-50/80">
                       <SelectValue placeholder="Select title" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="mr">Mr.</SelectItem>
-                      <SelectItem value="ms">Ms.</SelectItem>
-                      <SelectItem value="mrs">Mrs.</SelectItem>
-                      <SelectItem value="dr">Dr.</SelectItem>
+                      <SelectItem value="Mr.">Mr.</SelectItem>
+                      <SelectItem value="Ms.">Ms.</SelectItem>
+                      <SelectItem value="Mrs.">Mrs.</SelectItem>
+                      <SelectItem value="Miss">Miss</SelectItem>
+                      <SelectItem value="Dr.">Dr.</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
