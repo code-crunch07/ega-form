@@ -139,6 +139,18 @@ export function AddProgrammeDialog({
                     <Input id="applicationFee" name="applicationFee" type="number" step="0.01" placeholder="e.g. 160.00" defaultValue="160.00" required />
                   </div>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="intakes">
+                    Intake Dates <span className="text-neutral-400 font-normal text-xs">(Separate multiple with semicolon e.g. 16 Nov 2026; 11 Jan 2027)</span>
+                  </Label>
+                  <Input 
+                    id="intakes" 
+                    name="intakes" 
+                    placeholder="e.g. 16 Nov 2026; 11 Jan 2027; 15 Mar 2027" 
+                    className="h-10 rounded-md border-neutral-200" 
+                  />
+                </div>
               </div>
               
               <div className="p-6 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-900/50 flex justify-end gap-3">

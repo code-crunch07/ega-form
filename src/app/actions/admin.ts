@@ -78,6 +78,7 @@ export async function createProgramme(formData: FormData) {
   const duration = formData.get("duration") as string;
   const modeOfStudy = (formData.get("modeOfStudy") as string) || "Full Time / Part Time";
   const feeStr = formData.get("applicationFee") as string;
+  const intakes = formData.get("intakes") as string;
 
   if (!name || !schoolId || !level) {
     return { error: "Name, School, and Level are required." };
@@ -96,7 +97,8 @@ export async function createProgramme(formData: FormData) {
         modeOfStudy: modeOfStudy || "Full Time / Part Time",
         credits: 120,
         applicationFee: parseFloat(feeStr) || 0,
-        status: "Active"
+        status: "Active",
+        intakes: intakes || undefined,
       } as any,
     });
     
@@ -118,6 +120,7 @@ export async function updateProgramme(id: string, formData: FormData) {
   const duration = formData.get("duration") as string;
   const modeOfStudy = formData.get("modeOfStudy") as string;
   const feeStr = formData.get("applicationFee") as string;
+  const intakes = formData.get("intakes") as string;
   const status = formData.get("status") as string || "Active";
 
   if (!id || !name) {
@@ -133,6 +136,10 @@ export async function updateProgramme(id: string, formData: FormData) {
       applicationFee: parseFloat(feeStr) || 0,
       status
     };
+
+    if (intakes !== undefined && intakes !== null) {
+      updateData.intakes = intakes;
+    }
 
     if (modeOfStudy) {
       updateData.modeOfStudy = modeOfStudy;
@@ -1733,6 +1740,8 @@ export async function bulkImportCourses(
         where: { code }
       });
 
+      const rawIntakes = row.intakes || row["Intakes"] || row["Intake Dates"] || row["Intake"];
+
       if (existing) {
         await prisma.programme.update({
           where: { code },
@@ -1744,7 +1753,8 @@ export async function bulkImportCourses(
             modeOfStudy,
             credits,
             applicationFee,
-            status
+            status,
+            intakes: typeof rawIntakes === "string" ? rawIntakes : undefined,
           } as any
         });
         updated++;
@@ -1759,14 +1769,14 @@ export async function bulkImportCourses(
             modeOfStudy,
             credits,
             applicationFee,
-            status
+            status,
+            intakes: typeof rawIntakes === "string" ? rawIntakes : undefined,
           } as any
         });
         imported++;
       }
 
       // Auto-register multiple intake dates if provided in course row
-      const rawIntakes = row.intakes || row["Intakes"] || row["Intake Dates"] || row["Intake"];
       if (rawIntakes && typeof rawIntakes === "string") {
         const intakeList = rawIntakes.split(/[;,|]/).map((s: string) => s.trim()).filter(Boolean);
         for (const intakeName of intakeList) {

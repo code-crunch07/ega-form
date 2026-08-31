@@ -24,6 +24,7 @@ interface Programme {
   credits?: number | null;
   applicationFee?: number | null;
   status: string;
+  intakes?: string | null;
 }
 
 interface EditProgrammeDialogProps {
@@ -215,6 +216,19 @@ export function EditProgrammeDialog({
                       <option value="Inactive">Inactive</option>
                     </select>
                   </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="intakes" className="text-xs font-bold text-slate-700">
+                    Intake Dates <span className="text-slate-400 font-normal">(Separate multiple with semicolon e.g. 16 Nov 2026; 11 Jan 2027)</span>
+                  </Label>
+                  <Input 
+                    id="intakes" 
+                    name="intakes" 
+                    defaultValue={programme.intakes || ""} 
+                    placeholder="e.g. 16 Nov 2026; 11 Jan 2027; 15 Mar 2027" 
+                    className="h-11 rounded-xl border-slate-200 text-slate-800" 
+                  />
                 </div>
               </div>
               

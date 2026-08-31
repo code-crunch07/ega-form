@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, ReactNode } from "react";
+import { useState, useEffect, useRef, useMemo, ReactNode } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { 
@@ -89,6 +89,102 @@ const normalizeTitle = (val?: string | null) => {
   return val;
 };
 
+const COHORT_MAP: Record<string, string> = {
+  "16 Nov 2026": "November 2026 Intake",
+  "11 Jan 2027": "January 2027 Intake",
+  "15 Feb 2027": "February 2027 Intake",
+  "15 Mar 2027": "March 2027 Intake",
+  "10 May 2027": "May 2027 Intake",
+  "12 Jul 2027": "July 2027 Intake",
+  "10 Aug 2027": "August 2027 Intake",
+  "06 Sep 2027": "September 2027 Intake",
+  "6-Sep-27": "September 2027 Intake",
+  "15 Nov 2027": "November 2027 Intake",
+  "14 Sep 2026": "September 2026 Intake",
+  "05 Oct 2026": "October 2026 Intake",
+  "5-Oct-26": "October 2026 Intake",
+};
+
+const INTAKE_DATE_MAP: Record<string, string> = {
+  "16-Nov-26": "16 Nov 2026",
+  "11-Jan-27": "11 Jan 2027",
+  "15-Feb-27": "15 Feb 2027",
+  "15-Mar-27": "15 Mar 2027",
+  "10-May-27": "10 May 2027",
+  "12-Jul-27": "12 Jul 2027",
+  "10-Aug-27": "10 Aug 2027",
+  "6-Sep-27": "06 Sep 2027",
+  "15-Nov-27": "15 Nov 2027",
+  "14-Sep-26": "14 Sep 2026",
+  "5-Oct-26": "05 Oct 2026",
+  "November 2026": "16 Nov 2026",
+  "January 2027": "11 Jan 2027",
+  "February 2027": "15 Feb 2027",
+  "March 2027": "15 Mar 2027",
+  "May 2027": "10 May 2027",
+  "July 2027": "12 Jul 2027",
+  "August 2027": "10 Aug 2027",
+  "September 2027": "06 Sep 2027",
+  "September 2026": "14 Sep 2026",
+  "October 2026": "05 Oct 2026",
+};
+
+function parseProgrammeIntakes(intakesStr?: string | null): { value: string; label: string }[] {
+  if (!intakesStr || !intakesStr.trim()) return [];
+  const parts = intakesStr.split(/[;,|]/).map(s => s.trim()).filter(Boolean);
+  return parts.map(raw => {
+    const formatted = INTAKE_DATE_MAP[raw] || raw;
+    const cohort = COHORT_MAP[formatted] || COHORT_MAP[raw] || "";
+    return {
+      value: formatted,
+      label: cohort ? `${formatted} (${cohort})` : formatted
+    };
+  });
+}
+
+function getFallbackIntakes(partner?: string, level?: string, progName?: string): { value: string; label: string }[] {
+  const pLower = (partner || "").toLowerCase();
+  const lLower = (level || "").toLowerCase();
+  const nLower = (progName || "").toLowerCase();
+
+  if (pLower.includes("glasgow") || pLower.includes("gcu")) {
+    return [{ value: "14 Sep 2026", label: "14 Sep 2026 (September 2026 Intake)" }];
+  }
+  if (pLower.includes("kingston") || pLower.includes("ku")) {
+    return [{ value: "05 Oct 2026", label: "05 Oct 2026 (October 2026 Intake)" }];
+  }
+  if (pLower.includes("ncc")) {
+    return [{ value: "16 Nov 2026", label: "16 Nov 2026 (November 2026 Intake)" }];
+  }
+
+  // EGA Culinary / Bakery or Foundation / Preparatory:
+  if (nLower.includes("culinary") || nLower.includes("pastry") || nLower.includes("bakery") || lLower.includes("foundation") || lLower.includes("preparatory")) {
+    return [
+      { value: "16 Nov 2026", label: "16 Nov 2026 (November 2026 Intake)" },
+      { value: "15 Feb 2027", label: "15 Feb 2027 (February 2027 Intake)" },
+      { value: "10 May 2027", label: "10 May 2027 (May 2027 Intake)" },
+      { value: "10 Aug 2027", label: "10 Aug 2027 (August 2027 Intake)" },
+      { value: "15 Nov 2027", label: "15 Nov 2027 (November 2027 Intake)" },
+    ];
+  }
+
+  // EGA Postgraduate:
+  if (lLower.includes("postgraduate") || lLower.includes("master")) {
+    return [{ value: "16 Nov 2026", label: "16 Nov 2026 (November 2026 Intake)" }];
+  }
+
+  // Standard EGA Diplomas (Business, AI, Computing, Accounting, Tourism, etc.):
+  return [
+    { value: "16 Nov 2026", label: "16 Nov 2026 (November 2026 Intake)" },
+    { value: "11 Jan 2027", label: "11 Jan 2027 (January 2027 Intake)" },
+    { value: "15 Mar 2027", label: "15 Mar 2027 (March 2027 Intake)" },
+    { value: "10 May 2027", label: "10 May 2027 (May 2027 Intake)" },
+    { value: "12 Jul 2027", label: "12 Jul 2027 (July 2027 Intake)" },
+    { value: "06 Sep 2027", label: "06 Sep 2027 (September 2027 Intake)" },
+    { value: "15 Nov 2027", label: "15 Nov 2027 (November 2027 Intake)" },
+  ];
+}
+
 export default function ApplicationWizard({ 
   user, 
   programmes = [], 
@@ -148,7 +244,7 @@ export default function ApplicationWizard({
         prog3Level: "Undergraduate",
         prog3Id: "",
       },
-      intake: "January 2026",
+      intake: "16 Nov 2026",
 
       counsellingDeclaration: "counselled",
 
@@ -274,11 +370,48 @@ export default function ApplicationWizard({
 
   // Filter programmes for Standalone Course
   const filteredProgrammes = programmes.filter(p => {
-    if (watchAcademicLevel && watchAcademicLevel !== "All Levels") {
-      return p.level?.toLowerCase().includes(watchAcademicLevel.toLowerCase()) || p.name?.toLowerCase().includes(watchAcademicLevel.toLowerCase());
-    }
-    return true;
+    const matchesPartner = !watchPartner || watchPartner === "all" || 
+      p.school?.name?.toLowerCase() === watchPartner.toLowerCase() || 
+      p.schoolId === watchPartner;
+    const matchesLevel = !watchAcademicLevel || watchAcademicLevel === "All Levels" || 
+      p.level?.toLowerCase().includes(watchAcademicLevel.toLowerCase()) || 
+      p.name?.toLowerCase().includes(watchAcademicLevel.toLowerCase());
+    return matchesPartner && matchesLevel;
   });
+
+  // Resolve respective intakes based on selected course type, programme, academic level & university partner
+  const currentAvailableIntakes = useMemo(() => {
+    if (watchCourseType === "Package Courses") {
+      const p1Id = watch("packageProgrammes.prog1Id");
+      const prog1 = programmes.find(p => p.id === p1Id);
+      if (prog1?.intakes) {
+        const parsed = parseProgrammeIntakes(prog1.intakes);
+        if (parsed.length > 0) return parsed;
+      }
+      return getFallbackIntakes(watchPartner, watchProg1Level, prog1?.name);
+    }
+
+    const selectedProg = programmes.find(p => p.id === watchProgrammeId);
+    if (selectedProg?.intakes) {
+      const parsed = parseProgrammeIntakes(selectedProg.intakes);
+      if (parsed.length > 0) return parsed;
+    }
+    return getFallbackIntakes(watchPartner, watchAcademicLevel, selectedProg?.name);
+  }, [watchCourseType, watchProgrammeId, watchPartner, watchAcademicLevel, watchProg1Level, programmes, watch]);
+
+  // Synchronize selected intake when available intakes change
+  useEffect(() => {
+    if (currentAvailableIntakes.length > 0) {
+      const currentVal = getValues("intake");
+      const match = currentAvailableIntakes.find(i => 
+        i.value === currentVal || 
+        (currentVal && (i.value.includes(currentVal) || currentVal.includes(i.value)))
+      );
+      if (!match) {
+        setValue("intake", currentAvailableIntakes[0].value, { shouldValidate: true });
+      }
+    }
+  }, [currentAvailableIntakes, setValue, getValues]);
 
   useEffect(() => {
     setValue("education", educationList);
@@ -756,19 +889,26 @@ export default function ApplicationWizard({
                         <Controller
                           name="intake"
                           control={control}
-                          defaultValue={intakes[0]?.name || "Upcoming Intake"}
+                          defaultValue={currentAvailableIntakes[0]?.value || "16 Nov 2026"}
                           render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value || (intakes[0]?.name || "Upcoming Intake")}>
+                            <Select onValueChange={field.onChange} value={field.value || currentAvailableIntakes[0]?.value}>
                               <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
                                 <SelectValue placeholder="Select Intake" />
                               </SelectTrigger>
-                              <SelectContent>
-                                {intakes && intakes.length > 0 ? (
-                                  intakes.map(i => (
-                                    <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
+                              <SelectContent className="w-[320px] max-w-md">
+                                {currentAvailableIntakes && currentAvailableIntakes.length > 0 ? (
+                                  currentAvailableIntakes.map(i => (
+                                    <SelectItem key={i.value} value={i.value}>
+                                      <div className="flex items-center justify-between w-full pr-2">
+                                        <span className="font-semibold text-slate-900">{i.value}</span>
+                                        <span className="text-xs text-slate-400 font-normal ml-3">
+                                          {COHORT_MAP[i.value] || ""}
+                                        </span>
+                                      </div>
+                                    </SelectItem>
                                   ))
                                 ) : (
-                                  <SelectItem value="Upcoming Intake">Upcoming Intake</SelectItem>
+                                  <SelectItem value="16 Nov 2026">16 Nov 2026 (November 2026 Intake)</SelectItem>
                                 )}
                               </SelectContent>
                             </Select>
@@ -822,19 +962,26 @@ export default function ApplicationWizard({
                             <Controller
                               name="intake"
                               control={control}
-                              defaultValue={intakes[0]?.name || "Upcoming Intake"}
+                              defaultValue={currentAvailableIntakes[0]?.value || "16 Nov 2026"}
                               render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value || (intakes[0]?.name || "Upcoming Intake")}>
+                                <Select onValueChange={field.onChange} value={field.value || currentAvailableIntakes[0]?.value}>
                                   <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold">
                                     <SelectValue placeholder="Select Intake" />
                                   </SelectTrigger>
-                                  <SelectContent>
-                                    {intakes && intakes.length > 0 ? (
-                                      intakes.map(i => (
-                                        <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>
+                                  <SelectContent className="w-[320px] max-w-md">
+                                    {currentAvailableIntakes && currentAvailableIntakes.length > 0 ? (
+                                      currentAvailableIntakes.map(i => (
+                                        <SelectItem key={i.value} value={i.value}>
+                                          <div className="flex items-center justify-between w-full pr-2">
+                                            <span className="font-semibold text-slate-900">{i.value}</span>
+                                            <span className="text-xs text-slate-400 font-normal ml-3">
+                                              {COHORT_MAP[i.value] || ""}
+                                            </span>
+                                          </div>
+                                        </SelectItem>
                                       ))
                                     ) : (
-                                      <SelectItem value="Upcoming Intake">Upcoming Intake</SelectItem>
+                                      <SelectItem value="16 Nov 2026">16 Nov 2026 (November 2026 Intake)</SelectItem>
                                     )}
                                   </SelectContent>
                                 </Select>
