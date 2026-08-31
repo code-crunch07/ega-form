@@ -192,6 +192,31 @@ function getFallbackIntakes(partner?: string, level?: string, progName?: string)
   ];
 }
 
+function matchesLevel(prog: any, selectedLevel?: string): boolean {
+  if (!selectedLevel || selectedLevel === "All Levels") return true;
+  const pL = (prog.level || "").toLowerCase().trim();
+  const sL = selectedLevel.toLowerCase().trim();
+
+  if (sL === "preparatory") {
+    return pL === "preparatory";
+  }
+  if (sL === "foundation") {
+    return pL === "foundation";
+  }
+  if (sL === "diploma") {
+    const progName = (prog.name || "").toLowerCase();
+    return pL === "diploma" && !progName.includes("foundation diploma") && !progName.includes("postgraduate diploma");
+  }
+  if (sL === "undergraduate") {
+    return pL === "undergraduate";
+  }
+  if (sL === "postgraduate") {
+    return pL === "postgraduate";
+  }
+
+  return pL.includes(sL);
+}
+
 export default function ApplicationWizard({ 
   user, 
   programmes = [], 
@@ -376,15 +401,41 @@ export default function ApplicationWizard({
   const feeAmount = (watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC")) ? 320 : 160;
 
   // Filter programmes for Standalone Course
-  const filteredProgrammes = programmes.filter(p => {
-    const matchesPartner = !watchPartner || watchPartner === "all" || 
-      p.school?.name?.toLowerCase() === watchPartner.toLowerCase() || 
-      p.schoolId === watchPartner;
-    const matchesLevel = !watchAcademicLevel || watchAcademicLevel === "All Levels" || 
-      p.level?.toLowerCase().includes(watchAcademicLevel.toLowerCase()) || 
-      p.name?.toLowerCase().includes(watchAcademicLevel.toLowerCase());
-    return matchesPartner && matchesLevel;
-  });
+  const filteredProgrammes = useMemo(() => {
+    // 1. Strict filter by selected academic level
+    const levelFiltered = programmes.filter(p => matchesLevel(p, watchAcademicLevel));
+
+    // 2. If a specific partner is selected (and not all)
+    if (watchPartner && watchPartner !== "all" && !watchPartner.toLowerCase().includes("all")) {
+      const partnerAndLevel = levelFiltered.filter(p => {
+        const pSchoolName = p.school?.name?.toLowerCase() || "";
+        const targetPartner = watchPartner.toLowerCase();
+        return pSchoolName.includes(targetPartner) || targetPartner.includes(pSchoolName) || p.schoolId === watchPartner;
+      });
+
+      // If the selected partner offers programmes at this academic level, return them
+      if (partnerAndLevel.length > 0) {
+        return partnerAndLevel;
+      }
+    }
+
+    // Return all programmes at this academic level
+    return levelFiltered;
+  }, [programmes, watchAcademicLevel, watchPartner]);
+
+  // Keep selected programme synchronized with filteredProgrammes for standalone course
+  useEffect(() => {
+    if (watchCourseType === "Standalone Course" && filteredProgrammes.length > 0) {
+      const currentProg = getValues("programmeId");
+      const isValid = filteredProgrammes.some(p => p.id === currentProg);
+      if (!isValid) {
+        setValue("programmeId", filteredProgrammes[0].id, { shouldValidate: true });
+        if (filteredProgrammes[0].school?.name && filteredProgrammes[0].school.name !== watchPartner) {
+          setValue("universityPartner", filteredProgrammes[0].school.name, { shouldValidate: true });
+        }
+      }
+    }
+  }, [watchCourseType, filteredProgrammes, setValue, getValues, watchPartner]);
 
   // Resolve respective intakes based on selected course type, programme, academic level & university partner
   const currentAvailableIntakes = useMemo(() => {
@@ -422,30 +473,17 @@ export default function ApplicationWizard({
 
   // Programmes filtered by level for package slots
   const foundationProgrammes = useMemo(() => {
-    const list = programmes.filter(p => 
-      p.level?.toLowerCase().includes("foundation") || 
-      p.name?.toLowerCase().includes("foundation") || 
-      p.level?.toLowerCase().includes("certificate")
-    );
+    const list = programmes.filter(p => matchesLevel(p, "Foundation") || matchesLevel(p, "Preparatory"));
     return list.length > 0 ? list : programmes;
   }, [programmes]);
 
   const diplomaProgrammes = useMemo(() => {
-    const list = programmes.filter(p => 
-      p.level?.toLowerCase().includes("diploma") || 
-      p.name?.toLowerCase().includes("diploma")
-    );
+    const list = programmes.filter(p => matchesLevel(p, "Diploma"));
     return list.length > 0 ? list : programmes;
   }, [programmes]);
 
   const degreeProgrammes = useMemo(() => {
-    const list = programmes.filter(p => 
-      p.level?.toLowerCase().includes("undergraduate") || 
-      p.level?.toLowerCase().includes("bachelor") || 
-      p.name?.toLowerCase().includes("bachelor") || 
-      p.name?.toLowerCase().includes("bsc") || 
-      p.name?.toLowerCase().includes("degree")
-    );
+    const list = programmes.filter(p => matchesLevel(p, "Undergraduate"));
     return list.length > 0 ? list : programmes;
   }, [programmes]);
 
@@ -817,6 +855,7 @@ export default function ApplicationWizard({
                               <SelectValue placeholder="Select University Partner" />
                             </SelectTrigger>
                             <SelectContent>
+                              <SelectItem value="all">All Partners (EGA, GCU, KU, NCC)</SelectItem>
                               {schools && schools.length > 0 ? (
                                 schools.map((school) => (
                                   <SelectItem key={school.id} value={school.name}>{school.name}</SelectItem>
@@ -913,8 +952,14 @@ export default function ApplicationWizard({
                           render={({ field }) => (
                             <SearchableProgrammeSelect
                               value={field.value}
-                              onChange={field.onChange}
-                              programmes={filteredProgrammes.length > 0 ? filteredProgrammes : programmes}
+                              onChange={(newId) => {
+                                field.onChange(newId);
+                                const chosen = programmes.find(p => p.id === newId);
+                                if (chosen?.school?.name && chosen.school.name !== watchPartner && watchPartner !== "all") {
+                                  setValue("universityPartner", chosen.school.name, { shouldValidate: true });
+                                }
+                              }}
+                              programmes={filteredProgrammes}
                               placeholder="Search and select a programme..."
                             />
                           )}
