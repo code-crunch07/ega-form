@@ -43,10 +43,16 @@ function FormAccordion({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="border border-slate-200/90 rounded-2xl overflow-hidden bg-white shadow-2xs transition-all duration-200 hover:border-slate-300">
+    <div className={cn(
+      "border border-slate-200/90 rounded-2xl bg-white shadow-2xs transition-all duration-200 hover:border-slate-300 relative",
+      !isOpen && "overflow-hidden"
+    )}>
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="bg-white hover:bg-slate-50/80 px-6 py-4.5 flex items-center justify-between transition-colors text-left select-none cursor-pointer border-b border-slate-100"
+        className={cn(
+          "bg-white hover:bg-slate-50/80 px-6 py-4.5 flex items-center justify-between transition-colors text-left select-none cursor-pointer border-b border-slate-100",
+          isOpen ? "rounded-t-2xl" : "rounded-2xl"
+        )}
       >
         <div className="flex items-center gap-3">
           <span className="font-heading font-bold text-slate-900 text-base sm:text-lg">
@@ -69,7 +75,7 @@ function FormAccordion({
       </div>
 
       {isOpen && (
-        <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200">
+        <div className="p-6 sm:p-8 space-y-6 animate-in fade-in duration-200 rounded-b-2xl">
           {children}
         </div>
       )}
