@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
+import { SearchableProgrammeSelect } from "@/components/ui/searchable-programme-select";
 import { submitApplication, calculateApplicationFee } from "@/app/actions/application";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -909,35 +910,14 @@ export default function ApplicationWizard({
                         <Controller
                           name="programmeId"
                           control={control}
-                          render={({ field }) => {
-                            const selectedProg = programmes.find(p => p.id === field.value);
-                            const displayName = selectedProg 
-                              ? `${selectedProg.name} (${selectedProg.code})`
-                              : "";
-
-                            return (
-                              <Select onValueChange={field.onChange} value={field.value || ""}>
-                                <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
-                                  <span className="truncate text-left font-semibold">
-                                    {field.value && displayName ? displayName : <span className="text-slate-400 font-normal">Select Programme</span>}
-                                  </span>
-                                </SelectTrigger>
-                                <SelectContent className="w-[320px] max-w-md">
-                                  {filteredProgrammes.length > 0 ? (
-                                    filteredProgrammes.map(p => (
-                                      <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
-                                    ))
-                                  ) : programmes.length > 0 ? (
-                                    programmes.map(p => (
-                                      <SelectItem key={p.id} value={p.id}>{p.name} ({p.code})</SelectItem>
-                                    ))
-                                  ) : (
-                                    <div className="p-3 text-xs text-slate-500 font-medium">No programmes available</div>
-                                  )}
-                                </SelectContent>
-                              </Select>
-                            );
-                          }}
+                          render={({ field }) => (
+                            <SearchableProgrammeSelect
+                              value={field.value}
+                              onChange={field.onChange}
+                              programmes={filteredProgrammes.length > 0 ? filteredProgrammes : programmes}
+                              placeholder="Search and select a programme..."
+                            />
+                          )}
                         />
                       </div>
 
@@ -1065,33 +1045,14 @@ export default function ApplicationWizard({
                             <Controller
                               name="packageProgrammes.prog1Id"
                               control={control}
-                              render={({ field }) => {
-                                const slot1List = watchProg1Level === "Foundation" ? foundationProgrammes : diplomaProgrammes;
-                                const selected = programmes.find(p => p.id === field.value);
-                                const displayName = selected ? `${selected.name} (${selected.code})` : "";
-
-                                return (
-                                  <Select 
-                                    onValueChange={field.onChange} 
-                                    value={field.value || slot1List[0]?.id || ""}
-                                  >
-                                    <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
-                                      <span className="truncate text-left font-semibold text-slate-800">
-                                        {displayName || (slot1List[0] ? `${slot1List[0].name} (${slot1List[0].code})` : "Select Programme 1")}
-                                      </span>
-                                    </SelectTrigger>
-                                    <SelectContent className="w-[320px] max-w-md">
-                                      {slot1List.length > 0 ? (
-                                        slot1List.map((p) => (
-                                          <SelectItem key={`p1_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
-                                        ))
-                                      ) : (
-                                        <SelectItem value="none">No programmes found</SelectItem>
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                );
-                              }}
+                              render={({ field }) => (
+                                <SearchableProgrammeSelect
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  programmes={watchProg1Level === "Foundation" ? foundationProgrammes : diplomaProgrammes}
+                                  placeholder="Search and select Programme 1..."
+                                />
+                              )}
                             />
                           </div>
 
@@ -1107,33 +1068,14 @@ export default function ApplicationWizard({
                             <Controller
                               name="packageProgrammes.prog2Id"
                               control={control}
-                              render={({ field }) => {
-                                const slot2List = watchProg1Level === "Foundation" ? diplomaProgrammes : degreeProgrammes;
-                                const selected = programmes.find(p => p.id === field.value);
-                                const displayName = selected ? `${selected.name} (${selected.code})` : "";
-
-                                return (
-                                  <Select 
-                                    onValueChange={field.onChange} 
-                                    value={field.value || slot2List[0]?.id || ""}
-                                  >
-                                    <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
-                                      <span className="truncate text-left font-semibold text-slate-800">
-                                        {displayName || (slot2List[0] ? `${slot2List[0].name} (${slot2List[0].code})` : "Select Programme 2")}
-                                      </span>
-                                    </SelectTrigger>
-                                    <SelectContent className="w-[320px] max-w-md">
-                                      {slot2List.length > 0 ? (
-                                        slot2List.map((p) => (
-                                          <SelectItem key={`p2_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
-                                        ))
-                                      ) : (
-                                        <SelectItem value="none">No programmes found</SelectItem>
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                );
-                              }}
+                              render={({ field }) => (
+                                <SearchableProgrammeSelect
+                                  value={field.value}
+                                  onChange={field.onChange}
+                                  programmes={watchProg1Level === "Foundation" ? diplomaProgrammes : degreeProgrammes}
+                                  placeholder="Search and select Programme 2..."
+                                />
+                              )}
                             />
                           </div>
 
@@ -1148,33 +1090,14 @@ export default function ApplicationWizard({
                               <Controller
                                 name="packageProgrammes.prog3Id"
                                 control={control}
-                                render={({ field }) => {
-                                  const slot3List = degreeProgrammes;
-                                  const selected = programmes.find(p => p.id === field.value);
-                                  const displayName = selected ? `${selected.name} (${selected.code})` : "";
-
-                                  return (
-                                    <Select 
-                                      onValueChange={field.onChange} 
-                                      value={field.value || slot3List[0]?.id || ""}
-                                    >
-                                      <SelectTrigger className="h-11 bg-white border border-slate-200 rounded-xl font-medium text-xs">
-                                        <span className="truncate text-left font-semibold text-slate-800">
-                                          {displayName || (slot3List[0] ? `${slot3List[0].name} (${slot3List[0].code})` : "Select Programme 3")}
-                                        </span>
-                                      </SelectTrigger>
-                                      <SelectContent className="w-[320px] max-w-md">
-                                        {slot3List.length > 0 ? (
-                                          slot3List.map((p) => (
-                                            <SelectItem key={`p3_${p.id}`} value={p.id}>{p.name} ({p.code})</SelectItem>
-                                          ))
-                                        ) : (
-                                          <SelectItem value="none">No programmes found</SelectItem>
-                                        )}
-                                      </SelectContent>
-                                    </Select>
-                                  );
-                                }}
+                                render={({ field }) => (
+                                  <SearchableProgrammeSelect
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    programmes={degreeProgrammes}
+                                    placeholder="Search and select Programme 3..."
+                                  />
+                                )}
                               />
                             </div>
                           )}
