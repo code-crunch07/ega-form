@@ -234,10 +234,9 @@ export default function ApplicationWizard({
   const [formError, setFormError] = useState<string | null>(null);
 
   // CR-07 Qualifications state: Retain only 3 fields (Country, Awarding Institution, Qualification Title/Level)
-  const [educationList, setEducationList] = useState<any[]>([
-    { id: 1, country: "Singapore", institution: "National University of Singapore (NUS)", qualificationTitle: "Bachelor of Business Administration" },
-  ]);
+  const [educationList, setEducationList] = useState<any[]>([]);
   const [isQualModalOpen, setIsQualModalOpen] = useState(false);
+  const [isKeyPointsModalOpen, setIsKeyPointsModalOpen] = useState(false);
   const [qualForm, setQualForm] = useState<any>({
     country: "Singapore",
     institution: "",
@@ -245,9 +244,7 @@ export default function ApplicationWizard({
   });
 
   // CR-11 Education Certificate Uploads (Multiple attachments allowed)
-  const [certFiles, setCertFiles] = useState<{ id: string; name: string; size: string }[]>([
-    { id: "c1", name: "Degree_Certificate_NUS.pdf", size: "1.4 MB" },
-  ]);
+  const [certFiles, setCertFiles] = useState<{ id: string; name: string; size: string }[]>([]);
 
   // CR-12 Native Applicant Signature Pad state
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -262,7 +259,7 @@ export default function ApplicationWizard({
   const { register, handleSubmit, control, watch, setValue, getValues, trigger, formState: { errors } } = useForm<any>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
-      studentType: "Local Student", // CR-02 Mandatory Student Type
+      studentType: "", // CR-02 Mandatory Student Type (no default)
       universityPartner: "Educare Global Academy",
       studyMode: "Full Time",
       courseType: "Standalone Course",
@@ -278,33 +275,33 @@ export default function ApplicationWizard({
       },
       intake: "16 Nov 2026",
 
-      counsellingDeclaration: "counselled",
+      counsellingDeclaration: "", // Mandatory choice (no default)
 
       personal: {
-        title: normalizeTitle(user.profile?.title),
+        title: normalizeTitle(user.profile?.title) || "Mr.",
         fullName: user.profile?.firstName ? `${user.profile.firstName} ${user.profile.lastName || ''}`.trim() : "",
-        surname: user.profile?.lastName || ".",
-        dob: user.profile?.dob ? new Date(user.profile.dob).toISOString().split('T')[0] : "2002-05-15",
+        surname: user.profile?.lastName || "",
+        dob: user.profile?.dob ? new Date(user.profile.dob).toISOString().split('T')[0] : "",
         gender: user.profile?.gender || "male",
         maritalStatus: "Single",
-        nationality: user.profile?.nationality || "Singaporean",
-        email: user.email,
+        nationality: user.profile?.nationality || "",
+        email: user.email || "",
         phoneCountryCode: "+65",
         phone: user.profile?.phone || "",
       },
 
       emergencyContact: {
         contactType: "Parent / Legal Guardian",
-        fullName: user.profile?.firstName ? `${user.profile.firstName}'s Parent` : "Robert Doe",
+        fullName: "",
         countryCode: "+65",
-        phone: "91234567",
-        email: "emergency@example.com",
-        relation: "Father",
+        phone: "",
+        email: "",
+        relation: "",
       },
 
       guardian: {
         isUnder18: false,
-        isSameAsEmergency: true,
+        isSameAsEmergency: false,
         fullName: "",
         email: "",
         countryCode: "+65",
@@ -313,29 +310,29 @@ export default function ApplicationWizard({
       },
 
       passport: {
-        passportNumber: user.profile?.passportNumber || "S1234567A",
-        countryOfIssue: "Singapore",
-        issueDate: "2020-01-01",
-        expiryDate: "2030-01-01",
-        countryOfBirth: "Singapore",
+        passportNumber: user.profile?.passportNumber || "",
+        countryOfIssue: "",
+        issueDate: "",
+        expiryDate: "",
+        countryOfBirth: "",
       },
 
       address: {
-        country: "Singapore",
-        state: "Singapore",
-        city: "Singapore",
-        postalCode: "238845",
-        addressLine1: user.profile?.address || "123 Orchard Road",
+        country: "",
+        state: "",
+        city: "",
+        postalCode: "",
+        addressLine1: user.profile?.address || "",
         addressLine2: "",
-        unitNo: "#05-01",
+        unitNo: "",
       },
 
-      education: educationList,
+      education: [],
 
       englishTest: {
-        hasTakenTest: true,
-        testType: "IELTS",
-        testDate: "2025-06-10",
+        hasTakenTest: false,
+        testType: "",
+        testDate: "",
         isTentativeDate: false,
       },
 
@@ -343,12 +340,12 @@ export default function ApplicationWizard({
         healthConditions: "NA",
         conductSuspended: false,
         conductConvicted: false,
-        marketingChannel: "EGA Website", // CR-08 7 Approved Options
+        marketingChannel: "",
       },
 
       agent: {
         isAgentRepresented: false,
-        agentCountry: "Singapore",
+        agentCountry: "",
         agencyName: "",
         counsellorName: "",
         counsellorEmail: "",
@@ -366,7 +363,7 @@ export default function ApplicationWizard({
   });
 
   // Watchers
-  const watchStudentType = watch("studentType") || "Local Student";
+  const watchStudentType = watch("studentType");
   const watchPartner = watch("universityPartner") || "Educare Global Academy";
   const watchStudyMode = watch("studyMode") || "Full Time";
   const watchCourseType = watch("courseType") || "Standalone Course";
@@ -381,21 +378,26 @@ export default function ApplicationWizard({
   const watchMarketingChannel = watch("additionalInfo.marketingChannel");
   const watchIsAgent = watch("agent.isAgentRepresented");
   const watchIsSameAsEmergency = watch("guardian.isSameAsEmergency");
-  const watchIsUnder18 = watch("guardian.isUnder18");
+  // Calculate exact calendar age for under-18 guardian requirement (CR-05)
+  const applicantAge = useMemo(() => {
+    if (!watchDob) return null;
+    const dobDate = new Date(watchDob);
+    if (isNaN(dobDate.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - dobDate.getFullYear();
+    const m = today.getMonth() - dobDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < dobDate.getDate())) {
+      age--;
+    }
+    return age >= 0 ? age : null;
+  }, [watchDob]);
 
-  // Calculate age for under-18 guardian requirement (CR-05)
-  const applicantAge = watchDob ? Math.floor((new Date().getTime() - new Date(watchDob).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
-  const isUnder18 = typeof watchIsUnder18 === "boolean" ? watchIsUnder18 : (applicantAge !== null ? applicantAge < 18 : false);
+  const isUnder18 = applicantAge !== null && applicantAge < 18;
 
   // Sync DOB age calculation to guardian.isUnder18
   useEffect(() => {
-    if (watchDob) {
-      const calculatedAge = Math.floor((new Date().getTime() - new Date(watchDob).getTime()) / (365.25 * 24 * 60 * 60 * 1000));
-      if (!isNaN(calculatedAge)) {
-        setValue("guardian.isUnder18", calculatedAge < 18);
-      }
-    }
-  }, [watchDob, setValue]);
+    setValue("guardian.isUnder18", isUnder18);
+  }, [isUnder18, setValue]);
 
   // CR-09 Application Fee Calculation (EGA = SGD 160, NCC/GCU/KU = SGD 320)
   const feeAmount = (watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC")) ? 320 : 160;
@@ -573,10 +575,27 @@ export default function ApplicationWizard({
 
   const nextStep = async () => {
     if (step < 5) {
-      if (step === 1 && watchCourseType === "Standalone Course") {
-        const pId = getValues("programmeId");
-        if (!pId) {
-          setFormError("Please select an Available Programme before continuing.");
+      if (step === 1) {
+        if (!getValues("studentType")) {
+          setFormError("Please select whether you are a Local Student or International Student before continuing.");
+          return;
+        }
+        if (watchCourseType === "Standalone Course") {
+          const pId = getValues("programmeId");
+          if (!pId) {
+            setFormError("Please select an Available Programme before continuing.");
+            return;
+          }
+        }
+        if (!getValues("counsellingDeclaration")) {
+          setFormError("Please select your Pre-Course Counselling Declaration statement before continuing.");
+          return;
+        }
+      }
+
+      if (step === 3) {
+        if (educationList.length === 0) {
+          setFormError("Please add at least one Academic Qualification before continuing.");
           return;
         }
       }
@@ -584,7 +603,7 @@ export default function ApplicationWizard({
       let fieldsToValidate: string[] = [];
       switch (step) {
         case 1:
-          fieldsToValidate = ['studentType', 'universityPartner', 'studyMode', 'courseType', 'intake'];
+          fieldsToValidate = ['studentType', 'universityPartner', 'studyMode', 'courseType', 'intake', 'counsellingDeclaration'];
           break;
         case 2:
           fieldsToValidate = ['personal.fullName', 'personal.surname', 'personal.dob', 'personal.gender', 'personal.maritalStatus', 'emergencyContact.fullName', 'emergencyContact.phone', 'emergencyContact.relation', 'passport.passportNumber', 'passport.countryOfIssue', 'passport.countryOfBirth', 'address.country', 'address.addressLine1', 'address.postalCode'];
@@ -617,7 +636,27 @@ export default function ApplicationWizard({
 
   const prevStep = () => {
     if (step > 1) {
+      setFormError(null);
       setStep(step - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const onInvalid = (fieldErrors: any) => {
+    console.error("Form validation errors on submit:", fieldErrors);
+    const errorKeys = Object.keys(fieldErrors);
+    if (errorKeys.length > 0) {
+      const firstKey = errorKeys[0];
+      let targetStep = 1;
+      if (["personal", "emergencyContact", "guardian", "passport", "address"].includes(firstKey)) {
+        targetStep = 2;
+      } else if (["education", "englishTest"].includes(firstKey)) {
+        targetStep = 3;
+      } else if (["additionalInfo", "agent"].includes(firstKey)) {
+        targetStep = 4;
+      }
+      setStep(targetStep);
+      setFormError(`Please complete all required fields marked with * before submitting. (Incomplete: ${firstKey})`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -625,6 +664,12 @@ export default function ApplicationWizard({
   const onSubmit = async (data: any) => {
     if (step !== 5) {
       await nextStep();
+      return;
+    }
+
+    if (educationList.length === 0) {
+      setStep(3);
+      setFormError("Please add at least one Academic Qualification before submitting.");
       return;
     }
     
@@ -640,16 +685,26 @@ export default function ApplicationWizard({
     }
 
     setIsSubmitting(true);
-    const result = await submitApplication({
-      ...data,
-      digitalSignature: savedSignature,
-    });
-    setIsSubmitting(false);
+    setFormError(null);
+    try {
+      const result = await submitApplication({
+        ...data,
+        education: educationList,
+        digitalSignature: savedSignature,
+      });
 
-    if (result.success) {
-      setSuccessAppNumber(result.appNumber || "EGA2026-SUBMITTED");
-    } else {
-      setFormError("Error submitting application: " + (result.error || "Please try again."));
+      if (result.success) {
+        setSuccessAppNumber(result.appNumber || "EGA2026-SUBMITTED");
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("ega_application_draft");
+        }
+      } else {
+        setFormError(result.error || "Submission failed. Please verify required fields.");
+      }
+    } catch (err: any) {
+      setFormError(err.message || "An unexpected error occurred during submission.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -701,7 +756,7 @@ export default function ApplicationWizard({
       )}
 
       {/* APPLICATION WIZARD FORM */}
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
         
         {/* Header & 5-Step Connected Stepper Track Card */}
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 lg:p-10 shadow-xs space-y-8">
@@ -863,6 +918,27 @@ export default function ApplicationWizard({
                               ) : (
                                 <SelectItem value="Educare Global Academy">Educare Global Academy (EGA)</SelectItem>
                               )}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
+                      <Controller
+                        name="studyMode"
+                        control={control}
+                        defaultValue="Full Time"
+                        render={({ field }) => (
+                          <Select onValueChange={field.onChange} value={field.value || "Full Time"}>
+                            <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#252D65]/15">
+                              <SelectValue placeholder="Select Mode of Study" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Full Time">Full Time (FT)</SelectItem>
+                              <SelectItem value="Part Time">Part Time (PT)</SelectItem>
+                              <SelectItem value="E-learning">E-learning / Online</SelectItem>
                             </SelectContent>
                           </Select>
                         )}
@@ -1160,14 +1236,20 @@ export default function ApplicationWizard({
                   <div>
                     <h3 className="font-bold text-base text-slate-900 font-heading">3. Pre-Course Counselling Declaration *</h3>
                     <p className="text-xs text-slate-600 font-medium leading-relaxed mt-0.5">
-                      Kindly ensure that you understand the key points regarding your choice of study at {watchPartner} before making your declaration statement below:
+                      Kindly ensure that you understand the key points regarding your choice of study at {watchPartner} before making your declaration statement below.{" "}
+                      <button 
+                        type="button" 
+                        onClick={() => setIsKeyPointsModalOpen(true)} 
+                        className="text-[#252D65] font-bold underline hover:text-blue-700 inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        Please click here to read the key points &rarr;
+                      </button>
                     </p>
                   </div>
 
                   <Controller
                     name="counsellingDeclaration"
                     control={control}
-                    defaultValue="counselled"
                     render={({ field }) => (
                       <div className="space-y-2.5 pt-1">
                         {[
@@ -1175,7 +1257,10 @@ export default function ApplicationWizard({
                           { val: "read_contacted", label: "I have read sufficient information and, where applicable, I have contacted EGA / EGA Appointed Agents for clarification." },
                           { val: "read_self", label: "I have read sufficient information on my own and confirm that I do not require pre-course counselling by EGA / EGA Appointed Agents." }
                         ].map((opt) => (
-                          <label key={opt.val} className="flex items-center gap-3 p-3.5 rounded-xl bg-[#252D65]/5 border border-[#252D65]/15 cursor-pointer hover:border-[#252D65]/40 font-medium text-xs text-slate-900 transition-all">
+                          <label key={opt.val} className={cn(
+                            "flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer font-medium text-xs text-slate-900 transition-all",
+                            field.value === opt.val ? "bg-[#252D65]/5 border-[#252D65] text-[#252D65] font-bold shadow-2xs" : "bg-white border-slate-200 hover:border-slate-300"
+                          )}>
                             <input 
                               type="radio" 
                               name="counsellingDeclaration" 
@@ -1241,18 +1326,19 @@ export default function ApplicationWizard({
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Date of Birth *</Label>
                       <Input type="date" {...register("personal.dob")} className="h-12 rounded-xl" />
-                      <label className="flex items-center gap-2 pt-1 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          id="under18Checkbox"
-                          checked={Boolean(isUnder18)}
-                          onChange={(e) => {
-                            setValue("guardian.isUnder18", e.target.checked);
-                          }}
-                          className="w-4 h-4 rounded text-[#252D65] focus:ring-[#252D65] border-slate-300 cursor-pointer"
-                        />
-                        <span className="text-xs font-semibold text-slate-700">Applicant is below 18 years of age (Under 18)</span>
-                      </label>
+                      {applicantAge !== null && (
+                        <div className="pt-1">
+                          {isUnder18 ? (
+                            <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-md inline-block">
+                              Age: {applicantAge} Years (Under-18 Rule Active)
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-medium text-slate-500">
+                              Age: {applicantAge} Years
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -1769,58 +1855,83 @@ export default function ApplicationWizard({
                 {/* 12.4 EGA Appointed Agent Contact */}
                 <FormAccordion title="4. EGA Appointed Agent Contact" defaultOpen={true}>
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 p-4 rounded-xl">
-                      <input 
-                        type="checkbox" 
-                        id="isAgentRepresented" 
-                        {...register("agent.isAgentRepresented")} 
-                        className="w-4 h-4 text-[#252D65] border-slate-300 rounded focus:ring-[#252D65]" 
-                      />
-                      <Label htmlFor="isAgentRepresented" className="text-slate-800 font-semibold cursor-pointer text-xs sm:text-sm">
-                        Are you being represented by an EGA appointed agent for this application?
+                    <div className="space-y-2">
+                      <Label className="text-slate-800 font-semibold text-xs sm:text-sm">
+                        Are you being represented by an EGA appointed agent for this application? *
                       </Label>
-                    </div>
-
-                    <div className={cn("grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 transition-opacity duration-300", !watchIsAgent && "opacity-40 pointer-events-none")}>
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-xs">Agent Country *</Label>
-                        <Controller
-                          name="agent.agentCountry"
-                          control={control}
-                          defaultValue="Singapore"
-                          render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value || "Singapore"} disabled={!watchIsAgent}>
-                              <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
-                                <SelectValue placeholder="Select Country" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Singapore">Singapore</SelectItem>
-                                <SelectItem value="Malaysia">Malaysia</SelectItem>
-                                <SelectItem value="Indonesia">Indonesia</SelectItem>
-                                <SelectItem value="China">China</SelectItem>
-                                <SelectItem value="India">India</SelectItem>
-                                <SelectItem value="Vietnam">Vietnam</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-xs">Agency Name *</Label>
-                        <Input {...register("agent.agencyName")} placeholder="e.g. Global Education Agency" disabled={!watchIsAgent} className="h-12 rounded-xl" />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-xs">Counsellor Name *</Label>
-                        <Input {...register("agent.counsellorName")} placeholder="e.g. Jane Smith" disabled={!watchIsAgent} className="h-12 rounded-xl" />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-xs">Counsellor Email *</Label>
-                        <Input {...register("agent.counsellorEmail")} type="email" placeholder="e.g. counsellor@agency.com" disabled={!watchIsAgent} className="h-12 rounded-xl" />
+                      <div className="flex gap-4">
+                        <label className={cn(
+                          "px-5 py-3 rounded-xl border flex items-center gap-2.5 cursor-pointer text-xs font-bold transition-all",
+                          !watchIsAgent ? "border-[#252D65] bg-[#252D65]/5 text-[#252D65] shadow-2xs" : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                        )}>
+                          <input
+                            type="radio"
+                            name="isAgentRepresented"
+                            checked={!watchIsAgent}
+                            onChange={() => setValue("agent.isAgentRepresented", false, { shouldValidate: true })}
+                            className="w-4 h-4 text-[#252D65]"
+                          />
+                          No
+                        </label>
+                        <label className={cn(
+                          "px-5 py-3 rounded-xl border flex items-center gap-2.5 cursor-pointer text-xs font-bold transition-all",
+                          watchIsAgent ? "border-[#252D65] bg-[#252D65]/5 text-[#252D65] shadow-2xs" : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                        )}>
+                          <input
+                            type="radio"
+                            name="isAgentRepresented"
+                            checked={Boolean(watchIsAgent)}
+                            onChange={() => setValue("agent.isAgentRepresented", true, { shouldValidate: true })}
+                            className="w-4 h-4 text-[#252D65]"
+                          />
+                          Yes
+                        </label>
                       </div>
                     </div>
+
+                    {watchIsAgent && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in fade-in duration-200">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700 font-semibold text-xs">Agent Country *</Label>
+                          <Controller
+                            name="agent.agentCountry"
+                            control={control}
+                            defaultValue="Singapore"
+                            render={({ field }) => (
+                              <Select onValueChange={field.onChange} value={field.value || "Singapore"}>
+                                <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                                  <SelectValue placeholder="Select Country" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Singapore">Singapore</SelectItem>
+                                  <SelectItem value="Malaysia">Malaysia</SelectItem>
+                                  <SelectItem value="Indonesia">Indonesia</SelectItem>
+                                  <SelectItem value="China">China</SelectItem>
+                                  <SelectItem value="India">India</SelectItem>
+                                  <SelectItem value="Vietnam">Vietnam</SelectItem>
+                                  <SelectItem value="Other">Other</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-slate-700 font-semibold text-xs">Agency Name *</Label>
+                          <Input {...register("agent.agencyName")} placeholder="e.g. Global Education Agency" className="h-12 rounded-xl" />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-slate-700 font-semibold text-xs">Counsellor Name *</Label>
+                          <Input {...register("agent.counsellorName")} placeholder="e.g. Jane Smith" className="h-12 rounded-xl" />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label className="text-slate-700 font-semibold text-xs">Counsellor Email *</Label>
+                          <Input {...register("agent.counsellorEmail")} type="email" placeholder="e.g. counsellor@agency.com" className="h-12 rounded-xl" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </FormAccordion>
               </div>
@@ -2093,13 +2204,60 @@ export default function ApplicationWizard({
                 onClick={() => {
                   if (qualForm.country && qualForm.institution && qualForm.qualificationTitle) {
                     setEducationList([...educationList, { ...qualForm, id: Date.now() }]);
+                    setQualForm({ country: "Singapore", institution: "", qualificationTitle: "" });
                     setIsQualModalOpen(false);
-                  } else {
-                    alert("Please enter Country, Institution and Qualification Title.");
                   }
                 }}
               >
                 Save Qualification
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Key Points Modal (F-028) */}
+      {isKeyPointsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-xl max-h-[85vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative text-left border border-slate-200 font-jost space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 font-heading">Pre-Course Counselling Key Points</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Please review these essential items regarding your academic programme at EGA.</p>
+              </div>
+              <button type="button" onClick={() => setIsKeyPointsModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-sm font-bold p-1">✕</button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-700 leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900">1. School Vision, Mission & EduTrust System</p>
+                <p>EGA is committed to high educational standards and EduTrust certification guidelines regulated by the Committee for Private Education (CPE), SkillsFuture Singapore.</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900">2. Course Information & Admission Criteria</p>
+                <p>Entry qualifications, module structure, mode of delivery (Full Time / Part Time / E-learning), assessment methods, and graduation award requirements.</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900">3. Fee Structure & Fee Protection Scheme (FPS)</p>
+                <p>All tuition fees and course-related charges are fully protected under the Fee Protection Scheme (FPS) using CPE-approved insurance mechanisms.</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900">4. Refund, Withdrawal & Transfer Policies</p>
+                <p>Standard student contract terms, cooling-off period (7 working days), refund calculation percentages, and formal withdrawal procedures.</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900">5. Attendance Requirements</p>
+                <p>International students on Student Pass must maintain at least 90% monthly attendance. Local students must maintain at least 75% attendance.</p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-3 border-t border-slate-100">
+              <Button 
+                type="button" 
+                onClick={() => setIsKeyPointsModalOpen(false)} 
+                className="h-10 px-6 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold text-xs"
+              >
+                I Understand & Close
               </Button>
             </div>
           </div>

@@ -2,7 +2,9 @@ import { z } from "zod";
 
 export const applicationSchema = z.object({
   // Mandatory Student Type Selection (CR-02)
-  studentType: z.enum(["Local Student", "International Student"]).default("Local Student"),
+  studentType: z.enum(["Local Student", "International Student"], {
+    message: "Please select whether you are a Local Student or International Student",
+  }),
 
   // Programme Selection (CR-13 Dynamic Package Logic & Core Fields)
   universityPartner: z.string().min(1, "University Partner is required"),

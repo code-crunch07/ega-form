@@ -73,29 +73,35 @@ export async function submitApplication(data: any) {
       }
     });
 
-    // Update applicant profile with latest information
-    await prisma.profile.update({
+    // Update or create applicant profile with latest information
+    const profilePayload = {
+      title: validatedData.personal.title,
+      firstName: validatedData.personal.fullName,
+      lastName: validatedData.personal.surname,
+      gender: validatedData.personal.gender,
+      dob: validatedData.personal.dob ? new Date(validatedData.personal.dob) : undefined,
+      nationality: validatedData.personal.nationality,
+      passportNumber: validatedData.passport.passportNumber,
+      
+      phone: validatedData.personal.phone,
+      address: validatedData.address.addressLine1,
+      city: validatedData.address.city || "Singapore",
+      state: validatedData.address.state || "Singapore",
+      postalCode: validatedData.address.postalCode,
+      country: validatedData.address.country,
+      
+      emergencyContactName: validatedData.emergencyContact.fullName,
+      emergencyContactRelation: validatedData.emergencyContact.relation,
+      emergencyContactPhone: validatedData.emergencyContact.phone,
+    };
+
+    await prisma.profile.upsert({
       where: { userId: user.id },
-      data: {
-        title: validatedData.personal.title,
-        firstName: validatedData.personal.fullName,
-        lastName: validatedData.personal.surname,
-        gender: validatedData.personal.gender,
-        dob: validatedData.personal.dob ? new Date(validatedData.personal.dob) : undefined,
-        nationality: validatedData.personal.nationality,
-        passportNumber: validatedData.passport.passportNumber,
-        
-        phone: validatedData.personal.phone,
-        address: validatedData.address.addressLine1,
-        city: validatedData.address.city,
-        state: validatedData.address.state,
-        postalCode: validatedData.address.postalCode,
-        country: validatedData.address.country,
-        
-        emergencyContactName: validatedData.emergencyContact.fullName,
-        emergencyContactRelation: validatedData.emergencyContact.relation,
-        emergencyContactPhone: validatedData.emergencyContact.phone,
-      }
+      update: profilePayload,
+      create: {
+        userId: user.id,
+        ...profilePayload,
+      },
     });
 
     return {
