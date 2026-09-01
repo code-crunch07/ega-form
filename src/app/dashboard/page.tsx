@@ -48,6 +48,10 @@ export default async function DashboardOverview() {
 
   const drafts = applications.filter((a) => a.status === "Draft").length;
   const submitted = applications.filter((a) => a.status !== "Draft").length;
+  const incompleteCount = applications.filter((a) => a.status === "Draft" || a.status === "Incomplete").length;
+  const pendingPaymentCount = applications.filter((a) => a.status === "Pending Payment" || a.status === "Payment Pending").length;
+  const underReviewCount = applications.filter((a) => a.status === "Submitted" || a.status === "Under Review" || a.status === "In Review").length;
+  const enrolledCount = applications.filter((a) => a.status === "Enrolled" || a.status === "Approved" || a.status === "Offer Issued").length;
   const profileScore = getProfileCompletion(user);
 
   const requiredActions = [
@@ -167,33 +171,42 @@ export default async function DashboardOverview() {
         ))}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-6">
+      {/* 4 Official Status Buckets (§4.2 / F-005, F-008) */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">
         <StatCard
-          label="Draft Applications"
-          value={drafts}
+          label="Incomplete"
+          value={incompleteCount}
           icon={FileText}
           href="/dashboard/applications"
           linkText="Continue draft"
-          iconClassName="bg-slate-50 text-[#27295B] group-hover:bg-[#27295B]/10 group-hover:text-[#27295B]"
+          iconClassName="bg-amber-50 text-amber-700 group-hover:bg-amber-100"
           className="border-neutral-200/60"
         />
         <StatCard
-          label="Submitted"
-          value={submitted}
+          label="Pending Payment"
+          value={pendingPaymentCount}
+          icon={CreditCard}
+          href="/dashboard/payments"
+          linkText="Complete payment"
+          iconClassName="bg-rose-50 text-rose-700 group-hover:bg-rose-100"
+          className="border-neutral-200/60"
+        />
+        <StatCard
+          label="Under Review"
+          value={underReviewCount}
+          icon={Clock}
+          href="/dashboard/applications"
+          linkText="Track progress"
+          iconClassName="bg-blue-50 text-blue-700 group-hover:bg-blue-100"
+          className="border-neutral-200/60"
+        />
+        <StatCard
+          label="Enrolled"
+          value={enrolledCount}
           icon={CheckCircle2}
           href="/dashboard/applications"
-          linkText="View status"
-          iconClassName="bg-slate-50 text-emerald-600 group-hover:bg-emerald-50 group-hover:text-emerald-700"
-          className="border-neutral-200/60"
-        />
-        <StatCard
-          label="Programmes Available"
-          value={activeProgrammes}
-          icon={GraduationCap}
-          href="/dashboard/applications/new"
-          linkText="Browse programmes"
-          iconClassName="bg-slate-50 text-indigo-600 group-hover:bg-indigo-50 group-hover:text-indigo-700"
+          linkText="View offer / letter"
+          iconClassName="bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100"
           className="border-neutral-200/60"
         />
       </div>
