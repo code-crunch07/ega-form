@@ -393,6 +393,8 @@ export default function ApplicationWizard({
   const watchDob = watch("personal.dob");
   const watchHasTakenTest = watch("englishTest.hasTakenTest");
   const watchMarketingChannel = watch("additionalInfo.marketingChannel");
+  const watchConductSuspended = watch("additionalInfo.conductSuspended");
+  const watchConductConvicted = watch("additionalInfo.conductConvicted");
   const watchIsAgent = watch("agent.isAgentRepresented");
   const watchIsSameAsEmergency = watch("guardian.isSameAsEmergency");
   // Calculate exact calendar age for under-18 guardian requirement (CR-05)
@@ -1426,7 +1428,7 @@ export default function ApplicationWizard({
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Date of Birth *</Label>
-                      <Input type="date" {...register("personal.dob")} className="h-12 rounded-xl" />
+                      <Input type="date" max={new Date().toISOString().split("T")[0]} {...register("personal.dob")} className="h-12 rounded-xl" />
                       {applicantAge !== null && (
                         <div className="pt-1">
                           {isUnder18 ? (
@@ -1725,12 +1727,12 @@ export default function ApplicationWizard({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Passport Issue Date *</Label>
-                      <Input type="date" {...register("passport.issueDate")} className="h-12 rounded-xl" />
+                      <Input type="date" max={new Date().toISOString().split("T")[0]} {...register("passport.issueDate")} className="h-12 rounded-xl" />
                     </div>
 
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Passport Expiry Date *</Label>
-                      <Input type="date" {...register("passport.expiryDate")} className="h-12 rounded-xl" />
+                      <Input type="date" min={new Date().toISOString().split("T")[0]} {...register("passport.expiryDate")} className="h-12 rounded-xl" />
                     </div>
                   </div>
                 </FormAccordion>
@@ -1972,6 +1974,13 @@ export default function ApplicationWizard({
                         </label>
                       </div>
                     </div>
+
+                    {(watchConductSuspended === "yes" || watchConductConvicted === "yes") && (
+                      <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2 animate-in fade-in duration-200">
+                        <Label className="text-amber-900 font-bold text-xs">Please provide details / explanation *</Label>
+                        <Input placeholder="Enter relevant context, date, and institution/authority" className="h-11 rounded-xl bg-white text-xs" />
+                      </div>
+                    )}
                   </div>
                 </FormAccordion>
 
@@ -2004,6 +2013,19 @@ export default function ApplicationWizard({
                         </label>
                       ))}
                     </div>
+
+                    {watchMarketingChannel === "Referred by EGA Student/Alumni" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 animate-in fade-in duration-200">
+                        <div className="space-y-1.5">
+                          <Label className="text-slate-700 font-semibold text-xs">Referrer Full Name *</Label>
+                          <Input placeholder="e.g. David Tan" className="h-11 rounded-xl bg-white" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-slate-700 font-semibold text-xs">Referrer Student ID / Contact (Optional)</Label>
+                          <Input placeholder="e.g. EGA-2024-0012" className="h-11 rounded-xl bg-white" />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </FormAccordion>
 
