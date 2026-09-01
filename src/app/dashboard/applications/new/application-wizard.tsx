@@ -2472,6 +2472,10 @@ export default function ApplicationWizard({
                           </span>
                         </div>
                       )}
+
+                      <p className="text-[11px] text-slate-500 text-center italic pt-1">
+                        By providing your signature above, you acknowledge and agree that this digital signature is legally binding and has the same legal validity and enforceability as a handwritten signature under the Singapore Electronic Transactions Act (ETA).
+                      </p>
                     </div>
                   </div>
                 </FormAccordion>
