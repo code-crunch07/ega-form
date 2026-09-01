@@ -416,6 +416,15 @@ export default function ApplicationWizard({
     setValue("guardian.isUnder18", isUnder18);
   }, [isUnder18, setValue]);
 
+  // Conditional Master's Course check for Resume & SOP (F-078, QA-22)
+  const isMasterCourse = useMemo(() => {
+    if (watchAcademicLevel === "Postgraduate") return true;
+    const prog = programmes.find(p => p.id === watchProgrammeId);
+    const pName = (prog?.name || "").toLowerCase();
+    const pLevel = (prog?.level || "").toLowerCase();
+    return pName.includes("master") || pName.includes("msc") || pName.includes("mba") || pLevel.includes("postgraduate");
+  }, [watchAcademicLevel, watchProgrammeId, programmes]);
+
   // Autosave draft application to localStorage (F-093, QA-25)
   const formValues = watch();
   useEffect(() => {
@@ -1189,14 +1198,15 @@ export default function ApplicationWizard({
                                   if (val === "Foundation") {
                                     setValue("packageProgrammes.prog2Level", "Diploma Family (Assigned)");
                                     setValue("packageProgrammes.prog3Level", "Undergraduate (Assigned)");
-                                    setValue("packageProgrammes.prog1Id", foundationProgrammes[0]?.id || programmes[0]?.id || "");
-                                    setValue("packageProgrammes.prog2Id", diplomaProgrammes[0]?.id || programmes[1]?.id || "");
-                                    setValue("packageProgrammes.prog3Id", degreeProgrammes[0]?.id || programmes[2]?.id || "");
+                                    setValue("packageProgrammes.prog1Id", "");
+                                    setValue("packageProgrammes.prog2Id", "");
+                                    setValue("packageProgrammes.prog3Id", "");
                                   } else {
                                     setValue("packageProgrammes.prog2Level", "Undergraduate (Assigned)");
                                     setValue("packageProgrammes.prog3Level", "");
-                                    setValue("packageProgrammes.prog1Id", diplomaProgrammes[0]?.id || programmes[0]?.id || "");
-                                    setValue("packageProgrammes.prog2Id", degreeProgrammes[0]?.id || programmes[1]?.id || "");
+                                    setValue("packageProgrammes.prog1Id", "");
+                                    setValue("packageProgrammes.prog2Id", "");
+                                    setValue("packageProgrammes.prog3Id", "");
                                   }
                                 }} value={field.value || "Foundation"}>
                                   <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold">
@@ -2264,6 +2274,45 @@ export default function ApplicationWizard({
                         </div>
                       </div>
                     </div>
+
+                    {/* Master's Conditional Documents (F-078 / QA-22) */}
+                    {isMasterCourse && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
+                        <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900 block">3. Resume / Curriculum Vitae (CV) *</span>
+                            <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">Master's Requirement</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Input type="file" className="h-10 text-xs bg-white" />
+                          </div>
+                        </div>
+
+                        <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-slate-900 block">4. Statement of Purpose (SOP) *</span>
+                            <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">Master's Requirement</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Input type="file" className="h-10 text-xs bg-white" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Under-18 Guardian Document (F-079) */}
+                    {isUnder18 && (
+                      <div className="p-4 rounded-xl border border-indigo-200 bg-indigo-50/50 space-y-2 animate-in fade-in duration-300">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-900 block">Parent / Legal Guardian Consent Document *</span>
+                          <span className="text-[10px] font-bold bg-indigo-200 text-indigo-900 px-2 py-0.5 rounded-full">Under-18 Rule</span>
+                        </div>
+                        <p className="text-[11px] text-slate-600">Please attach a signed Parent/Guardian Consent Letter or proof of legal guardianship.</p>
+                        <div className="flex items-center gap-3">
+                          <Input type="file" className="h-10 text-xs bg-white" />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Multiple Education Certificates (CR-11) */}
                     <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
