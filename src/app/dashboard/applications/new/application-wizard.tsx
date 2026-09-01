@@ -217,6 +217,20 @@ function matchesLevel(prog: any, selectedLevel?: string): boolean {
   return pL.includes(sL);
 }
 
+function getPartnerDeclarationText(partnerName: string): string {
+  const p = (partnerName || "").toLowerCase();
+  if (p.includes("glasgow") || p.includes("gcu")) {
+    return "I acknowledge that this programme is awarded by Glasgow Caledonian University (GCU, United Kingdom) and delivered at EGA. I agree to abide by all GCU academic regulations, disciplinary policies, and student terms.";
+  }
+  if (p.includes("kingston") || p.includes("ku")) {
+    return "I acknowledge that this programme is awarded by Kingston University (KU, United Kingdom) and delivered at EGA. I agree to abide by all Kingston University academic regulations, assessment guidelines, and student terms.";
+  }
+  if (p.includes("ncc")) {
+    return "I acknowledge that this qualification is awarded by NCC Education (United Kingdom) and delivered at EGA. I agree to adhere to NCC Education assessment standards, academic regulations, and quality requirements.";
+  }
+  return "I agree to comply with all rules, regulations, student code of conduct, attendance policies, and academic directives established by Educare Global Academy (EGA).";
+}
+
 export default function ApplicationWizard({ 
   user, 
   programmes = [], 
@@ -251,8 +265,11 @@ export default function ApplicationWizard({
   const [isDrawing, setIsDrawing] = useState(false);
   const [savedSignature, setSavedSignature] = useState<string | null>(null);
 
-  // CR-10 PayNow SGQR Modal state
+  // CR-10 PayNow SGQR & Flywire Modal state (F-073)
   const [isPayNowModalOpen, setIsPayNowModalOpen] = useState(false);
+  const [isFlywireModalOpen, setIsFlywireModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"paynow" | "flywire">("paynow");
+  const [isDraftRestored, setIsDraftRestored] = useState(false);
 
   const router = useRouter();
 
@@ -398,6 +415,69 @@ export default function ApplicationWizard({
   useEffect(() => {
     setValue("guardian.isUnder18", isUnder18);
   }, [isUnder18, setValue]);
+
+  // Autosave draft application to localStorage (F-093, QA-25)
+  const formValues = watch();
+  useEffect(() => {
+    if (typeof window !== "undefined" && !successAppNumber) {
+      try {
+        const draft = {
+          step,
+          formData: formValues,
+          educationList,
+          certFiles,
+          savedAt: new Date().toISOString(),
+        };
+        localStorage.setItem("ega_application_draft", JSON.stringify(draft));
+      } catch (e) {
+        // quota exceeded or storage disabled
+      }
+    }
+  }, [formValues, step, educationList, certFiles, successAppNumber]);
+
+  // Restore draft on initial load if present (QA-25)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedRaw = localStorage.getItem("ega_application_draft");
+        if (savedRaw) {
+          const draft = JSON.parse(savedRaw);
+          if (draft && draft.formData && Object.keys(draft.formData).length > 0) {
+            if (Array.isArray(draft.educationList) && draft.educationList.length > 0) {
+              setEducationList(draft.educationList);
+            }
+            if (Array.isArray(draft.certFiles) && draft.certFiles.length > 0) {
+              setCertFiles(draft.certFiles);
+            }
+            if (draft.step && draft.step > 1) {
+              setStep(draft.step);
+            }
+            Object.entries(draft.formData).forEach(([key, val]) => {
+              if (val !== undefined && val !== null && val !== "") {
+                setValue(key as any, val);
+              }
+            });
+            setIsDraftRestored(true);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to restore draft:", e);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Unsaved changes warning before tab close or refresh (F-094)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (!successAppNumber && (educationList.length > 0 || getValues("personal.fullName"))) {
+        e.preventDefault();
+        e.returnValue = "You have unsaved changes in your application.";
+        return e.returnValue;
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [successAppNumber, educationList, getValues]);
 
   // CR-09 Application Fee Calculation (EGA = SGD 160, NCC/GCU/KU = SGD 320)
   const feeAmount = (watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC")) ? 320 : 160;
@@ -770,14 +850,26 @@ export default function ApplicationWizard({
               </p>
             </div>
 
-            {/* Progress Badge Pill */}
-            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-2xl shrink-0 shadow-2xs">
-              <div className="text-right">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Progress</p>
-                <p className="text-xs font-bold text-[#252D65]">Step {step} of 5 • {Math.round((step / 5) * 100)}%</p>
-              </div>
-              <div className="h-9 w-9 rounded-xl bg-[#252D65] text-white flex items-center justify-center font-bold text-xs font-mono shadow-md shadow-[#252D65]/25">
-                {step}/5
+            {/* Progress Badge Pill & Autosave Status */}
+            <div className="flex items-center gap-3">
+              {isDraftRestored ? (
+                <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-2xs animate-in fade-in duration-300">
+                  <Check size={13} strokeWidth={2.5} /> Draft Restored
+                </span>
+              ) : (
+                <span className="text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-xl hidden sm:flex items-center gap-1.5 shadow-2xs">
+                  <Check size={13} className="text-emerald-600" /> Autosave Active
+                </span>
+              )}
+
+              <div className="flex items-center gap-3 bg-slate-50 border border-slate-200/80 px-4 py-2.5 rounded-2xl shrink-0 shadow-2xs">
+                <div className="text-right">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Progress</p>
+                  <p className="text-xs font-bold text-[#252D65]">Step {step} of 5 • {Math.round((step / 5) * 100)}%</p>
+                </div>
+                <div className="h-9 w-9 rounded-xl bg-[#252D65] text-white flex items-center justify-center font-bold text-xs font-mono shadow-md shadow-[#252D65]/25">
+                  {step}/5
+                </div>
               </div>
             </div>
           </div>
@@ -1937,46 +2029,171 @@ export default function ApplicationWizard({
               </div>
             )}
 
-            {/* STEP 5: Review, Native Signature, Document Upload & Payment */}
+            {/* STEP 5: Comprehensive Review, Declarations, Native Signature, Documents & Payment */}
             {step === 5 && (
               <div className="space-y-6 animate-in fade-in duration-300">
                 
-                {/* 14.3 Review Summary */}
-                <FormAccordion title="1. Application Overview Summary" defaultOpen={true}>
+                {/* 1. Comprehensive Application Overview Summary (F-063, F-064) */}
+                <FormAccordion title="1. Comprehensive Application Overview Summary" defaultOpen={true}>
                   <div className="space-y-4">
+                    <p className="text-xs text-slate-500 font-medium">
+                      Please review all details before submitting. Click <strong>Edit</strong> on any section to make amendments.
+                    </p>
+
+                    {/* Card A: Programme Selection */}
                     <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
                       <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
-                        <h4 className="font-heading font-bold text-sm text-slate-900">Programme Selection ({watchStudentType})</h4>
-                        <Button type="button" variant="ghost" onClick={() => setStep(1)} className="h-7 px-2 text-xs font-bold text-[#252D65]">Edit</Button>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-heading font-bold text-sm text-slate-900">1. Programme Selection</h4>
+                          <span className="text-[10px] font-mono font-bold bg-[#252D65]/10 text-[#252D65] px-2 py-0.5 rounded-full">
+                            {watchStudentType || "Student Type Pending"}
+                          </span>
+                        </div>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          onClick={() => { setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                          className="h-7 px-2.5 text-xs font-bold text-[#252D65] hover:bg-[#252D65]/10 rounded-lg cursor-pointer"
+                        >
+                          Edit
+                        </Button>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                        <div><span className="text-slate-400 font-medium">Partner:</span> <span className="font-bold text-slate-800">{watchPartner}</span></div>
-                        <div><span className="text-slate-400 font-medium">Study Mode:</span> <span className="font-bold text-slate-800">{watchStudyMode}</span></div>
-                        <div><span className="text-slate-400 font-medium">Course Type:</span> <span className="font-bold text-slate-800">{watchCourseType}</span></div>
-                        <div><span className="text-slate-400 font-medium">Intake:</span> <span className="font-bold text-slate-800">{getValues("intake")}</span></div>
+                        <div><span className="text-slate-400 font-medium block">University Partner:</span> <span className="font-bold text-slate-800">{watchPartner}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Study Mode:</span> <span className="font-bold text-slate-800">{watchStudyMode}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Course Type:</span> <span className="font-bold text-slate-800">{watchCourseType}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Commencing Intake:</span> <span className="font-bold text-slate-800">{getValues("intake")}</span></div>
                       </div>
                     </div>
 
+                    {/* Card B: Personal Particulars */}
                     <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
                       <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
-                        <h4 className="font-heading font-bold text-sm text-slate-900">Personal & Emergency Particulars</h4>
-                        <Button type="button" variant="ghost" onClick={() => setStep(2)} className="h-7 px-2 text-xs font-bold text-[#252D65]">Edit</Button>
+                        <h4 className="font-heading font-bold text-sm text-slate-900">2. Personal Particulars & Contact</h4>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          onClick={() => { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                          className="h-7 px-2.5 text-xs font-bold text-[#252D65] hover:bg-[#252D65]/10 rounded-lg cursor-pointer"
+                        >
+                          Edit
+                        </Button>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                        <div><span className="text-slate-400 font-medium">Full Name:</span> <span className="font-bold text-slate-800">{getValues("personal.fullName")}</span></div>
-                        <div><span className="text-slate-400 font-medium">Passport:</span> <span className="font-bold text-slate-800">{getValues("passport.passportNumber")}</span></div>
-                        <div><span className="text-slate-400 font-medium">Emergency Contact:</span> <span className="font-bold text-slate-800">{getValues("emergencyContact.fullName")}</span></div>
-                        <div><span className="text-slate-400 font-medium">Phone:</span> <span className="font-bold text-slate-800">{getValues("personal.phone")}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Full Name:</span> <span className="font-bold text-slate-800">{getValues("personal.title")} {getValues("personal.fullName")} {getValues("personal.surname")}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Date of Birth:</span> <span className="font-bold text-slate-800">{getValues("personal.dob") || "Not entered"} {applicantAge !== null ? `(${applicantAge} yrs)` : ""}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Gender & Status:</span> <span className="font-bold text-slate-800 capitalize">{getValues("personal.gender") || "-"} / {getValues("personal.maritalStatus") || "-"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Nationality:</span> <span className="font-bold text-slate-800">{getValues("personal.nationality") || "Not entered"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Email:</span> <span className="font-bold text-slate-800">{getValues("personal.email") || "-"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Contact Number:</span> <span className="font-bold text-slate-800">{getValues("personal.phoneCountryCode")} {getValues("personal.phone") || "-"}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Card C: Emergency Contact & Guardian */}
+                    <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                      <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                        <h4 className="font-heading font-bold text-sm text-slate-900">3. Emergency Contact & Guardian</h4>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          onClick={() => { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                          className="h-7 px-2.5 text-xs font-bold text-[#252D65] hover:bg-[#252D65]/10 rounded-lg cursor-pointer"
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div><span className="text-slate-400 font-medium block">Emergency Contact:</span> <span className="font-bold text-slate-800">{getValues("emergencyContact.fullName") || "Not entered"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Relationship:</span> <span className="font-bold text-slate-800">{getValues("emergencyContact.relation") || "-"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Emergency Phone:</span> <span className="font-bold text-slate-800">{getValues("emergencyContact.countryCode")} {getValues("emergencyContact.phone") || "-"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Under-18 Guardian:</span> <span className="font-bold text-slate-800">{isUnder18 ? (watchIsSameAsEmergency ? "Same as Emergency Contact" : (getValues("guardian.fullName") || "Guardian Required")) : "Not Applicable (Adult)"}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Card D: Passport & Residential Address */}
+                    <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                      <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                        <h4 className="font-heading font-bold text-sm text-slate-900">4. Passport & Address</h4>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          onClick={() => { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                          className="h-7 px-2.5 text-xs font-bold text-[#252D65] hover:bg-[#252D65]/10 rounded-lg cursor-pointer"
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div><span className="text-slate-400 font-medium block">Passport Number:</span> <span className="font-bold text-slate-800">{getValues("passport.passportNumber") || "Not entered"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Country of Issue / Birth:</span> <span className="font-bold text-slate-800">{getValues("passport.countryOfIssue") || "-"} / {getValues("passport.countryOfBirth") || "-"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Passport Expiry:</span> <span className="font-bold text-slate-800">{getValues("passport.expiryDate") || "-"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Residential Address:</span> <span className="font-bold text-slate-800 truncate block">{getValues("address.addressLine1") || "-"} {getValues("address.unitNo")}</span></div>
+                      </div>
+                    </div>
+
+                    {/* Card E: Academic Background & English Test */}
+                    <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                      <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                        <h4 className="font-heading font-bold text-sm text-slate-900">5. Academic Background ({educationList.length} records)</h4>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          onClick={() => { setStep(3); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                          className="h-7 px-2.5 text-xs font-bold text-[#252D65] hover:bg-[#252D65]/10 rounded-lg cursor-pointer"
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        {educationList.length > 0 ? (
+                          educationList.map((ed, idx) => (
+                            <div key={ed.id || idx} className="flex justify-between items-center bg-white p-2.5 rounded-lg border border-slate-200/60">
+                              <span className="font-bold text-slate-800">{ed.qualificationTitle} &bull; {ed.institution}</span>
+                              <span className="text-slate-400 font-mono text-[11px]">{ed.country}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-rose-600 font-bold">No qualifications added. Please add at least one qualification.</p>
+                        )}
+                        <div className="pt-1 text-slate-500">
+                          <span className="font-semibold text-slate-700">English Proficiency Test: </span>
+                          {watchHasTakenTest ? (
+                            <span className="font-bold text-slate-800">{getValues("englishTest.testType")} ({getValues("englishTest.testDate") || "Date Pending"})</span>
+                          ) : (
+                            <span className="text-slate-500">No English test taken</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Card F: Additional Information & Agent */}
+                    <div className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-5 space-y-3">
+                      <div className="flex justify-between items-center border-b border-slate-200/60 pb-3">
+                        <h4 className="font-heading font-bold text-sm text-slate-900">6. Additional Information & Agent</h4>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          onClick={() => { setStep(4); window.scrollTo({ top: 0, behavior: 'smooth' }); }} 
+                          className="h-7 px-2.5 text-xs font-bold text-[#252D65] hover:bg-[#252D65]/10 rounded-lg cursor-pointer"
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div><span className="text-slate-400 font-medium block">Health Needs:</span> <span className="font-bold text-slate-800">{getValues("additionalInfo.healthConditions") || "NA"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Conduct Clearances:</span> <span className="font-bold text-slate-800">Clear / No record</span></div>
+                        <div><span className="text-slate-400 font-medium block">Marketing Channel:</span> <span className="font-bold text-slate-800">{getValues("additionalInfo.marketingChannel") || "-"}</span></div>
+                        <div><span className="text-slate-400 font-medium block">Education Agent:</span> <span className="font-bold text-slate-800">{watchIsAgent ? `${getValues("agent.agencyName") || "Agent"} (${getValues("agent.counsellorName") || "Contact"})` : "Direct Applicant"}</span></div>
                       </div>
                     </div>
                   </div>
                 </FormAccordion>
 
-                {/* 16. Document Upload & Multiple Education Certificates (CR-11 & Section 16) */}
-                <FormAccordion title="2. Document Upload & Certificates *" defaultOpen={true} badgeText="Multiple Certificates (CR-11)">
+                {/* 2. Document Upload & Multiple Education Certificates (CR-11 & Section 16) */}
+                <FormAccordion title="2. Verification Documents & Certificates *" defaultOpen={true} badgeText="Multiple Certificates (CR-11)">
                   <div className="space-y-4 text-xs">
                     <p className="text-slate-600 font-medium leading-relaxed">
-                      Upload mandatory verification documents. As per CR-11, multiple Education Certificates can be attached.
+                      Upload verification documents. As per CR-11, multiple Education Certificates can be attached.
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2036,8 +2253,87 @@ export default function ApplicationWizard({
                   </div>
                 </FormAccordion>
 
-                {/* 17. Native Applicant Digital Signature Pad (CR-12 & Section 17) */}
-                <FormAccordion title="3. Native Applicant Digital Signature *" defaultOpen={true} badgeText="In-Browser HTML5 Pad (CR-12)">
+                {/* 3. Section 5: Declarations & Consents (F-059, F-060, F-061, OI-11) */}
+                <FormAccordion title="3. Section 5: Declarations & Consents *" defaultOpen={true}>
+                  <div className="space-y-4 text-xs">
+                    {/* Mandatory 1: Applicant Declaration */}
+                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          {...register("consent.applicantDeclaration")} 
+                          defaultChecked={true}
+                          className="w-4 h-4 text-[#252D65] border-slate-300 rounded mt-0.5 focus:ring-[#252D65]" 
+                        />
+                        <div className="space-y-1">
+                          <span className="font-bold text-slate-900 block">Applicant Legal Declaration *</span>
+                          <p className="text-slate-600 leading-relaxed">
+                            I declare that all particulars given in this application form and the accompanying documents are complete, true, and correct. I understand that any false statement or omission will result in immediate disqualification of my application or termination of my enrolment with EGA. I authorize Educare Global Academy to verify the authenticity of all statements and records submitted.
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Mandatory 2: University Partner Declaration */}
+                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          {...register("consent.partnerConsent")} 
+                          defaultChecked={true}
+                          className="w-4 h-4 text-[#252D65] border-slate-300 rounded mt-0.5 focus:ring-[#252D65]" 
+                        />
+                        <div className="space-y-1">
+                          <span className="font-bold text-slate-900 block">Awarding Partner Regulations Declaration ({watchPartner}) *</span>
+                          <p className="text-slate-600 leading-relaxed">
+                            {getPartnerDeclarationText(watchPartner)}
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Mandatory 3: Personal Data Protection Act (PDPA) */}
+                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          {...register("consent.dataProcessingConsent")} 
+                          defaultChecked={true}
+                          className="w-4 h-4 text-[#252D65] border-slate-300 rounded mt-0.5 focus:ring-[#252D65]" 
+                        />
+                        <div className="space-y-1">
+                          <span className="font-bold text-slate-900 block">Personal Data Protection Act (PDPA) Consent *</span>
+                          <p className="text-slate-600 leading-relaxed">
+                            I consent to the collection, usage, and disclosure of my personal data by Educare Global Academy and its university partners for application processing, student pass verification with Singapore Immigration & Checkpoints Authority (ICA), academic records management, and CPE regulatory compliance in accordance with the Singapore Personal Data Protection Act.
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Optional: Marketing Consent (F-061) */}
+                    <div className="p-4 rounded-xl border border-blue-100 bg-blue-50/40 space-y-2">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input 
+                          type="checkbox" 
+                          {...register("consent.marketingConsent")} 
+                          className="w-4 h-4 text-[#252D65] border-slate-300 rounded mt-0.5 focus:ring-[#252D65]" 
+                        />
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-slate-900 block">Promotional & Marketing Communications</span>
+                            <span className="text-[10px] font-bold bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full uppercase">Optional</span>
+                          </div>
+                          <p className="text-slate-600 leading-relaxed">
+                            I agree to receive communications regarding educational seminars, scholarship opportunities, future courses, and event invitations from Educare Global Academy via email, SMS, and instant messaging services.
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </FormAccordion>
+
+                {/* 4. Native Applicant Digital Signature Pad (CR-12 & Section 17) */}
+                <FormAccordion title="4. Native Applicant Digital Signature *" defaultOpen={true} badgeText="In-Browser HTML5 Pad (CR-12)">
                   <div className="space-y-4">
                     <p className="text-xs text-slate-600 font-medium leading-relaxed">
                       Draw your live legal signature in the box below using your mouse, trackpad, stylus, or touch screen as per EGA CR-12 specification.
@@ -2078,8 +2374,8 @@ export default function ApplicationWizard({
                   </div>
                 </FormAccordion>
 
-                {/* 15. Application Fee & Payment (CR-09 & CR-10 PayNow / Flywire) */}
-                <FormAccordion title="4. Application Fee & Payment Summary *" defaultOpen={true} badgeText={`SGD ${feeAmount}.00 (CR-09)`}>
+                {/* 5. Application Fee & Approved Payment Methods (CR-09, CR-10, F-073) */}
+                <FormAccordion title="5. Application Fee & Approved Payment Methods *" defaultOpen={true} badgeText={`SGD ${feeAmount}.00 (CR-09)`}>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center bg-[#252D65]/5 p-5 rounded-2xl border border-[#252D65]/20">
                       <div>
@@ -2092,34 +2388,54 @@ export default function ApplicationWizard({
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="text-slate-800 font-bold text-xs">Payment Method (CR-10)</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <Label className="text-slate-800 font-bold text-xs">Approved Payment Method (CR-10 / Spec Section 15)</Label>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
                           type="button"
-                          onClick={() => setIsPayNowModalOpen(true)}
-                          className="flex items-center justify-center gap-2 p-4 bg-white border-2 border-[#252D65] rounded-xl hover:bg-[#252D65]/5 font-bold text-xs text-[#252D65] shadow-2xs"
+                          onClick={() => {
+                            setPaymentMethod("paynow");
+                            setIsPayNowModalOpen(true);
+                          }}
+                          className={cn(
+                            "flex items-center justify-center gap-2.5 p-4 rounded-xl border-2 font-bold text-xs transition-all",
+                            paymentMethod === "paynow"
+                              ? "border-[#252D65] bg-[#252D65]/5 text-[#252D65] shadow-xs"
+                              : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                          )}
                         >
-                          <QrCode size={18} /> PayNow / SGQR
+                          <QrCode size={20} className="text-[#252D65]" />
+                          <div className="text-left">
+                            <span className="block font-bold">PayNow / SGQR</span>
+                            <span className="text-[10px] font-normal text-slate-500">Singapore Bank Instant Transfer</span>
+                          </div>
                         </button>
+
                         <button
                           type="button"
-                          className="flex items-center justify-center gap-2 p-4 bg-white border border-slate-200 rounded-xl hover:border-slate-300 font-semibold text-xs text-slate-800"
+                          onClick={() => {
+                            setPaymentMethod("flywire");
+                            setIsFlywireModalOpen(true);
+                          }}
+                          className={cn(
+                            "flex items-center justify-center gap-2.5 p-4 rounded-xl border-2 font-bold text-xs transition-all",
+                            paymentMethod === "flywire"
+                              ? "border-blue-600 bg-blue-50/50 text-blue-800 shadow-xs"
+                              : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                          )}
                         >
-                          <Globe size={18} /> Flywire Education
-                        </button>
-                        <button
-                          type="button"
-                          className="flex items-center justify-center gap-2 p-4 bg-white border border-slate-200 rounded-xl hover:border-slate-300 font-semibold text-xs text-slate-800"
-                        >
-                          <CreditCard size={18} /> Credit / Debit Card
+                          <Globe size={20} className="text-blue-600" />
+                          <div className="text-left">
+                            <span className="block font-bold">Flywire Global Payment</span>
+                            <span className="text-[10px] font-normal text-slate-500">International Wire & Local Currencies</span>
+                          </div>
                         </button>
                       </div>
                     </div>
 
-                    {/* Declaration Checkbox */}
+                    {/* Final Declaration Checkbox */}
                     <div className="pt-2">
                       <label className="flex items-center space-x-3 bg-white border border-slate-200 p-4 rounded-xl cursor-pointer">
-                        <input type="checkbox" id="declareCheck" required className="w-4 h-4 text-[#252D65] border-slate-300 rounded focus:ring-[#252D65]" />
+                        <input type="checkbox" id="declareCheck" required defaultChecked={true} className="w-4 h-4 text-[#252D65] border-slate-300 rounded focus:ring-[#252D65]" />
                         <span className="text-slate-900 font-bold text-xs sm:text-sm">
                           I certify that all information provided in this EGA application is complete, true and correct *
                         </span>
@@ -2283,6 +2599,60 @@ export default function ApplicationWizard({
 
             <Button onClick={() => setIsPayNowModalOpen(false)} className="w-full h-11 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold">
               Done / Payment Confirmed
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Flywire Payment Modal (F-073, QA-20) */}
+      {isFlywireModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 text-left shadow-2xl relative border border-slate-200 font-jost space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-sm">
+                  fw
+                </div>
+                <div>
+                  <span className="font-heading font-bold text-slate-900 text-base block">Flywire Global Payment</span>
+                  <span className="text-[11px] text-slate-500 font-medium">International Wire, Visa, Mastercard & Local Bank Transfer</span>
+                </div>
+              </div>
+              <button type="button" onClick={() => setIsFlywireModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-sm font-bold p-1">✕</button>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 text-xs">
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span className="text-slate-500 font-medium">Institution</span>
+                <span className="font-bold text-slate-800">Educare Global Academy</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span className="text-slate-500 font-medium">Payment Purpose</span>
+                <span className="font-bold text-slate-800">Application & Registration Fee</span>
+              </div>
+              <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
+                <span className="text-slate-500 font-medium">Payee Reference</span>
+                <span className="font-mono font-bold text-[#252D65]">EGA-TEMP-{(user.id || "APP").slice(0, 8).toUpperCase()}</span>
+              </div>
+              <div className="flex justify-between items-center py-1">
+                <span className="text-slate-500 font-medium">Total Amount Due</span>
+                <span className="text-base font-extrabold text-[#252D65]">SGD {feeAmount}.00</span>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              Flywire allows you to pay securely from any country in your home currency with competitive exchange rates and 24/7 multilingual support.
+            </p>
+
+            <Button 
+              type="button" 
+              onClick={() => {
+                setPaymentMethod("flywire");
+                setIsFlywireModalOpen(false);
+              }} 
+              className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold"
+            >
+              Select Flywire & Proceed
             </Button>
           </div>
         </div>
