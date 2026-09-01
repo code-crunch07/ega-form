@@ -1002,7 +1002,6 @@ export default function ApplicationWizard({
                               <SelectValue placeholder="Select University Partner" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="all">All Partners (EGA, GCU, KU, NCC)</SelectItem>
                               {schools && schools.length > 0 ? (
                                 schools.map((school) => (
                                   <SelectItem key={school.id} value={school.name}>{school.name}</SelectItem>
@@ -1500,7 +1499,33 @@ export default function ApplicationWizard({
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Contact Number *</Label>
                       <div className="flex gap-2">
-                        <Input {...register("personal.phoneCountryCode")} placeholder="+65" className="w-20 h-12 rounded-xl text-center shrink-0 font-mono font-semibold" />
+                        <Controller
+                          name="personal.phoneCountryCode"
+                          control={control}
+                          defaultValue="+65"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value || "+65"}>
+                              <SelectTrigger className="w-28 h-12 bg-white border border-slate-200 rounded-xl font-mono font-semibold text-xs shrink-0">
+                                <SelectValue placeholder="+65" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-56">
+                                <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                                <SelectItem value="+60">🇲🇾 +60</SelectItem>
+                                <SelectItem value="+62">🇮🇩 +62</SelectItem>
+                                <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                                <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                <SelectItem value="+84">🇻🇳 +84</SelectItem>
+                                <SelectItem value="+66">🇹🇭 +66</SelectItem>
+                                <SelectItem value="+63">🇵🇭 +63</SelectItem>
+                                <SelectItem value="+82">🇰🇷 +82</SelectItem>
+                                <SelectItem value="+81">🇯🇵 +81</SelectItem>
+                                <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                                <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                                <SelectItem value="+61">🇦🇺 +61</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
                         <Input {...register("personal.phone")} placeholder="9123 4567" className="flex-1 h-12 rounded-xl" />
                       </div>
                     </div>
@@ -1524,6 +1549,8 @@ export default function ApplicationWizard({
                             <SelectContent>
                               <SelectItem value="Parent / Legal Guardian">Parent / Legal Guardian</SelectItem>
                               <SelectItem value="Next of Kin">Next of Kin</SelectItem>
+                              <SelectItem value="Spouse">Spouse</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         )}
@@ -1545,7 +1572,33 @@ export default function ApplicationWizard({
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Emergency Contact Phone *</Label>
                       <div className="flex gap-2">
-                        <Input {...register("emergencyContact.countryCode")} placeholder="+65" className="w-20 h-12 rounded-xl text-center shrink-0 font-mono font-semibold" />
+                        <Controller
+                          name="emergencyContact.countryCode"
+                          control={control}
+                          defaultValue="+65"
+                          render={({ field }) => (
+                            <Select onValueChange={field.onChange} value={field.value || "+65"}>
+                              <SelectTrigger className="w-28 h-12 bg-white border border-slate-200 rounded-xl font-mono font-semibold text-xs shrink-0">
+                                <SelectValue placeholder="+65" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-56">
+                                <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                                <SelectItem value="+60">🇲🇾 +60</SelectItem>
+                                <SelectItem value="+62">🇮🇩 +62</SelectItem>
+                                <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                                <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                <SelectItem value="+84">🇻🇳 +84</SelectItem>
+                                <SelectItem value="+66">🇹🇭 +66</SelectItem>
+                                <SelectItem value="+63">🇵🇭 +63</SelectItem>
+                                <SelectItem value="+82">🇰🇷 +82</SelectItem>
+                                <SelectItem value="+81">🇯🇵 +81</SelectItem>
+                                <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                                <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                                <SelectItem value="+61">🇦🇺 +61</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
                         <Input {...register("emergencyContact.phone")} placeholder="9224 5678" className="flex-1 h-12 rounded-xl" />
                       </div>
                     </div>
