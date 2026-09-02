@@ -22,7 +22,7 @@ type ApplicationItem = {
   programmeCode?: string;
 };
 
-type FilterMode = "all" | "draft" | "submitted";
+type FilterMode = "all" | "saved" | "unpaid" | "completed";
 
 export function ApplicationsList({
   applications,
@@ -36,10 +36,15 @@ export function ApplicationsList({
     const normalizedQuery = query.trim().toLowerCase();
 
     return applications.filter((app) => {
+      const isSaved = app.status === "Draft" || app.status === "Incomplete";
+      const isUnpaid = app.status === "Pending Payment" || app.status === "PendingPayment";
+      const isCompleted = !isSaved && !isUnpaid;
+
       const matchesFilter =
         filter === "all" ||
-        (filter === "draft" && app.status === "Draft") ||
-        (filter === "submitted" && app.status !== "Draft");
+        (filter === "saved" && isSaved) ||
+        (filter === "unpaid" && isUnpaid) ||
+        (filter === "completed" && isCompleted);
 
       if (!matchesFilter) return false;
       if (!normalizedQuery) return true;
@@ -60,20 +65,26 @@ export function ApplicationsList({
     });
   }, [applications, filter, query]);
 
-  const drafts = filtered.filter((a) => a.status === "Draft");
-  const submitted = filtered.filter((a) => a.status !== "Draft");
+  const savedApps = filtered.filter((a) => a.status === "Draft" || a.status === "Incomplete");
+  const unpaidApps = filtered.filter((a) => a.status === "Pending Payment" || a.status === "PendingPayment");
+  const completedApps = filtered.filter((a) => a.status !== "Draft" && a.status !== "Incomplete" && a.status !== "Pending Payment" && a.status !== "PendingPayment");
 
   const filterOptions: { id: FilterMode; label: string; count: number }[] = [
     { id: "all", label: "All", count: applications.length },
     {
-      id: "draft",
-      label: "Drafts",
-      count: applications.filter((a) => a.status === "Draft").length,
+      id: "saved",
+      label: "Saved Applications",
+      count: applications.filter((a) => a.status === "Draft" || a.status === "Incomplete").length,
     },
     {
-      id: "submitted",
-      label: "Submitted",
-      count: applications.filter((a) => a.status !== "Draft").length,
+      id: "unpaid",
+      label: "Unpaid / Payment-In-Progress",
+      count: applications.filter((a) => a.status === "Pending Payment" || a.status === "PendingPayment").length,
+    },
+    {
+      id: "completed",
+      label: "Completed Applications",
+      count: applications.filter((a) => a.status !== "Draft" && a.status !== "Incomplete" && a.status !== "Pending Payment" && a.status !== "PendingPayment").length,
     },
   ];
 
@@ -91,6 +102,32 @@ export function ApplicationsList({
       />
     );
   }
+
+  // Spec-approved empty-state text per bucket (F-006)
+  const getEmptyStateCopy = () => {
+    if (filter === "saved") {
+      return {
+        title: "You have no saved applications.",
+        desc: "Start a new application and you can save your progress anytime.",
+      };
+    }
+    if (filter === "unpaid") {
+      return {
+        title: "You have no unpaid / payment-in-progress applications.",
+        desc: "All submitted applications have their fees settled or are in review.",
+      };
+    }
+    if (filter === "completed") {
+      return {
+        title: "You have no completed applications.",
+        desc: "Once an application is finalized and assessed, it will appear here.",
+      };
+    }
+    return {
+      title: "No matching applications",
+      desc: "Try a different search term or clear your filters.",
+    };
+  };
 
   return (
     <div className="space-y-6">
@@ -136,8 +173,8 @@ export function ApplicationsList({
       {filtered.length === 0 ? (
         <EmptyState
           icon={Search}
-          title="No matching applications"
-          description="Try a different search term or clear your filters."
+          title={getEmptyStateCopy().title}
+          description={getEmptyStateCopy().desc}
         >
           <Button
             variant="outline"
@@ -152,26 +189,42 @@ export function ApplicationsList({
         </EmptyState>
       ) : (
         <div className="space-y-8">
-          {drafts.length > 0 && (
+          {/* Bucket 1: Saved Applications (Drafts) */}
+          {savedApps.length > 0 && (
             <section>
               <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-neutral-500">
-                Drafts ({drafts.length})
+                Saved Applications ({savedApps.length})
               </h2>
               <div className="grid gap-4">
-                {drafts.map((app) => (
+                {savedApps.map((app) => (
                   <ApplicationCard key={app.id} app={app} isDraft />
                 ))}
               </div>
             </section>
           )}
 
-          {submitted.length > 0 && (
+          {/* Bucket 2: Unpaid / Payment-In-Progress Applications (F-005, F-008) */}
+          {unpaidApps.length > 0 && (
             <section>
-              <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-neutral-500">
-                Submitted ({submitted.length})
+              <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-amber-600">
+                Unpaid / Payment-In-Progress Applications ({unpaidApps.length})
               </h2>
               <div className="grid gap-4">
-                {submitted.map((app) => (
+                {unpaidApps.map((app) => (
+                  <ApplicationCard key={app.id} app={app} isUnpaid />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Bucket 3: Completed Applications */}
+          {completedApps.length > 0 && (
+            <section>
+              <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-emerald-700">
+                Completed Applications ({completedApps.length})
+              </h2>
+              <div className="grid gap-4">
+                {completedApps.map((app) => (
                   <ApplicationCard key={app.id} app={app} />
                 ))}
               </div>
@@ -186,12 +239,14 @@ export function ApplicationsList({
 function ApplicationCard({
   app,
   isDraft,
+  isUnpaid,
 }: {
   app: ApplicationItem;
   isDraft?: boolean;
+  isUnpaid?: boolean;
 }) {
   const progress = isDraft
-    ? Math.min(Math.round((app.currentStep / 12) * 100), 95)
+    ? Math.min(Math.round((app.currentStep / 5) * 100), 95)
     : 100;
 
   return (
@@ -223,6 +278,12 @@ function ApplicationCard({
                 Continue
               </Link>
             </Button>
+          ) : isUnpaid ? (
+            <Button asChild className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold">
+              <Link href="/dashboard/payments">
+                Complete Payment &rarr;
+              </Link>
+            </Button>
           ) : (
             <Button asChild variant="outline" className="rounded-xl border-neutral-200">
               <Link href={`/dashboard/applications/${app.id}`}>View Details</Link>
@@ -236,7 +297,7 @@ function ApplicationCard({
           <div className="mb-2 flex justify-between text-xs font-semibold">
             <span className="text-neutral-600">Progress</span>
             <span className="text-[#27295B]">
-              {progress}% · Step {app.currentStep} of 12
+              {progress}% · Step {app.currentStep} of 5
             </span>
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-neutral-100">

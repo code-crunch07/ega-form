@@ -1637,7 +1637,6 @@ export default function ApplicationWizard({
                         <Controller
                           name="guardian.isSameAsEmergency"
                           control={control}
-                          defaultValue={true}
                           render={({ field }) => (
                             <div className="flex items-center gap-6 text-xs font-bold text-slate-800">
                               <label className="flex items-center gap-2 cursor-pointer">
@@ -1653,10 +1652,10 @@ export default function ApplicationWizard({
                         />
                       </div>
 
-                      {!watchIsSameAsEmergency && (
+                      {watchIsSameAsEmergency === false && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in fade-in duration-200">
                           <div className="space-y-2">
-                            <Label className="text-slate-700 font-semibold text-xs">Guardian Full Name *</Label>
+                            <Label className="text-slate-700 font-semibold text-xs">Guardian Full Name (As it appears on NRIC/Passport) *</Label>
                             <Input {...register("guardian.fullName")} placeholder="e.g. Mary Doe" className="h-12 bg-white rounded-xl" />
                           </div>
 
@@ -1668,7 +1667,30 @@ export default function ApplicationWizard({
                           <div className="space-y-2">
                             <Label className="text-slate-700 font-semibold text-xs">Guardian Phone Number *</Label>
                             <div className="flex gap-2">
-                              <Input {...register("guardian.countryCode")} placeholder="+65" className="w-20 h-12 bg-white rounded-xl text-center font-mono font-semibold" />
+                              <Controller
+                                name="guardian.countryCode"
+                                control={control}
+                                defaultValue="+65"
+                                render={({ field }) => (
+                                  <Select onValueChange={field.onChange} value={field.value || "+65"}>
+                                    <SelectTrigger className="w-28 h-12 bg-white border border-slate-200 rounded-xl font-mono font-semibold text-xs shrink-0">
+                                      <SelectValue placeholder="+65" />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-56">
+                                      <SelectItem value="+65">🇸🇬 +65</SelectItem>
+                                      <SelectItem value="+60">🇲🇾 +60</SelectItem>
+                                      <SelectItem value="+62">🇮🇩 +62</SelectItem>
+                                      <SelectItem value="+86">🇨🇳 +86</SelectItem>
+                                      <SelectItem value="+91">🇮🇳 +91</SelectItem>
+                                      <SelectItem value="+84">🇻🇳 +84</SelectItem>
+                                      <SelectItem value="+95">🇲🇲 +95</SelectItem>
+                                      <SelectItem value="+44">🇬🇧 +44</SelectItem>
+                                      <SelectItem value="+1">🇺🇸 +1</SelectItem>
+                                      <SelectItem value="+61">🇦🇺 +61</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                )}
+                              />
                               <Input {...register("guardian.phone")} placeholder="9224 5678" className="flex-1 h-12 bg-white rounded-xl" />
                             </div>
                           </div>
@@ -2601,13 +2623,28 @@ export default function ApplicationWizard({
               Continue to {SECTIONS.find(s => s.id === step + 1)?.shortName || "Next"} &gt;
             </Button>
           ) : (
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-12 px-8 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold gap-2 shadow-md shadow-[#252D65]/25 hover:shadow-lg transition-all"
-            >
-              {isSubmitting ? "Processing..." : `Pay SGD ${feeAmount}.00 & Submit Application`}
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  if (confirm("Are you sure you want to cancel? Your application draft will remain saved.")) {
+                    window.location.href = "/dashboard";
+                  }
+                }}
+                disabled={isSubmitting}
+                className="h-12 px-6 border-slate-200 text-slate-600 rounded-xl font-bold bg-white hover:bg-slate-50"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="h-12 px-8 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold gap-2 shadow-md shadow-[#252D65]/25 hover:shadow-lg transition-all"
+              >
+                {isSubmitting ? "Processing..." : `Pay SGD ${feeAmount}.00 & Submit Application`}
+              </Button>
+            </div>
           )}
         </div>
       </form>
