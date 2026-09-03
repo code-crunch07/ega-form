@@ -533,6 +533,7 @@ export default function ApplicationWizard({
   const currentAvailableIntakes = useMemo(() => {
     if (watchCourseType === "Package Courses") {
       const p1Id = watch("packageProgrammes.prog1Id");
+      if (!p1Id) return [];
       const prog1 = programmes.find(p => p.id === p1Id);
       if (prog1?.intakes) {
         const parsed = parseProgrammeIntakes(prog1.intakes);
@@ -541,6 +542,7 @@ export default function ApplicationWizard({
       return getFallbackIntakes(watchPartner, watchProg1Level, prog1?.name);
     }
 
+    if (!watchProgrammeId) return [];
     const selectedProg = programmes.find(p => p.id === watchProgrammeId);
     if (selectedProg?.intakes) {
       const parsed = parseProgrammeIntakes(selectedProg.intakes);
@@ -549,16 +551,16 @@ export default function ApplicationWizard({
     return getFallbackIntakes(watchPartner, watchAcademicLevel, selectedProg?.name);
   }, [watchCourseType, watchProgrammeId, watchPartner, watchAcademicLevel, watchProg1Level, programmes, watch]);
 
-  // Synchronize selected intake when available intakes change
+  // Synchronize selected intake when available intakes change (clear if invalid, never auto-fill)
   useEffect(() => {
-    if (currentAvailableIntakes.length > 0) {
-      const currentVal = getValues("intake");
+    const currentVal = getValues("intake");
+    if (currentVal && currentAvailableIntakes.length > 0) {
       const match = currentAvailableIntakes.find(i => 
         i.value === currentVal || 
         (currentVal && (i.value.includes(currentVal) || currentVal.includes(i.value)))
       );
       if (!match) {
-        setValue("intake", currentAvailableIntakes[0].value, { shouldValidate: true });
+        setValue("intake", "", { shouldValidate: true });
       }
     }
   }, [currentAvailableIntakes, setValue, getValues]);
@@ -1294,79 +1296,87 @@ export default function ApplicationWizard({
                         </div>
 
                         {/* Package Slots Grid */}
-                        <div className={cn("grid grid-cols-1 gap-4", watchProg1Level === "Foundation" ? "md:grid-cols-3" : "md:grid-cols-2")}>
-                          
-                          {/* Slot 1 */}
-                          <div className="p-4.5 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs">
-                            <div className="flex justify-between items-center">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 1 Slot</span>
-                              <span className="text-xs font-bold text-[#252D65] bg-[#252D65]/10 px-2 py-0.5 rounded-md">{watchProg1Level}</span>
-                            </div>
-                            <Label className="text-slate-800 font-bold text-xs">Programme 1 Selection *</Label>
-                            <Controller
-                              name="packageProgrammes.prog1Id"
-                              control={control}
-                              render={({ field }) => (
-                                <SearchableProgrammeSelect
-                                  value={field.value}
-                                  onChange={(newId) => {
-                                    field.onChange(newId);
-                                    setValue("intake", "");
-                                  }}
-                                  programmes={watchProg1Level === "Foundation" ? foundationProgrammes : diplomaProgrammes}
-                                  placeholder="Search and select Programme 1..."
-                                />
-                              )}
-                            />
+                        {!watchProg1Level ? (
+                          <div className="p-6 rounded-2xl border border-dashed border-slate-300 bg-white text-center space-y-2">
+                            <p className="text-xs font-semibold text-slate-500">
+                              Please select <strong className="text-slate-800">Programme 1 Academic Level (Driver)</strong> above to display the pathway programme slots.
+                            </p>
                           </div>
-
-                          {/* Slot 2 (Read-only Academic Level) */}
-                          <div className="p-4.5 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs">
-                            <div className="flex justify-between items-center">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 2 Slot</span>
-                              <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
-                                {watchProg1Level === "Foundation" ? "Diploma Family (Assigned)" : "Undergraduate (Assigned)"}
-                              </span>
-                            </div>
-                            <Label className="text-slate-800 font-bold text-xs">Programme 2 Selection *</Label>
-                            <Controller
-                              name="packageProgrammes.prog2Id"
-                              control={control}
-                              render={({ field }) => (
-                                <SearchableProgrammeSelect
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  programmes={watchProg1Level === "Foundation" ? diplomaProgrammes : degreeProgrammes}
-                                  placeholder="Search and select Programme 2..."
-                                />
-                              )}
-                            />
-                          </div>
-
-                          {/* Slot 3 (Variation 1 Only - Read-only Academic Level = Undergraduate) */}
-                          {watchProg1Level === "Foundation" && (
-                            <div className="p-4.5 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs animate-in fade-in duration-300">
+                        ) : (
+                          <div className={cn("grid grid-cols-1 gap-4", watchProg1Level === "Foundation" ? "md:grid-cols-3" : "md:grid-cols-2")}>
+                            
+                            {/* Slot 1 */}
+                            <div className="p-4.5 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs">
                               <div className="flex justify-between items-center">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 3 Slot</span>
-                                <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">Undergraduate (Assigned)</span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 1 Slot</span>
+                                <span className="text-xs font-bold text-[#252D65] bg-[#252D65]/10 px-2 py-0.5 rounded-md">{watchProg1Level}</span>
                               </div>
-                              <Label className="text-slate-800 font-bold text-xs">Programme 3 Selection *</Label>
+                              <Label className="text-slate-800 font-bold text-xs">Programme 1 Selection *</Label>
                               <Controller
-                                name="packageProgrammes.prog3Id"
+                                name="packageProgrammes.prog1Id"
                                 control={control}
                                 render={({ field }) => (
                                   <SearchableProgrammeSelect
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    programmes={degreeProgrammes}
-                                    placeholder="Search and select Programme 3..."
+                                    value={field.value || ""}
+                                    onChange={(newId) => {
+                                      field.onChange(newId);
+                                      setValue("intake", "");
+                                    }}
+                                    programmes={watchProg1Level === "Foundation" ? foundationProgrammes : diplomaProgrammes}
+                                    placeholder="Search and select Programme 1..."
                                   />
                                 )}
                               />
                             </div>
-                          )}
 
-                        </div>
+                            {/* Slot 2 (Read-only Academic Level) */}
+                            <div className="p-4.5 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs">
+                              <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 2 Slot</span>
+                                <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                  {watchProg1Level === "Foundation" ? "Diploma Family (Assigned)" : "Undergraduate (Assigned)"}
+                                </span>
+                              </div>
+                              <Label className="text-slate-800 font-bold text-xs">Programme 2 Selection *</Label>
+                              <Controller
+                                name="packageProgrammes.prog2Id"
+                                control={control}
+                                render={({ field }) => (
+                                  <SearchableProgrammeSelect
+                                    value={field.value || ""}
+                                    onChange={field.onChange}
+                                    programmes={watchProg1Level === "Foundation" ? diplomaProgrammes : degreeProgrammes}
+                                    placeholder="Search and select Programme 2..."
+                                  />
+                                )}
+                              />
+                            </div>
+
+                            {/* Slot 3 (Foundation Only - Read-only Academic Level = Undergraduate) */}
+                            {watchProg1Level === "Foundation" && (
+                              <div className="p-4.5 rounded-2xl border border-slate-200 bg-white space-y-3 shadow-2xs animate-in fade-in duration-300">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 3 Slot</span>
+                                  <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">Undergraduate (Assigned)</span>
+                                </div>
+                                <Label className="text-slate-800 font-bold text-xs">Programme 3 Selection *</Label>
+                                <Controller
+                                  name="packageProgrammes.prog3Id"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <SearchableProgrammeSelect
+                                      value={field.value || ""}
+                                      onChange={field.onChange}
+                                      programmes={degreeProgrammes}
+                                      placeholder="Search and select Programme 3..."
+                                    />
+                                  )}
+                                />
+                              </div>
+                            )}
+
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
