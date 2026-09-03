@@ -277,20 +277,20 @@ export default function ApplicationWizard({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
       studentType: "", // CR-02 Mandatory Student Type (no default)
-      universityPartner: "Educare Global Academy",
-      studyMode: "Full Time",
+      universityPartner: "",
+      studyMode: "",
       courseType: "Standalone Course",
-      academicLevel: "Diploma",
+      academicLevel: "",
       programmeId: "",
       packageProgrammes: {
-        prog1Level: "Foundation",
+        prog1Level: "",
         prog1Id: "",
-        prog2Level: "Diploma / Advanced Diploma / Higher Diploma",
+        prog2Level: "",
         prog2Id: "",
-        prog3Level: "Undergraduate",
+        prog3Level: "",
         prog3Id: "",
       },
-      intake: "16 Nov 2026",
+      intake: "",
 
       counsellingDeclaration: "", // Mandatory choice (no default)
 
@@ -381,14 +381,14 @@ export default function ApplicationWizard({
 
   // Watchers
   const watchStudentType = watch("studentType");
-  const watchPartner = watch("universityPartner") || "Educare Global Academy";
-  const watchStudyMode = watch("studyMode") || "Full Time";
+  const watchPartner = watch("universityPartner") || "";
+  const watchStudyMode = watch("studyMode") || "";
   const watchCourseType = watch("courseType") || "Standalone Course";
-  const watchAcademicLevel = watch("academicLevel") || "Diploma";
+  const watchAcademicLevel = watch("academicLevel") || "";
   const watchProgrammeId = watch("programmeId");
   
   // Dynamic Package Course Watchers (CR-13)
-  const watchProg1Level = watch("packageProgrammes.prog1Level") || "Foundation";
+  const watchProg1Level = watch("packageProgrammes.prog1Level") || "";
 
   const watchDob = watch("personal.dob");
   const watchHasTakenTest = watch("englishTest.hasTakenTest");
@@ -520,15 +520,14 @@ export default function ApplicationWizard({
   useEffect(() => {
     if (watchCourseType === "Standalone Course" && filteredProgrammes.length > 0) {
       const currentProg = getValues("programmeId");
-      const isValid = filteredProgrammes.some(p => p.id === currentProg);
-      if (!isValid) {
-        setValue("programmeId", filteredProgrammes[0].id, { shouldValidate: true });
-        if (filteredProgrammes[0].school?.name && filteredProgrammes[0].school.name !== watchPartner) {
-          setValue("universityPartner", filteredProgrammes[0].school.name, { shouldValidate: true });
+      if (currentProg) {
+        const isValid = filteredProgrammes.some(p => p.id === currentProg);
+        if (!isValid) {
+          setValue("programmeId", "", { shouldValidate: true });
         }
       }
     }
-  }, [watchCourseType, filteredProgrammes, setValue, getValues, watchPartner]);
+  }, [watchCourseType, filteredProgrammes, setValue, getValues]);
 
   // Resolve respective intakes based on selected course type, programme, academic level & university partner
   const currentAvailableIntakes = useMemo(() => {
@@ -1003,12 +1002,12 @@ export default function ApplicationWizard({
                       <Controller
                         name="universityPartner"
                         control={control}
-                        defaultValue={schools[0]?.name || "Educare Global Academy"}
                         render={({ field }) => (
                           <Select onValueChange={(val) => {
                             field.onChange(val);
                             setValue("programmeId", "");
-                          }} value={field.value || (schools[0]?.name || "Educare Global Academy")}>
+                            setValue("intake", "");
+                          }} value={field.value || ""}>
                             <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#252D65]/15">
                               <SelectValue placeholder="Select University Partner" />
                             </SelectTrigger>
@@ -1031,9 +1030,8 @@ export default function ApplicationWizard({
                       <Controller
                         name="studyMode"
                         control={control}
-                        defaultValue="Full Time"
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value || "Full Time"}>
+                          <Select onValueChange={field.onChange} value={field.value || ""}>
                             <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#252D65]/15">
                               <SelectValue placeholder="Select Mode of Study" />
                             </SelectTrigger>
@@ -1101,14 +1099,14 @@ export default function ApplicationWizard({
                         <Controller
                           name="academicLevel"
                           control={control}
-                          defaultValue="Diploma"
                           render={({ field }) => (
                             <Select onValueChange={(val) => {
                               field.onChange(val);
                               setValue("programmeId", "");
-                            }} value={field.value || "Diploma"}>
+                              setValue("intake", "");
+                            }} value={field.value || ""}>
                               <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
-                                <SelectValue placeholder="Select Level" />
+                                <SelectValue placeholder="Select Academic Level" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="Preparatory">Preparatory</SelectItem>
@@ -1132,6 +1130,7 @@ export default function ApplicationWizard({
                               value={field.value}
                               onChange={(newId) => {
                                 field.onChange(newId);
+                                setValue("intake", "");
                                 const chosen = programmes.find(p => p.id === newId);
                                 if (chosen?.school?.name && chosen.school.name !== watchPartner && watchPartner !== "all") {
                                   setValue("universityPartner", chosen.school.name, { shouldValidate: true });
@@ -1149,9 +1148,8 @@ export default function ApplicationWizard({
                         <Controller
                           name="intake"
                           control={control}
-                          defaultValue={currentAvailableIntakes[0]?.value || "16 Nov 2026"}
                           render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value || currentAvailableIntakes[0]?.value}>
+                            <Select onValueChange={field.onChange} value={field.value || ""}>
                               <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
                                 <SelectValue placeholder="Select Intake" />
                               </SelectTrigger>
@@ -1168,7 +1166,7 @@ export default function ApplicationWizard({
                                     </SelectItem>
                                   ))
                                 ) : (
-                                  <SelectItem value="16 Nov 2026">16 Nov 2026 (November 2026 Intake)</SelectItem>
+                                  <div className="p-3 text-xs text-slate-400 text-center">Please select a programme first</div>
                                 )}
                               </SelectContent>
                             </Select>
@@ -1193,7 +1191,6 @@ export default function ApplicationWizard({
                             <Controller
                               name="packageProgrammes.prog1Level"
                               control={control}
-                              defaultValue="Foundation"
                               render={({ field }) => (
                                 <Select onValueChange={(val) => {
                                   field.onChange(val);
@@ -1203,14 +1200,16 @@ export default function ApplicationWizard({
                                     setValue("packageProgrammes.prog1Id", "");
                                     setValue("packageProgrammes.prog2Id", "");
                                     setValue("packageProgrammes.prog3Id", "");
+                                    setValue("intake", "");
                                   } else {
                                     setValue("packageProgrammes.prog2Level", "Undergraduate (Assigned)");
                                     setValue("packageProgrammes.prog3Level", "");
                                     setValue("packageProgrammes.prog1Id", "");
                                     setValue("packageProgrammes.prog2Id", "");
                                     setValue("packageProgrammes.prog3Id", "");
+                                    setValue("intake", "");
                                   }
-                                }} value={field.value || "Foundation"}>
+                                }} value={field.value || ""}>
                                   <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold">
                                     <SelectValue placeholder="Select Programme 1 Level" />
                                   </SelectTrigger>
@@ -1228,9 +1227,8 @@ export default function ApplicationWizard({
                             <Controller
                               name="intake"
                               control={control}
-                              defaultValue={currentAvailableIntakes[0]?.value || "16 Nov 2026"}
                               render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value || currentAvailableIntakes[0]?.value}>
+                                <Select onValueChange={field.onChange} value={field.value || ""}>
                                   <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold">
                                     <SelectValue placeholder="Select Intake" />
                                   </SelectTrigger>
@@ -1247,7 +1245,7 @@ export default function ApplicationWizard({
                                         </SelectItem>
                                       ))
                                     ) : (
-                                      <SelectItem value="16 Nov 2026">16 Nov 2026 (November 2026 Intake)</SelectItem>
+                                      <div className="p-3 text-xs text-slate-400 text-center">Please select Programme 1 first</div>
                                     )}
                                   </SelectContent>
                                 </Select>
