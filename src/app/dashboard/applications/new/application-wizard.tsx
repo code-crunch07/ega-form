@@ -974,7 +974,20 @@ export default function ApplicationWizard({
                             name="studentType"
                             value={st.value}
                             checked={isSelected}
-                            onChange={() => setValue("studentType", st.value, { shouldValidate: true })}
+                            onChange={() => {
+                              setValue("studentType", st.value, { shouldValidate: true });
+                              setValue("universityPartner", "");
+                              setValue("studyMode", "");
+                              setValue("academicLevel", "");
+                              setValue("programmeId", "");
+                              setValue("intake", "");
+                              setValue("packageProgrammes.prog1Level", "");
+                              setValue("packageProgrammes.prog1Id", "");
+                              setValue("packageProgrammes.prog2Level", "");
+                              setValue("packageProgrammes.prog2Id", "");
+                              setValue("packageProgrammes.prog3Level", "");
+                              setValue("packageProgrammes.prog3Id", "");
+                            }}
                             className="mt-1 w-4 h-4 text-[#252D65]"
                           />
                           <div>
@@ -1005,8 +1018,15 @@ export default function ApplicationWizard({
                         render={({ field }) => (
                           <Select onValueChange={(val) => {
                             field.onChange(val);
+                            setValue("academicLevel", "");
                             setValue("programmeId", "");
                             setValue("intake", "");
+                            setValue("packageProgrammes.prog1Level", "");
+                            setValue("packageProgrammes.prog1Id", "");
+                            setValue("packageProgrammes.prog2Level", "");
+                            setValue("packageProgrammes.prog2Id", "");
+                            setValue("packageProgrammes.prog3Level", "");
+                            setValue("packageProgrammes.prog3Id", "");
                           }} value={field.value || ""}>
                             <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#252D65]/15">
                               <SelectValue placeholder="Select University Partner" />
@@ -1031,7 +1051,18 @@ export default function ApplicationWizard({
                         name="studyMode"
                         control={control}
                         render={({ field }) => (
-                          <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <Select onValueChange={(val) => {
+                            field.onChange(val);
+                            setValue("academicLevel", "");
+                            setValue("programmeId", "");
+                            setValue("intake", "");
+                            setValue("packageProgrammes.prog1Level", "");
+                            setValue("packageProgrammes.prog1Id", "");
+                            setValue("packageProgrammes.prog2Level", "");
+                            setValue("packageProgrammes.prog2Id", "");
+                            setValue("packageProgrammes.prog3Level", "");
+                            setValue("packageProgrammes.prog3Id", "");
+                          }} value={field.value || ""}>
                             <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#252D65]/15">
                               <SelectValue placeholder="Select Mode of Study" />
                             </SelectTrigger>
@@ -1079,7 +1110,15 @@ export default function ApplicationWizard({
                             checked={isSelected}
                             onChange={() => {
                               setValue("courseType", c.value, { shouldValidate: true });
+                              setValue("academicLevel", "");
                               setValue("programmeId", "");
+                              setValue("intake", "");
+                              setValue("packageProgrammes.prog1Level", "");
+                              setValue("packageProgrammes.prog1Id", "");
+                              setValue("packageProgrammes.prog2Level", "");
+                              setValue("packageProgrammes.prog2Id", "");
+                              setValue("packageProgrammes.prog3Level", "");
+                              setValue("packageProgrammes.prog3Id", "");
                             }}
                             className="mt-1 w-4 h-4 text-[#252D65]"
                           />
@@ -1270,7 +1309,10 @@ export default function ApplicationWizard({
                               render={({ field }) => (
                                 <SearchableProgrammeSelect
                                   value={field.value}
-                                  onChange={field.onChange}
+                                  onChange={(newId) => {
+                                    field.onChange(newId);
+                                    setValue("intake", "");
+                                  }}
                                   programmes={watchProg1Level === "Foundation" ? foundationProgrammes : diplomaProgrammes}
                                   placeholder="Search and select Programme 1..."
                                 />
