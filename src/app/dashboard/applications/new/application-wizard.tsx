@@ -1215,8 +1215,8 @@ export default function ApplicationWizard({
                                     <SelectValue placeholder="Select Programme 1 Level" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="Foundation">Foundation (Variation 1 — 3 Slot Pathway)</SelectItem>
-                                    <SelectItem value="Diploma / Advanced Diploma / Higher Diploma">Diploma / Advanced / Higher Diploma (Variation 2 — 2 Slot Pathway)</SelectItem>
+                                    <SelectItem value="Foundation">Foundation</SelectItem>
+                                    <SelectItem value="Diploma / Advanced Diploma / Higher Diploma">Diploma / Advanced / Higher Diploma</SelectItem>
                                   </SelectContent>
                                 </Select>
                               )}
