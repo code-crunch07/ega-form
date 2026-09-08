@@ -198,20 +198,20 @@ function matchesLevel(prog: any, selectedLevel?: string): boolean {
   const sL = selectedLevel.toLowerCase().trim();
 
   if (sL === "preparatory") {
-    return pL === "preparatory";
+    return pL === "preparatory" || pL.includes("preparatory");
   }
   if (sL === "foundation") {
-    return pL === "foundation";
+    return pL === "foundation" || pL.includes("foundation");
   }
   if (sL === "diploma") {
     const progName = (prog.name || "").toLowerCase();
-    return pL === "diploma" && !progName.includes("foundation diploma") && !progName.includes("postgraduate diploma");
+    return (pL === "diploma" || pL.includes("diploma")) && !progName.includes("foundation diploma") && !progName.includes("postgraduate diploma") && !pL.includes("postgraduate");
   }
   if (sL === "undergraduate") {
-    return pL === "undergraduate";
+    return pL === "undergraduate" || pL === "degree" || pL === "bachelor" || pL.includes("undergraduate") || pL.includes("bachelor");
   }
   if (sL === "postgraduate") {
-    return pL === "postgraduate";
+    return pL === "postgraduate" || pL === "master" || pL === "masters" || pL.includes("postgraduate") || pL.includes("master");
   }
 
   return pL.includes(sL);
@@ -493,27 +493,68 @@ export default function ApplicationWizard({
   // CR-09 Application Fee Calculation (EGA = SGD 160, NCC/GCU/KU = SGD 320)
   const feeAmount = (watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC")) ? 320 : 160;
 
-  // Filter programmes for Standalone Course
-  const filteredProgrammes = useMemo(() => {
-    // 1. Strict filter by selected academic level
-    const levelFiltered = programmes.filter(p => matchesLevel(p, watchAcademicLevel));
+  // Full academic level definitions
+  const ALL_ACADEMIC_LEVELS = useMemo(() => [
+    { value: "Preparatory", label: "Preparatory" },
+    { value: "Foundation", label: "Foundation" },
+    { value: "Diploma", label: "Diploma / Advanced / Higher Diploma" },
+    { value: "Undergraduate", label: "Undergraduate" },
+    { value: "Postgraduate", label: "Postgraduate" },
+  ], []);
 
-    // 2. If a specific partner is selected (and not all)
-    if (watchPartner && watchPartner !== "all" && !watchPartner.toLowerCase().includes("all")) {
-      const partnerAndLevel = levelFiltered.filter(p => {
-        const pSchoolName = p.school?.name?.toLowerCase() || "";
-        const targetPartner = watchPartner.toLowerCase();
-        return pSchoolName.includes(targetPartner) || targetPartner.includes(pSchoolName) || p.schoolId === watchPartner;
-      });
-
-      // If the selected partner offers programmes at this academic level, return them
-      if (partnerAndLevel.length > 0) {
-        return partnerAndLevel;
-      }
+  // Compute available academic levels dynamically based on selected University Partner
+  const availableAcademicLevels = useMemo(() => {
+    if (!watchPartner || watchPartner === "all" || watchPartner.toLowerCase().includes("all")) {
+      return ALL_ACADEMIC_LEVELS;
     }
 
-    // Return all programmes at this academic level
-    return levelFiltered;
+    const partnerProgs = programmes.filter((p) => {
+      const pSchoolName = p.school?.name?.toLowerCase() || "";
+      const targetPartner = watchPartner.toLowerCase().trim();
+      return pSchoolName.includes(targetPartner) || targetPartner.includes(pSchoolName) || p.schoolId === watchPartner;
+    });
+
+    if (partnerProgs.length === 0) {
+      return ALL_ACADEMIC_LEVELS;
+    }
+
+    const matched = ALL_ACADEMIC_LEVELS.filter((lvl) =>
+      partnerProgs.some((p) => matchesLevel(p, lvl.value))
+    );
+
+    return matched.length > 0 ? matched : ALL_ACADEMIC_LEVELS;
+  }, [programmes, watchPartner, ALL_ACADEMIC_LEVELS]);
+
+  // Synchronize selected academic level when availableAcademicLevels changes
+  useEffect(() => {
+    if (watchAcademicLevel && availableAcademicLevels.length > 0) {
+      const isValid = availableAcademicLevels.some((l) => l.value === watchAcademicLevel);
+      if (!isValid) {
+        setValue("academicLevel", "", { shouldValidate: true });
+        setValue("programmeId", "", { shouldValidate: true });
+        setValue("intake", "", { shouldValidate: true });
+      }
+    }
+  }, [watchAcademicLevel, availableAcademicLevels, setValue]);
+
+  // Filter programmes for Standalone Course based on partner and academic level
+  const filteredProgrammes = useMemo(() => {
+    return programmes.filter((p) => {
+      // 1. Strict filter by selected academic level
+      if (watchAcademicLevel && !matchesLevel(p, watchAcademicLevel)) {
+        return false;
+      }
+
+      // 2. Filter by selected university partner
+      if (watchPartner && watchPartner !== "all" && !watchPartner.toLowerCase().includes("all")) {
+        const pSchoolName = p.school?.name?.toLowerCase() || "";
+        const targetPartner = watchPartner.toLowerCase().trim();
+        const matchesSchool = pSchoolName.includes(targetPartner) || targetPartner.includes(pSchoolName) || p.schoolId === watchPartner;
+        if (!matchesSchool) return false;
+      }
+
+      return true;
+    });
   }, [programmes, watchAcademicLevel, watchPartner]);
 
   // Keep selected programme synchronized with filteredProgrammes for standalone course
@@ -580,28 +621,6 @@ export default function ApplicationWizard({
     const list = programmes.filter(p => matchesLevel(p, "Undergraduate"));
     return list.length > 0 ? list : programmes;
   }, [programmes]);
-
-  // Ensure default package programme IDs are populated if empty
-  useEffect(() => {
-    if (watchCourseType === "Package Courses") {
-      const currentP1 = getValues("packageProgrammes.prog1Id");
-      const currentP2 = getValues("packageProgrammes.prog2Id");
-      const currentP3 = getValues("packageProgrammes.prog3Id");
-
-      if (!currentP1) {
-        const defaultP1 = (watchProg1Level === "Foundation" ? foundationProgrammes[0] : diplomaProgrammes[0])?.id || programmes[0]?.id || "";
-        setValue("packageProgrammes.prog1Id", defaultP1, { shouldValidate: true });
-      }
-      if (!currentP2) {
-        const defaultP2 = (watchProg1Level === "Foundation" ? diplomaProgrammes[0] : degreeProgrammes[0])?.id || programmes[1]?.id || "";
-        setValue("packageProgrammes.prog2Id", defaultP2, { shouldValidate: true });
-      }
-      if (watchProg1Level === "Foundation" && !currentP3) {
-        const defaultP3 = degreeProgrammes[0]?.id || programmes[2]?.id || "";
-        setValue("packageProgrammes.prog3Id", defaultP3, { shouldValidate: true });
-      }
-    }
-  }, [watchCourseType, watchProg1Level, foundationProgrammes, diplomaProgrammes, degreeProgrammes, programmes, setValue, getValues]);
 
   useEffect(() => {
     setValue("education", educationList);
@@ -1150,11 +1169,11 @@ export default function ApplicationWizard({
                                 <SelectValue placeholder="Select Academic Level" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="Preparatory">Preparatory</SelectItem>
-                                <SelectItem value="Foundation">Foundation</SelectItem>
-                                <SelectItem value="Diploma">Diploma / Advanced / Higher Diploma</SelectItem>
-                                <SelectItem value="Undergraduate">Undergraduate</SelectItem>
-                                <SelectItem value="Postgraduate">Postgraduate</SelectItem>
+                                {availableAcademicLevels.map((lvl) => (
+                                  <SelectItem key={lvl.value} value={lvl.value}>
+                                    {lvl.label}
+                                  </SelectItem>
+                                ))}
                               </SelectContent>
                             </Select>
                           )}
