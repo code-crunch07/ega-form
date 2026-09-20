@@ -7,7 +7,7 @@ import {
   Check, ChevronRight, ChevronDown, Upload, Plus, FileText, Globe, MapPin, Building2, 
   UserCircle2, GraduationCap, Briefcase, Languages, FileCheck2, ClipboardCheck, 
   ScrollText, CreditCard, Phone, Mail, Clock, ArrowLeft, AlertCircle, Info, ShieldCheck, Sparkles,
-  PenTool, Trash2, RefreshCw, QrCode
+  PenTool, Trash2, RefreshCw, QrCode, Save
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,10 +15,75 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchableCountrySelect } from "@/components/ui/searchable-country-select";
 import { SearchableProgrammeSelect } from "@/components/ui/searchable-programme-select";
-import { submitApplication, calculateApplicationFee } from "@/app/actions/application";
+import { submitApplication, saveDraftApplication, calculateApplicationFee } from "@/app/actions/application";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { applicationSchema } from "@/lib/application-schema";
+
+const DEFAULT_AGENCIES_BY_COUNTRY: Record<string, string[]> = {
+  "India": [
+    "IDP Education India",
+    "KC Overseas Education",
+    "Edwise International",
+    "Global Opportunities",
+    "Canam Consultants",
+    "Chopras Global Education",
+    "AECC Global India",
+    "Study Metro India"
+  ],
+  "Singapore": [
+    "Educare Global Agency (EGA Network)",
+    "Overseas Education Pte Ltd",
+    "Study Singapore Admissions Hub",
+    "Global Student Advisory Singapore",
+    "Universal Education Centre"
+  ],
+  "China": [
+    "New Oriental Vision Overseas",
+    "JJL Overseas Education",
+    "EIC Education",
+    "Golden Arrow Overseas Consulting",
+    "Amber Education China"
+  ],
+  "Malaysia": [
+    "AUG Student Services Malaysia",
+    "JM Education Group",
+    "IDP Education Malaysia",
+    "GEN Education Group",
+    "MABECS Malaysia"
+  ],
+  "Indonesia": [
+    "SUN Education Group",
+    "Vista Education",
+    "Alfa Link Overseas Study",
+    "Edlink+ConneX Indonesia",
+    "IDP Education Indonesia"
+  ],
+  "Vietnam": [
+    "IDP Education Vietnam",
+    "Du Hoc SET",
+    "Duc Anh A&T Overseas Study",
+    "GSE-beo Education Vietnam",
+    "ILA Vietnam Study Abroad"
+  ],
+  "Myanmar": [
+    "Crown Education Myanmar",
+    "CSL Education Myanmar",
+    "STUDY ABROAD Information Centre",
+    "Knowledge Zone Education"
+  ],
+  "Thailand": [
+    "IDP Education Thailand",
+    "Hands On Education Consultants",
+    "OEC Global Education Thailand",
+    "Insight Education Consulting"
+  ],
+  "Philippines": [
+    "IDP Education Philippines",
+    "AECC Global Philippines",
+    "Fortrust Education Services"
+  ]
+};
 
 const SECTIONS = [
   { id: 1, name: "Programme Selection", shortName: "1. Programme", icon: Building2, desc: "Student type, partner & package pathway" },
@@ -235,20 +300,35 @@ export default function ApplicationWizard({
   user, 
   programmes = [], 
   intakes = [], 
-  schools = [] 
+  schools = [],
+  agents = [],
+  existingDraft,
+  userProfile
 }: { 
   user: any, 
   programmes: any[], 
   intakes: any[], 
-  schools?: any[] 
+  schools?: any[],
+  agents?: any[],
+  existingDraft?: any,
+  userProfile?: any
 }) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(existingDraft?.currentStep || 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [saveDraftSuccessMsg, setSaveDraftSuccessMsg] = useState<string | null>(null);
   const [successAppNumber, setSuccessAppNumber] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // CR-07 Qualifications state: Retain only 3 fields (Country, Awarding Institution, Qualification Title/Level)
-  const [educationList, setEducationList] = useState<any[]>([]);
+  // Qualifications state
+  const [educationList, setEducationList] = useState<any[]>(
+    existingDraft?.educationHistory?.map((ed: any) => ({
+      id: ed.id,
+      country: ed.country,
+      institution: ed.institution,
+      qualificationTitle: ed.qualification,
+    })) || []
+  );
   const [isQualModalOpen, setIsQualModalOpen] = useState(false);
   const [isKeyPointsModalOpen, setIsKeyPointsModalOpen] = useState(false);
   const [qualForm, setQualForm] = useState<any>({
@@ -257,31 +337,34 @@ export default function ApplicationWizard({
     qualificationTitle: "",
   });
 
-  // CR-11 Education Certificate Uploads (Multiple attachments allowed)
+  // Education Certificate Uploads
   const [certFiles, setCertFiles] = useState<{ id: string; name: string; size: string }[]>([]);
 
-  // CR-12 Native Applicant Signature Pad state
+  // Native Applicant Signature Pad state
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [savedSignature, setSavedSignature] = useState<string | null>(null);
+  const [savedSignature, setSavedSignature] = useState<string | null>(existingDraft?.digitalSignature || null);
 
-  // CR-10 PayNow SGQR & Flywire Modal state (F-073)
+  // PayNow SGQR & Flywire Modal state
   const [isPayNowModalOpen, setIsPayNowModalOpen] = useState(false);
   const [isFlywireModalOpen, setIsFlywireModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"paynow" | "flywire">("paynow");
-  const [isDraftRestored, setIsDraftRestored] = useState(false);
+  const [isDraftRestored, setIsDraftRestored] = useState(Boolean(existingDraft));
+  const [customAgencyName, setCustomAgencyName] = useState("");
 
   const router = useRouter();
+
+  const profileData = userProfile || user.profile;
 
   const { register, handleSubmit, control, watch, setValue, getValues, trigger, formState: { errors } } = useForm<any>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
-      studentType: "", // CR-02 Mandatory Student Type (no default)
-      universityPartner: "",
-      studyMode: "",
+      studentType: existingDraft?.applicantType || "",
+      universityPartner: existingDraft?.school || "",
+      studyMode: existingDraft?.studyMode || "",
       courseType: "Standalone Course",
-      academicLevel: "",
-      programmeId: "",
+      academicLevel: existingDraft?.programmeLevel || "",
+      programmeId: existingDraft?.programmeId || "",
       packageProgrammes: {
         prog1Level: "",
         prog1Id: "",
@@ -290,30 +373,30 @@ export default function ApplicationWizard({
         prog3Level: "",
         prog3Id: "",
       },
-      intake: "",
+      intake: existingDraft?.intake || "",
 
-      counsellingDeclaration: "", // Mandatory choice (no default)
+      counsellingDeclaration: "",
 
       personal: {
-        title: normalizeTitle(user.profile?.title) || "Mr.",
-        fullName: user.profile?.firstName ? `${user.profile.firstName} ${user.profile.lastName || ''}`.trim() : "",
-        surname: user.profile?.lastName || "",
-        dob: user.profile?.dob ? new Date(user.profile.dob).toISOString().split('T')[0] : "",
-        gender: user.profile?.gender || "male",
-        maritalStatus: "Single",
-        nationality: user.profile?.nationality || "",
+        title: normalizeTitle(profileData?.title) || "Mr.",
+        fullName: profileData?.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : "",
+        surname: profileData?.lastName || "",
+        dob: profileData?.dob ? new Date(profileData.dob).toISOString().split('T')[0] : "",
+        gender: profileData?.gender || "Male",
+        maritalStatus: profileData?.maritalStatus || "Single",
+        nationality: profileData?.nationality || "",
         email: user.email || "",
         phoneCountryCode: "+65",
-        phone: user.profile?.phone || "",
+        phone: profileData?.phone || "",
       },
 
       emergencyContact: {
         contactType: "Parent / Legal Guardian",
-        fullName: "",
+        fullName: profileData?.emergencyContactName || "",
         countryCode: "+65",
-        phone: "",
+        phone: profileData?.emergencyContactPhone || "",
         email: "",
-        relation: "",
+        relation: profileData?.emergencyContactRelation || "",
       },
 
       guardian: {
@@ -327,7 +410,7 @@ export default function ApplicationWizard({
       },
 
       passport: {
-        passportNumber: user.profile?.passportNumber || "",
+        passportNumber: profileData?.passportNumber || "",
         countryOfIssue: "",
         issueDate: "",
         expiryDate: "",
@@ -335,16 +418,20 @@ export default function ApplicationWizard({
       },
 
       address: {
-        country: "",
-        state: "",
-        city: "",
-        postalCode: "",
-        addressLine1: user.profile?.address || "",
+        country: profileData?.country || "Singapore",
+        state: profileData?.state || "Singapore",
+        city: profileData?.city || "Singapore",
+        postalCode: profileData?.postalCode || "",
+        addressLine1: profileData?.address || "",
         addressLine2: "",
         unitNo: "",
       },
 
-      education: [],
+      education: existingDraft?.educationHistory?.map((ed: any) => ({
+        country: ed.country,
+        institution: ed.institution,
+        qualificationTitle: ed.qualification,
+      })) || [],
 
       englishTest: {
         hasTakenTest: false,
@@ -362,7 +449,7 @@ export default function ApplicationWizard({
 
       agent: {
         isAgentRepresented: false,
-        agentCountry: "",
+        agentCountry: "Singapore",
         agencyName: "",
         counsellorName: "",
         counsellorEmail: "",
@@ -375,7 +462,7 @@ export default function ApplicationWizard({
         marketingConsent: false,
       },
 
-      digitalSignature: "",
+      digitalSignature: existingDraft?.digitalSignature || "",
     }
   });
 
@@ -446,7 +533,29 @@ export default function ApplicationWizard({
     }
   }, [formValues, step, educationList, certFiles, successAppNumber]);
 
-  // Restore draft on initial load if present (QA-25)
+  // Manual save draft handler
+  const handleSaveDraft = async () => {
+    setIsSavingDraft(true);
+    setFormError(null);
+    try {
+      const currentValues = getValues();
+      const res = await saveDraftApplication(currentValues, step);
+      if (res.success) {
+        setSaveDraftSuccessMsg(`Application draft saved successfully! (Ref: ${res.appNumber})`);
+        setIsDraftRestored(true);
+        setTimeout(() => setSaveDraftSuccessMsg(null), 5000);
+      } else {
+        setFormError(res.error || "Failed to save draft.");
+      }
+    } catch (e: any) {
+      console.error("Failed to save draft:", e);
+      setFormError("An unexpected error occurred while saving draft.");
+    } finally {
+      setIsSavingDraft(false);
+    }
+  };
+
+  // Restore draft on initial load if present
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
@@ -454,18 +563,21 @@ export default function ApplicationWizard({
         if (savedRaw) {
           const draft = JSON.parse(savedRaw);
           if (draft && draft.formData && Object.keys(draft.formData).length > 0) {
-            if (Array.isArray(draft.educationList) && draft.educationList.length > 0) {
+            if (Array.isArray(draft.educationList) && draft.educationList.length > 0 && educationList.length === 0) {
               setEducationList(draft.educationList);
             }
             if (Array.isArray(draft.certFiles) && draft.certFiles.length > 0) {
               setCertFiles(draft.certFiles);
             }
-            if (draft.step && draft.step > 1) {
+            if (!existingDraft && draft.step && draft.step > 1) {
               setStep(draft.step);
             }
             Object.entries(draft.formData).forEach(([key, val]) => {
               if (val !== undefined && val !== null && val !== "") {
-                setValue(key as any, val);
+                const currentVal = getValues(key as any);
+                if (!currentVal) {
+                  setValue(key as any, val);
+                }
               }
             });
             setIsDraftRestored(true);
@@ -717,18 +829,50 @@ export default function ApplicationWizard({
           fieldsToValidate = ['studentType', 'universityPartner', 'studyMode', 'courseType', 'intake', 'counsellingDeclaration'];
           break;
         case 2:
-          fieldsToValidate = ['personal.fullName', 'personal.surname', 'personal.dob', 'personal.gender', 'personal.maritalStatus', 'emergencyContact.fullName', 'emergencyContact.phone', 'emergencyContact.relation', 'passport.passportNumber', 'passport.countryOfIssue', 'passport.countryOfBirth', 'address.country', 'address.addressLine1', 'address.postalCode'];
+          fieldsToValidate = [
+            'personal.fullName', 
+            'personal.surname', 
+            'personal.dob', 
+            'personal.gender', 
+            'personal.maritalStatus',
+            'personal.nationality',
+            'personal.email',
+            'personal.phone',
+            'emergencyContact.contactType',
+            'emergencyContact.fullName', 
+            'emergencyContact.phone', 
+            'emergencyContact.relation', 
+            'passport.passportNumber', 
+            'passport.countryOfIssue', 
+            'passport.countryOfBirth', 
+            'passport.issueDate',
+            'passport.expiryDate',
+            'address.country', 
+            'address.state',
+            'address.city',
+            'address.addressLine1', 
+            'address.postalCode'
+          ];
+          if (getValues("emergencyContact.email")) {
+            fieldsToValidate.push('emergencyContact.email');
+          }
           if (isUnder18 && !watchIsSameAsEmergency) {
             fieldsToValidate.push('guardian.fullName', 'guardian.email', 'guardian.phone', 'guardian.relation');
           }
           break;
         case 3:
-          fieldsToValidate = [];
+          if (educationList.length === 0) {
+            setFormError("Please add at least one Academic Qualification record before continuing.");
+            return;
+          }
+          if (watchHasTakenTest) {
+            fieldsToValidate = ['englishTest.testType', 'englishTest.testDate'];
+          }
           break;
         case 4:
           fieldsToValidate = ['additionalInfo.healthConditions', 'additionalInfo.marketingChannel'];
           if (watchIsAgent) {
-            fieldsToValidate.push('agent.agencyName', 'agent.counsellorName', 'agent.counsellorEmail');
+            fieldsToValidate.push('agent.agentCountry', 'agent.agencyName', 'agent.counsellorName', 'agent.counsellorEmail');
           }
           break;
       }
@@ -737,10 +881,18 @@ export default function ApplicationWizard({
       
       if (isStepValid) {
         setFormError(null);
-        setStep((prev) => Math.min(prev + 1, 5));
+        const nextStepNum = Math.min(step + 1, 5);
+        setStep(nextStepNum);
         window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        // Auto-save draft on step transition
+        try {
+          saveDraftApplication(getValues(), nextStepNum);
+        } catch (e) {
+          // ignore background save errors
+        }
       } else {
-        setFormError("There are incomplete required fields in this section. Please review all fields marked with *.");
+        setFormError("There are incomplete or invalid fields in this section. Please review all fields marked with *.");
       }
     }
   };
@@ -877,7 +1029,7 @@ export default function ApplicationWizard({
                 Student Application Form
               </h1>
               <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Official Educare Global Academy (EGA) Baseline Specification v1.2.
+                Please complete all mandatory sections to submit your student application.
               </p>
             </div>
 
@@ -1403,18 +1555,18 @@ export default function ApplicationWizard({
 
                 <div className="h-px bg-slate-100" />
 
-                {/* 4. Pre-Course Counselling */}
+                {/* 3. Declaration on Pre-Course Counselling */}
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-bold text-base text-slate-900 font-heading">3. Pre-Course Counselling Declaration *</h3>
-                    <p className="text-xs text-slate-600 font-medium leading-relaxed mt-0.5">
-                      Kindly ensure that you understand the key points regarding your choice of study at {watchPartner} before making your declaration statement below.{" "}
+                    <h3 className="font-bold text-base text-slate-900 font-heading">3. Declaration on Pre-Course Counselling *</h3>
+                    <p className="text-xs text-slate-600 font-medium leading-relaxed mt-1">
+                      To help you confirm that you have gathered sufficient information on your choice of study, we have prepared a checklist of key point for you to take note of. Kindly ensure that you understand the details listed in the key points before submitting your application.{" "}
                       <button 
                         type="button" 
                         onClick={() => setIsKeyPointsModalOpen(true)} 
                         className="text-[#252D65] font-bold underline hover:text-blue-700 inline-flex items-center gap-1 cursor-pointer"
                       >
-                        Please click here to read the key points &rarr;
+                        Please click here to read the key points before making your declaration.
                       </button>
                     </p>
                   </div>
@@ -1607,7 +1759,15 @@ export default function ApplicationWizard({
                             </Select>
                           )}
                         />
-                        <Input {...register("personal.phone")} placeholder="9123 4567" className="flex-1 h-12 rounded-xl" />
+                        <Input 
+                          {...register("personal.phone")} 
+                          placeholder="9123 4567" 
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9\s-]/g, "");
+                            setValue("personal.phone", val, { shouldValidate: true });
+                          }}
+                          className="flex-1 h-12 rounded-xl" 
+                        />
                       </div>
                     </div>
                   </div>
@@ -1680,7 +1840,15 @@ export default function ApplicationWizard({
                             </Select>
                           )}
                         />
-                        <Input {...register("emergencyContact.phone")} placeholder="9224 5678" className="flex-1 h-12 rounded-xl" />
+                        <Input 
+                          {...register("emergencyContact.phone")} 
+                          placeholder="9224 5678" 
+                          onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9\s-]/g, "");
+                            setValue("emergencyContact.phone", val, { shouldValidate: true });
+                          }}
+                          className="flex-1 h-12 rounded-xl" 
+                        />
                       </div>
                     </div>
 
@@ -1760,7 +1928,15 @@ export default function ApplicationWizard({
                                   </Select>
                                 )}
                               />
-                              <Input {...register("guardian.phone")} placeholder="9224 5678" className="flex-1 h-12 bg-white rounded-xl" />
+                              <Input 
+                                {...register("guardian.phone")} 
+                                placeholder="9224 5678" 
+                                onChange={(e) => {
+                                  const val = e.target.value.replace(/[^0-9\s-]/g, "");
+                                  setValue("guardian.phone", val, { shouldValidate: true });
+                                }}
+                                className="flex-1 h-12 bg-white rounded-xl" 
+                              />
                             </div>
                           </div>
 
@@ -1847,11 +2023,11 @@ export default function ApplicationWizard({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">State / Region</Label>
+                      <Label className="text-slate-700 font-semibold text-xs">State / Region *</Label>
                       <Input {...register("address.state")} placeholder="Singapore" className="h-12 rounded-xl" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">City</Label>
+                      <Label className="text-slate-700 font-semibold text-xs">City *</Label>
                       <Input {...register("address.city")} placeholder="Singapore" className="h-12 rounded-xl" />
                     </div>
                   </div>
@@ -1889,7 +2065,6 @@ export default function ApplicationWizard({
                 <FormAccordion 
                   title="1. Academic Qualifications *" 
                   defaultOpen={true}
-                  badgeText="Repeatable (CR-07)"
                   actionButton={
                     <Button 
                       type="button" 
@@ -1907,7 +2082,7 @@ export default function ApplicationWizard({
                     </Button>
                   }
                 >
-                  <p className="text-xs text-slate-500 font-medium">List all prior academic qualifications. Only Country, Institution/Board and Title are required per CR-07.</p>
+                  <p className="text-xs text-slate-500 font-medium">List all prior academic qualifications. Please provide the country, awarding institution/board, and qualification title/level.</p>
                   
                   <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
                     <table className="w-full text-left text-xs border-collapse">
@@ -2075,8 +2250,8 @@ export default function ApplicationWizard({
                   </div>
                 </FormAccordion>
 
-                {/* 12.3 Marketing Channel (CR-08: 7 Approved Options ONLY) */}
-                <FormAccordion title="3. How did you hear about EGA? *" defaultOpen={true} badgeText="7 Approved Options (CR-08)">
+                {/* 3. Marketing Channel */}
+                <FormAccordion title="3. How did you hear about EGA? *" defaultOpen={true}>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                       {[
@@ -2166,18 +2341,24 @@ export default function ApplicationWizard({
                             control={control}
                             defaultValue="Singapore"
                             render={({ field }) => (
-                              <Select onValueChange={field.onChange} value={field.value || "Singapore"}>
+                              <Select onValueChange={(val) => {
+                                field.onChange(val);
+                                setValue("agent.agencyName", "");
+                              }} value={field.value || "Singapore"}>
                                 <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
                                   <SelectValue placeholder="Select Country" />
                                 </SelectTrigger>
                                 <SelectContent>
                                   <SelectItem value="Singapore">Singapore</SelectItem>
+                                  <SelectItem value="India">India</SelectItem>
+                                  <SelectItem value="China">China</SelectItem>
                                   <SelectItem value="Malaysia">Malaysia</SelectItem>
                                   <SelectItem value="Indonesia">Indonesia</SelectItem>
-                                  <SelectItem value="China">China</SelectItem>
-                                  <SelectItem value="India">India</SelectItem>
                                   <SelectItem value="Vietnam">Vietnam</SelectItem>
-                                  <SelectItem value="Other">Other</SelectItem>
+                                  <SelectItem value="Myanmar">Myanmar</SelectItem>
+                                  <SelectItem value="Thailand">Thailand</SelectItem>
+                                  <SelectItem value="Philippines">Philippines</SelectItem>
+                                  <SelectItem value="Other">Other Country</SelectItem>
                                 </SelectContent>
                               </Select>
                             )}
@@ -2186,7 +2367,55 @@ export default function ApplicationWizard({
 
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-semibold text-xs">Agency Name *</Label>
-                          <Input {...register("agent.agencyName")} placeholder="e.g. Global Education Agency" className="h-12 rounded-xl" />
+                          <Controller
+                            name="agent.agencyName"
+                            control={control}
+                            render={({ field }) => {
+                              const countryVal = watch("agent.agentCountry") || "Singapore";
+                              const dbAgencies = agents
+                                .filter((a: any) => a.country?.toLowerCase() === countryVal.toLowerCase())
+                                .map((a: any) => a.agencyName);
+                              const defaultList = DEFAULT_AGENCIES_BY_COUNTRY[countryVal] || [
+                                "Global Education Agency",
+                                "International Admissions Centre",
+                                "Overseas Study Advisory"
+                              ];
+                              const agencyOptions = Array.from(new Set([...dbAgencies, ...defaultList]));
+
+                              return (
+                                <div className="space-y-2">
+                                  <Select 
+                                    onValueChange={(val) => {
+                                      field.onChange(val);
+                                    }} 
+                                    value={field.value || ""}
+                                  >
+                                    <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                                      <SelectValue placeholder="Select Agency Name" />
+                                    </SelectTrigger>
+                                    <SelectContent className="max-h-60">
+                                      {agencyOptions.map((agency) => (
+                                        <SelectItem key={agency} value={agency}>{agency}</SelectItem>
+                                      ))}
+                                      <SelectItem value="Other Agency">Other (Specify Custom Agency)</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+
+                                  {field.value === "Other Agency" && (
+                                    <Input 
+                                      placeholder="Enter custom agency name *" 
+                                      value={customAgencyName}
+                                      onChange={(e) => {
+                                        setCustomAgencyName(e.target.value);
+                                        setValue("agent.agencyName", e.target.value, { shouldValidate: true });
+                                      }}
+                                      className="h-11 bg-white rounded-xl text-xs" 
+                                    />
+                                  )}
+                                </div>
+                              );
+                            }}
+                          />
                         </div>
 
                         <div className="space-y-2">
@@ -2365,11 +2594,11 @@ export default function ApplicationWizard({
                   </div>
                 </FormAccordion>
 
-                {/* 2. Document Upload & Multiple Education Certificates (CR-11 & Section 16) */}
-                <FormAccordion title="2. Verification Documents & Certificates *" defaultOpen={true} badgeText="Multiple Certificates (CR-11)">
+                {/* 2. Document Upload */}
+                <FormAccordion title="2. Verification Documents & Certificates *" defaultOpen={true}>
                   <div className="space-y-4 text-xs">
                     <p className="text-slate-600 font-medium leading-relaxed">
-                      Upload verification documents. As per CR-11, multiple Education Certificates can be attached.
+                      Upload verification documents. Multiple education certificates can be attached.
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2547,11 +2776,11 @@ export default function ApplicationWizard({
                   </div>
                 </FormAccordion>
 
-                {/* 4. Native Applicant Digital Signature Pad (CR-12 & Section 17) */}
-                <FormAccordion title="4. Native Applicant Digital Signature *" defaultOpen={true} badgeText="In-Browser HTML5 Pad (CR-12)">
+                {/* 4. Native Applicant Digital Signature */}
+                <FormAccordion title="4. Native Applicant Digital Signature *" defaultOpen={true}>
                   <div className="space-y-4">
                     <p className="text-xs text-slate-600 font-medium leading-relaxed">
-                      Draw your live legal signature in the box below using your mouse, trackpad, stylus, or touch screen as per EGA CR-12 specification.
+                      Draw your live legal signature in the box below using your mouse, trackpad, stylus, or touch screen.
                     </p>
 
                     <div className="border-2 border-dashed border-slate-300 rounded-2xl bg-white p-4 text-center space-y-3 relative">
@@ -2593,21 +2822,21 @@ export default function ApplicationWizard({
                   </div>
                 </FormAccordion>
 
-                {/* 5. Application Fee & Approved Payment Methods (CR-09, CR-10, F-073) */}
-                <FormAccordion title="5. Application Fee & Approved Payment Methods *" defaultOpen={true} badgeText={`SGD ${feeAmount}.00 (CR-09)`}>
+                {/* 5. Application Fee & Approved Payment Methods */}
+                <FormAccordion title="5. Application Fee & Approved Payment Methods *" defaultOpen={true} badgeText={`SGD ${feeAmount}.00`}>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center bg-[#252D65]/5 p-5 rounded-2xl border border-[#252D65]/20">
                       <div>
                         <h4 className="font-heading font-bold text-base text-slate-900">Application Fee Summary</h4>
                         <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                          Partner Rule (CR-09): {watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC") ? "Partner University Fee (SGD 320)" : "EGA Course Fee (SGD 160)"}
+                          Fee Category: {watchPartner.includes("Glasgow") || watchPartner.includes("Kingston") || watchPartner.includes("NCC") ? "Partner University Application Fee" : "EGA Course Application Fee"}
                         </p>
                       </div>
                       <span className="text-2xl font-mono font-extrabold text-[#252D65]">SGD {feeAmount}.00</span>
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="text-slate-800 font-bold text-xs">Approved Payment Method (CR-10 / Spec Section 15)</Label>
+                      <Label className="text-slate-800 font-bold text-xs">Approved Payment Method *</Label>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
                           type="button"
@@ -2666,27 +2895,46 @@ export default function ApplicationWizard({
             )}
         </div>
 
+        {/* Save Draft Notification */}
+        {saveDraftSuccessMsg && (
+          <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-medium text-xs flex items-center gap-2 animate-in fade-in duration-300">
+            <Check size={16} className="text-emerald-700 shrink-0" />
+            <span>{saveDraftSuccessMsg}</span>
+          </div>
+        )}
+
         {/* Bottom Navigation Action Buttons */}
         <div className="flex items-center justify-between pt-2">
-          {step > 1 ? (
+          <div className="flex items-center gap-3">
+            {step > 1 && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={prevStep}
+                disabled={isSubmitting || isSavingDraft}
+                className="h-12 px-6 border-slate-200 text-slate-700 rounded-xl font-bold gap-2 bg-white hover:bg-slate-50"
+              >
+                <ArrowLeft size={16} /> Back
+              </Button>
+            )}
+
             <Button
               type="button"
               variant="outline"
-              onClick={prevStep}
-              disabled={isSubmitting}
-              className="h-12 px-6 border-slate-200 text-slate-700 rounded-xl font-bold gap-2 bg-white hover:bg-slate-50"
+              onClick={handleSaveDraft}
+              disabled={isSavingDraft || isSubmitting}
+              className="h-12 px-5 border-slate-300 text-slate-700 bg-white hover:bg-slate-50 rounded-xl font-bold flex items-center gap-2 shadow-2xs"
             >
-              <ArrowLeft size={16} /> Back
+              <Save size={16} className="text-[#252D65]" />
+              {isSavingDraft ? "Saving..." : "Save as Draft"}
             </Button>
-          ) : (
-            <div />
-          )}
+          </div>
 
           {step < 5 ? (
             <Button
               type="button"
               onClick={nextStep}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSavingDraft}
               className="h-12 px-8 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold gap-2 shadow-md shadow-[#252D65]/25 hover:shadow-lg transition-all"
             >
               Continue to {SECTIONS.find(s => s.id === step + 1)?.shortName || "Next"} &gt;
@@ -2718,12 +2966,12 @@ export default function ApplicationWizard({
         </div>
       </form>
 
-      {/* Qualification Modal (CR-07 3 Fields) */}
+      {/* Qualification Modal */}
       {isQualModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl relative text-left border border-slate-200 font-jost">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
-              <h3 className="text-xl font-bold text-slate-900 font-heading">Add Qualification (CR-07)</h3>
+              <h3 className="text-xl font-bold text-slate-900 font-heading">Add Academic Qualification</h3>
               <button type="button" onClick={() => setIsQualModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-sm font-bold">✕</button>
             </div>
 
@@ -2759,45 +3007,53 @@ export default function ApplicationWizard({
                   }
                 }}
               >
-                Save Qualification
+                Add Record
               </Button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Key Points Modal (F-028) */}
+      {/* Pre-Course Counselling Key Points Modal */}
       {isKeyPointsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-xl max-h-[85vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative text-left border border-slate-200 font-jost space-y-5">
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-y-auto p-6 sm:p-8 shadow-2xl relative text-left border border-slate-200 font-jost space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-xl font-bold text-slate-900 font-heading">Pre-Course Counselling Key Points</h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">Please review these essential items regarding your academic programme at EGA.</p>
+                <h3 className="text-xl font-bold text-slate-900 font-heading">Pre-Course Counselling Checklist & Key Points</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Please review these essential items regarding your academic programme at Educare Global Academy (EGA).</p>
               </div>
               <button type="button" onClick={() => setIsKeyPointsModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-sm font-bold p-1">✕</button>
             </div>
 
-            <div className="space-y-3 text-xs text-slate-700 leading-relaxed">
+            <div className="space-y-3.5 text-xs text-slate-700 leading-relaxed">
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <p className="font-bold text-slate-900">1. School Vision, Mission & EduTrust System</p>
-                <p>EGA is committed to high educational standards and EduTrust certification guidelines regulated by the Committee for Private Education (CPE), SkillsFuture Singapore.</p>
+                <p className="font-bold text-slate-900 flex items-center gap-1.5"><ShieldCheck size={14} className="text-[#252D65]" /> 1. School Vision, Mission & EduTrust Certification</p>
+                <p>Educare Global Academy (EGA) is registered with the Committee for Private Education (CPE), SkillsFuture Singapore (SSG), and maintains EduTrust certification ensuring educational and administrative excellence.</p>
               </div>
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <p className="font-bold text-slate-900">2. Course Information & Admission Criteria</p>
-                <p>Entry qualifications, module structure, mode of delivery (Full Time / Part Time / E-learning), assessment methods, and graduation award requirements.</p>
+                <p className="font-bold text-slate-900 flex items-center gap-1.5"><GraduationCap size={14} className="text-[#252D65]" /> 2. Course Information, Modules & Awarding Body</p>
+                <p>Programme duration, entry admission criteria, module breakdown, modes of delivery (Full Time / Part Time / E-learning), assessment schedules, and university partner awarding guidelines.</p>
               </div>
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <p className="font-bold text-slate-900">3. Fee Structure & Fee Protection Scheme (FPS)</p>
-                <p>All tuition fees and course-related charges are fully protected under the Fee Protection Scheme (FPS) using CPE-approved insurance mechanisms.</p>
+                <p className="font-bold text-slate-900 flex items-center gap-1.5"><CreditCard size={14} className="text-[#252D65]" /> 3. Fee Structure & Fee Protection Scheme (FPS)</p>
+                <p>Comprehensive course fees, miscellaneous charges, payment milestones, and mandatory Fee Protection Scheme (FPS) insurance coverage protecting all student fees.</p>
               </div>
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <p className="font-bold text-slate-900">4. Refund, Withdrawal & Transfer Policies</p>
-                <p>Standard student contract terms, cooling-off period (7 working days), refund calculation percentages, and formal withdrawal procedures.</p>
+                <p className="font-bold text-slate-900 flex items-center gap-1.5"><FileCheck2 size={14} className="text-[#252D65]" /> 4. Standard Student Contract & Cooling-Off Period</p>
+                <p>Every student signs a standard PEI-Student Contract with a mandatory 7-working-day cooling-off period from contract signing date, entitling the applicant to maximum refund allowances.</p>
               </div>
               <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
-                <p className="font-bold text-slate-900">5. Attendance Requirements</p>
-                <p>International students on Student Pass must maintain at least 90% monthly attendance. Local students must maintain at least 75% attendance.</p>
+                <p className="font-bold text-slate-900 flex items-center gap-1.5"><RefreshCw size={14} className="text-[#252D65]" /> 5. Refund, Withdrawal & Transfer Policies</p>
+                <p>Clear policies governing course withdrawals, module deferments, institutional transfers, and refund percentages aligned with CPE regulations.</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900 flex items-center gap-1.5"><Clock size={14} className="text-[#252D65]" /> 6. Attendance Requirements & Student's Pass Regulations</p>
+                <p>International students holding a Student's Pass must achieve at least 90% monthly attendance and comply with Singapore Immigration & Checkpoints Authority (ICA) laws. Local students must maintain at least 75% attendance.</p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                <p className="font-bold text-slate-900 flex items-center gap-1.5"><UserCircle2 size={14} className="text-[#252D65]" /> 7. Medical Insurance & Student Support Services</p>
+                <p>Mandatory group hospitalization and surgical insurance, pastoral counselling, academic advisory, orientation programmes, and CPE Mediation-Arbitration dispute resolution services.</p>
               </div>
             </div>
 
@@ -2814,7 +3070,7 @@ export default function ApplicationWizard({
         </div>
       )}
 
-      {/* PayNow SGQR Modal (CR-10) */}
+      {/* PayNow SGQR Modal */}
       {isPayNowModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl relative border border-slate-200 font-jost space-y-4">
