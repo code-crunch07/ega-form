@@ -144,6 +144,7 @@ model Application {
   termsAccepted      Boolean @default(false)
   privacyAccepted    Boolean @default(false)
   digitalSignature   String?
+  draftData          String?
   submittedAt        DateTime?
 
   createdAt DateTime @default(now())

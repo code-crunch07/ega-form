@@ -28,6 +28,15 @@ export async function saveDraftApplication(data: any, step: number = 1) {
     const appNumber = draft?.appNumber || `EGA${new Date().getFullYear()}${Math.floor(10000 + Math.random() * 90000)}`;
     const progLevel = data.academicLevel || (data.courseType === "Package Courses" ? "Package Pathway" : "Diploma");
 
+    const draftPayload = JSON.stringify({
+      ...data,
+      step,
+      education: data.education || data.educationList || [],
+      educationList: data.educationList || data.education || [],
+      certFiles: data.certFiles || [],
+      digitalSignature: data.digitalSignature || "",
+    });
+
     if (draft) {
       draft = await prisma.application.update({
         where: { id: draft.id },
@@ -40,6 +49,7 @@ export async function saveDraftApplication(data: any, step: number = 1) {
           intake: data.intake || draft.intake,
           studyMode: data.studyMode || draft.studyMode,
           digitalSignature: data.digitalSignature || draft.digitalSignature,
+          draftData: draftPayload,
         },
       });
     } else {
@@ -57,7 +67,25 @@ export async function saveDraftApplication(data: any, step: number = 1) {
           intake: data.intake || "16 Nov 2026",
           studyMode: data.studyMode || "Full Time",
           digitalSignature: data.digitalSignature || "",
+          draftData: draftPayload,
         },
+      });
+    }
+
+    // Persist education history records if present
+    const educationItems = Array.isArray(data.education) && data.education.length > 0 
+      ? data.education 
+      : (Array.isArray(data.educationList) && data.educationList.length > 0 ? data.educationList : []);
+
+    if (educationItems.length > 0) {
+      await prisma.educationHistory.deleteMany({ where: { applicationId: draft.id } });
+      await prisma.educationHistory.createMany({
+        data: educationItems.map((ed: any) => ({
+          applicationId: draft.id,
+          country: ed.country || "Singapore",
+          institution: ed.institution || "",
+          qualification: ed.qualificationTitle || ed.qualification || "",
+        })),
       });
     }
 

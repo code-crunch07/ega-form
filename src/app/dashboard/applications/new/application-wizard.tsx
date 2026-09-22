@@ -313,22 +313,48 @@ export default function ApplicationWizard({
   existingDraft?: any,
   userProfile?: any
 }) {
-  const [step, setStep] = useState(existingDraft?.currentStep || 1);
+  const profileData = userProfile || user.profile;
+
+  // Parse server-side saved draft payload if present
+  const initialDraftData = useMemo(() => {
+    if (existingDraft?.draftData) {
+      try {
+        const parsed = JSON.parse(existingDraft.draftData);
+        if (parsed && typeof parsed === "object") return parsed;
+      } catch (e) {
+        console.error("Error parsing existingDraft.draftData", e);
+      }
+    }
+    return null;
+  }, [existingDraft]);
+
+  const [step, setStep] = useState(initialDraftData?.step || existingDraft?.currentStep || 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [saveDraftSuccessMsg, setSaveDraftSuccessMsg] = useState<string | null>(null);
   const [successAppNumber, setSuccessAppNumber] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Qualifications state
-  const [educationList, setEducationList] = useState<any[]>(
-    existingDraft?.educationHistory?.map((ed: any) => ({
-      id: ed.id,
-      country: ed.country,
-      institution: ed.institution,
-      qualificationTitle: ed.qualification,
-    })) || []
-  );
+  // Initial Qualifications state
+  const initialEducations = useMemo(() => {
+    if (initialDraftData?.educationList && Array.isArray(initialDraftData.educationList) && initialDraftData.educationList.length > 0) {
+      return initialDraftData.educationList;
+    }
+    if (initialDraftData?.education && Array.isArray(initialDraftData.education) && initialDraftData.education.length > 0) {
+      return initialDraftData.education;
+    }
+    if (existingDraft?.educationHistory && Array.isArray(existingDraft.educationHistory) && existingDraft.educationHistory.length > 0) {
+      return existingDraft.educationHistory.map((ed: any) => ({
+        id: ed.id,
+        country: ed.country,
+        institution: ed.institution,
+        qualificationTitle: ed.qualification,
+      }));
+    }
+    return [];
+  }, [initialDraftData, existingDraft]);
+
+  const [educationList, setEducationList] = useState<any[]>(initialEducations);
   const [isQualModalOpen, setIsQualModalOpen] = useState(false);
   const [isKeyPointsModalOpen, setIsKeyPointsModalOpen] = useState(false);
   const [qualForm, setQualForm] = useState<any>({
@@ -338,34 +364,36 @@ export default function ApplicationWizard({
   });
 
   // Education Certificate Uploads
-  const [certFiles, setCertFiles] = useState<{ id: string; name: string; size: string }[]>([]);
+  const [certFiles, setCertFiles] = useState<{ id: string; name: string; size: string }[]>(
+    initialDraftData?.certFiles || []
+  );
 
   // Native Applicant Signature Pad state
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [savedSignature, setSavedSignature] = useState<string | null>(existingDraft?.digitalSignature || null);
+  const [savedSignature, setSavedSignature] = useState<string | null>(
+    initialDraftData?.digitalSignature || existingDraft?.digitalSignature || null
+  );
 
   // PayNow SGQR & Flywire Modal state
   const [isPayNowModalOpen, setIsPayNowModalOpen] = useState(false);
   const [isFlywireModalOpen, setIsFlywireModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"paynow" | "flywire">("paynow");
-  const [isDraftRestored, setIsDraftRestored] = useState(Boolean(existingDraft));
+  const [isDraftRestored, setIsDraftRestored] = useState(Boolean(existingDraft || initialDraftData));
   const [customAgencyName, setCustomAgencyName] = useState("");
 
   const router = useRouter();
 
-  const profileData = userProfile || user.profile;
-
-  const { register, handleSubmit, control, watch, setValue, getValues, trigger, formState: { errors } } = useForm<any>({
+  const { register, handleSubmit, control, watch, setValue, getValues, reset, trigger, formState: { errors } } = useForm<any>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
-      studentType: existingDraft?.applicantType || "",
-      universityPartner: existingDraft?.school || "",
-      studyMode: existingDraft?.studyMode || "",
-      courseType: "Standalone Course",
-      academicLevel: existingDraft?.programmeLevel || "",
-      programmeId: existingDraft?.programmeId || "",
-      packageProgrammes: {
+      studentType: initialDraftData?.studentType || existingDraft?.applicantType || "",
+      universityPartner: initialDraftData?.universityPartner || existingDraft?.school || "",
+      studyMode: initialDraftData?.studyMode || existingDraft?.studyMode || "",
+      courseType: initialDraftData?.courseType || "Standalone Course",
+      academicLevel: initialDraftData?.academicLevel || existingDraft?.programmeLevel || "",
+      programmeId: initialDraftData?.programmeId || existingDraft?.programmeId || "",
+      packageProgrammes: initialDraftData?.packageProgrammes || {
         prog1Level: "",
         prog1Id: "",
         prog2Level: "",
@@ -373,24 +401,24 @@ export default function ApplicationWizard({
         prog3Level: "",
         prog3Id: "",
       },
-      intake: existingDraft?.intake || "",
+      intake: initialDraftData?.intake || existingDraft?.intake || "",
 
-      counsellingDeclaration: "",
+      counsellingDeclaration: initialDraftData?.counsellingDeclaration || "",
 
       personal: {
-        title: normalizeTitle(profileData?.title) || "Mr.",
-        fullName: profileData?.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : "",
-        surname: profileData?.lastName || "",
-        dob: profileData?.dob ? new Date(profileData.dob).toISOString().split('T')[0] : "",
-        gender: profileData?.gender || "Male",
-        maritalStatus: profileData?.maritalStatus || "Single",
-        nationality: profileData?.nationality || "",
-        email: user.email || "",
-        phoneCountryCode: "+65",
-        phone: profileData?.phone || "",
+        title: normalizeTitle(initialDraftData?.personal?.title || profileData?.title) || "Mr.",
+        fullName: initialDraftData?.personal?.fullName ?? (profileData?.firstName ? `${profileData.firstName} ${profileData.lastName || ''}`.trim() : ""),
+        surname: initialDraftData?.personal?.surname ?? profileData?.lastName ?? "",
+        dob: initialDraftData?.personal?.dob ?? (profileData?.dob ? new Date(profileData.dob).toISOString().split('T')[0] : ""),
+        gender: initialDraftData?.personal?.gender || profileData?.gender || "Male",
+        maritalStatus: initialDraftData?.personal?.maritalStatus || profileData?.maritalStatus || "Single",
+        nationality: initialDraftData?.personal?.nationality || profileData?.nationality || "",
+        email: initialDraftData?.personal?.email || user.email || "",
+        phoneCountryCode: initialDraftData?.personal?.phoneCountryCode || "+65",
+        phone: initialDraftData?.personal?.phone ?? profileData?.phone ?? "",
       },
 
-      emergencyContact: {
+      emergencyContact: initialDraftData?.emergencyContact || {
         contactType: "Parent / Legal Guardian",
         fullName: profileData?.emergencyContactName || "",
         countryCode: "+65",
@@ -399,7 +427,7 @@ export default function ApplicationWizard({
         relation: profileData?.emergencyContactRelation || "",
       },
 
-      guardian: {
+      guardian: initialDraftData?.guardian || {
         isUnder18: false,
         isSameAsEmergency: false,
         fullName: "",
@@ -409,7 +437,7 @@ export default function ApplicationWizard({
         relation: "",
       },
 
-      passport: {
+      passport: initialDraftData?.passport || {
         passportNumber: profileData?.passportNumber || "",
         countryOfIssue: "",
         issueDate: "",
@@ -417,7 +445,7 @@ export default function ApplicationWizard({
         countryOfBirth: "",
       },
 
-      address: {
+      address: initialDraftData?.address || {
         country: profileData?.country || "Singapore",
         state: profileData?.state || "Singapore",
         city: profileData?.city || "Singapore",
@@ -427,27 +455,27 @@ export default function ApplicationWizard({
         unitNo: "",
       },
 
-      education: existingDraft?.educationHistory?.map((ed: any) => ({
+      education: initialDraftData?.education || initialDraftData?.educationList || existingDraft?.educationHistory?.map((ed: any) => ({
         country: ed.country,
         institution: ed.institution,
         qualificationTitle: ed.qualification,
       })) || [],
 
-      englishTest: {
+      englishTest: initialDraftData?.englishTest || {
         hasTakenTest: false,
         testType: "",
         testDate: "",
         isTentativeDate: false,
       },
 
-      additionalInfo: {
+      additionalInfo: initialDraftData?.additionalInfo || {
         healthConditions: "NA",
         conductSuspended: false,
         conductConvicted: false,
         marketingChannel: "",
       },
 
-      agent: {
+      agent: initialDraftData?.agent || {
         isAgentRepresented: false,
         agentCountry: "Singapore",
         agencyName: "",
@@ -455,14 +483,14 @@ export default function ApplicationWizard({
         counsellorEmail: "",
       },
 
-      consent: {
+      consent: initialDraftData?.consent || {
         dataProcessingConsent: true,
         partnerConsent: true,
         applicantDeclaration: true,
         marketingConsent: false,
       },
 
-      digitalSignature: existingDraft?.digitalSignature || "",
+      digitalSignature: initialDraftData?.digitalSignature || existingDraft?.digitalSignature || "",
     }
   });
 
@@ -539,7 +567,14 @@ export default function ApplicationWizard({
     setFormError(null);
     try {
       const currentValues = getValues();
-      const res = await saveDraftApplication(currentValues, step);
+      const payload = {
+        ...currentValues,
+        education: educationList,
+        educationList,
+        certFiles,
+        digitalSignature: savedSignature || currentValues.digitalSignature || "",
+      };
+      const res = await saveDraftApplication(payload, step);
       if (res.success) {
         setSaveDraftSuccessMsg(`Application draft saved successfully! (Ref: ${res.appNumber})`);
         setIsDraftRestored(true);
@@ -555,33 +590,54 @@ export default function ApplicationWizard({
     }
   };
 
-  // Restore draft on initial load if present
+  // Restore draft on initial load if present (combining server draftData & localStorage)
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         const savedRaw = localStorage.getItem("ega_application_draft");
         if (savedRaw) {
-          const draft = JSON.parse(savedRaw);
-          if (draft && draft.formData && Object.keys(draft.formData).length > 0) {
-            if (Array.isArray(draft.educationList) && draft.educationList.length > 0 && educationList.length === 0) {
-              setEducationList(draft.educationList);
-            }
-            if (Array.isArray(draft.certFiles) && draft.certFiles.length > 0) {
-              setCertFiles(draft.certFiles);
-            }
-            if (!existingDraft && draft.step && draft.step > 1) {
-              setStep(draft.step);
-            }
-            Object.entries(draft.formData).forEach(([key, val]) => {
-              if (val !== undefined && val !== null && val !== "") {
-                const currentVal = getValues(key as any);
-                if (!currentVal) {
-                  setValue(key as any, val);
-                }
+          const localDraft = JSON.parse(savedRaw);
+          if (localDraft && localDraft.formData && Object.keys(localDraft.formData).length > 0) {
+            // Check if localDraft is newer than initialDraftData
+            const isLocalNewer = !initialDraftData || (localDraft.savedAt && (!existingDraft?.updatedAt || new Date(localDraft.savedAt) > new Date(existingDraft.updatedAt)));
+            if (isLocalNewer) {
+              reset(localDraft.formData);
+              if (Array.isArray(localDraft.educationList) && localDraft.educationList.length > 0) {
+                setEducationList(localDraft.educationList);
               }
-            });
-            setIsDraftRestored(true);
+              if (Array.isArray(localDraft.certFiles) && localDraft.certFiles.length > 0) {
+                setCertFiles(localDraft.certFiles);
+              }
+              if (localDraft.formData?.digitalSignature) {
+                setSavedSignature(localDraft.formData.digitalSignature);
+              }
+              if (localDraft.step && localDraft.step > 0) {
+                setStep(localDraft.step);
+              }
+              setIsDraftRestored(true);
+              return;
+            }
           }
+        }
+
+        // If server initialDraftData exists, ensure form is reset with it
+        if (initialDraftData) {
+          reset(initialDraftData);
+          if (Array.isArray(initialDraftData.educationList) && initialDraftData.educationList.length > 0) {
+            setEducationList(initialDraftData.educationList);
+          } else if (Array.isArray(initialDraftData.education) && initialDraftData.education.length > 0) {
+            setEducationList(initialDraftData.education);
+          }
+          if (Array.isArray(initialDraftData.certFiles) && initialDraftData.certFiles.length > 0) {
+            setCertFiles(initialDraftData.certFiles);
+          }
+          if (initialDraftData.digitalSignature) {
+            setSavedSignature(initialDraftData.digitalSignature);
+          }
+          if (initialDraftData.step) {
+            setStep(initialDraftData.step);
+          }
+          setIsDraftRestored(true);
         }
       } catch (e) {
         console.error("Failed to restore draft:", e);
