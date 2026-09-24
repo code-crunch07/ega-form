@@ -98,33 +98,42 @@ function FormAccordion({
   defaultOpen = true,
   badgeText,
   actionButton,
+  hasError = false,
   children,
 }: {
   title: string;
   defaultOpen?: boolean;
   badgeText?: string;
   actionButton?: ReactNode;
+  hasError?: boolean;
   children: ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
     <div className={cn(
-      "border border-slate-200/90 rounded-2xl bg-white shadow-2xs transition-all duration-200 hover:border-slate-300 relative",
+      "border rounded-2xl bg-white shadow-2xs transition-all duration-200 relative",
+      hasError ? "border-rose-400 ring-2 ring-rose-500/15" : "border-slate-200/90 hover:border-slate-300",
       !isOpen && "overflow-hidden"
     )}>
       <div
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "bg-white hover:bg-slate-50/80 px-6 py-4.5 flex items-center justify-between transition-colors text-left select-none cursor-pointer border-b border-slate-100",
+          "px-6 py-4.5 flex items-center justify-between transition-colors text-left select-none cursor-pointer border-b",
+          hasError ? "bg-rose-50/50 border-rose-100 hover:bg-rose-50/70" : "bg-white hover:bg-slate-50/80 border-slate-100",
           isOpen ? "rounded-t-2xl" : "rounded-2xl"
         )}
       >
         <div className="flex items-center gap-3">
-          <span className="font-heading font-bold text-slate-900 text-base sm:text-lg">
+          <span className={cn("font-heading font-bold text-base sm:text-lg", hasError ? "text-rose-900" : "text-slate-900")}>
             {title}
           </span>
-          {badgeText && (
+          {hasError && (
+            <span className="text-[11px] font-bold text-rose-700 bg-rose-100 px-2.5 py-0.5 rounded-md flex items-center gap-1 font-mono">
+              <AlertCircle size={12} /> Required Details Missing
+            </span>
+          )}
+          {badgeText && !hasError && (
             <span className="text-[11px] font-bold font-mono text-[#252D65] bg-[#252D65]/10 px-2.5 py-0.5 rounded-md hidden sm:inline-block">
               {badgeText}
             </span>
@@ -134,7 +143,7 @@ function FormAccordion({
           {actionButton && (
             <div onClick={(e) => e.stopPropagation()}>{actionButton}</div>
           )}
-          <div className={cn("h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 transition-transform duration-300", isOpen && "rotate-180 bg-[#252D65]/10 text-[#252D65]")}>
+          <div className={cn("h-7 w-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 transition-transform duration-300", isOpen && "rotate-180 bg-[#252D65]/10 text-[#252D65]", hasError && "bg-rose-100 text-rose-700")}>
             <ChevronDown size={18} />
           </div>
         </div>
@@ -384,7 +393,7 @@ export default function ApplicationWizard({
 
   const router = useRouter();
 
-  const { register, handleSubmit, control, watch, setValue, getValues, reset, trigger, formState: { errors } } = useForm<any>({
+  const { register, handleSubmit, control, watch, setValue, getValues, reset, trigger, formState } = useForm<any>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
       studentType: initialDraftData?.studentType || existingDraft?.applicantType || "",
@@ -493,6 +502,8 @@ export default function ApplicationWizard({
       digitalSignature: initialDraftData?.digitalSignature || existingDraft?.digitalSignature || "",
     }
   });
+
+  const errors = formState.errors as Record<string, any>;
 
   // Watchers
   const watchStudentType = watch("studentType");
@@ -856,25 +867,32 @@ export default function ApplicationWizard({
     if (step < 5) {
       if (step === 1) {
         if (!getValues("studentType")) {
+          await trigger("studentType");
           setFormError("Please select whether you are a Local Student or International Student before continuing.");
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
         if (watchCourseType === "Standalone Course") {
           const pId = getValues("programmeId");
           if (!pId) {
+            await trigger("programmeId");
             setFormError("Please select an Available Programme before continuing.");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
           }
         }
         if (!getValues("counsellingDeclaration")) {
+          await trigger("counsellingDeclaration");
           setFormError("Please select your Pre-Course Counselling Declaration statement before continuing.");
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
       }
 
       if (step === 3) {
         if (educationList.length === 0) {
-          setFormError("Please add at least one Academic Qualification before continuing.");
+          setFormError("Please add at least one Academic Qualification record before continuing.");
+          window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
       }
@@ -883,9 +901,13 @@ export default function ApplicationWizard({
       switch (step) {
         case 1:
           fieldsToValidate = ['studentType', 'universityPartner', 'studyMode', 'courseType', 'intake', 'counsellingDeclaration'];
+          if (watchCourseType === "Standalone Course") {
+            fieldsToValidate.push('academicLevel', 'programmeId');
+          }
           break;
         case 2:
           fieldsToValidate = [
+            'personal.title',
             'personal.fullName', 
             'personal.surname', 
             'personal.dob', 
@@ -919,6 +941,7 @@ export default function ApplicationWizard({
         case 3:
           if (educationList.length === 0) {
             setFormError("Please add at least one Academic Qualification record before continuing.");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
           }
           if (watchHasTakenTest) {
@@ -928,7 +951,10 @@ export default function ApplicationWizard({
         case 4:
           fieldsToValidate = ['additionalInfo.healthConditions', 'additionalInfo.marketingChannel'];
           if (watchIsAgent) {
-            fieldsToValidate.push('agent.agentCountry', 'agent.agencyName', 'agent.counsellorName', 'agent.counsellorEmail');
+            fieldsToValidate.push('agent.agentCountry', 'agent.agencyName', 'agent.counsellorName');
+            if (getValues("agent.counsellorEmail")) {
+              fieldsToValidate.push('agent.counsellorEmail');
+            }
           }
           break;
       }
@@ -948,7 +974,8 @@ export default function ApplicationWizard({
           // ignore background save errors
         }
       } else {
-        setFormError("There are incomplete or invalid fields in this section. Please review all fields marked with *.");
+        setFormError("Please review and complete all required fields highlighted in red below.");
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     }
   };
@@ -967,15 +994,63 @@ export default function ApplicationWizard({
     if (errorKeys.length > 0) {
       const firstKey = errorKeys[0];
       let targetStep = 1;
-      if (["personal", "emergencyContact", "guardian", "passport", "address"].includes(firstKey)) {
+      let friendlyName = firstKey;
+      
+      if (firstKey === "studentType") {
+        targetStep = 1;
+        friendlyName = "Student Type Selection";
+      } else if (firstKey === "universityPartner") {
+        targetStep = 1;
+        friendlyName = "University Partner";
+      } else if (firstKey === "studyMode") {
+        targetStep = 1;
+        friendlyName = "Study Mode";
+      } else if (firstKey === "courseType" || firstKey === "programmeId" || firstKey === "academicLevel" || firstKey === "intake") {
+        targetStep = 1;
+        friendlyName = "Programme & Intake Selection";
+      } else if (firstKey === "counsellingDeclaration") {
+        targetStep = 1;
+        friendlyName = "Pre-Course Counselling Declaration";
+      } else if (firstKey === "personal") {
         targetStep = 2;
-      } else if (["education", "englishTest"].includes(firstKey)) {
+        friendlyName = "Personal Particulars";
+      } else if (firstKey === "emergencyContact") {
+        targetStep = 2;
+        friendlyName = "Emergency Contact Details";
+      } else if (firstKey === "guardian") {
+        targetStep = 2;
+        friendlyName = "Parent / Guardian Details";
+      } else if (firstKey === "passport") {
+        targetStep = 2;
+        friendlyName = "Passport Details";
+      } else if (firstKey === "address") {
+        targetStep = 2;
+        friendlyName = "Residential Address";
+      } else if (firstKey === "education") {
         targetStep = 3;
-      } else if (["additionalInfo", "agent"].includes(firstKey)) {
+        friendlyName = "Academic Qualifications";
+      } else if (firstKey === "englishTest") {
+        targetStep = 3;
+        friendlyName = "English Proficiency Test";
+      } else if (firstKey === "additionalInfo") {
         targetStep = 4;
+        if (fieldErrors.additionalInfo?.marketingChannel) {
+          friendlyName = "Marketing Channel (How did you hear about EGA?)";
+        } else if (fieldErrors.additionalInfo?.healthConditions) {
+          friendlyName = "Health Conditions & Learning Needs";
+        } else {
+          friendlyName = "Additional Information";
+        }
+      } else if (firstKey === "agent") {
+        targetStep = 4;
+        friendlyName = "Agent Details";
+      } else if (firstKey === "consent" || firstKey === "digitalSignature") {
+        targetStep = 5;
+        friendlyName = firstKey === "digitalSignature" ? "Native Applicant Digital Signature" : "Legal Declarations & Consents";
       }
+
       setStep(targetStep);
-      setFormError(`Please complete all required fields marked with * before submitting. (Incomplete: ${firstKey})`);
+      setFormError(`Please complete all required fields marked with * before submitting. (Incomplete: ${friendlyName})`);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
@@ -1174,7 +1249,9 @@ export default function ApplicationWizard({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-bold text-base text-slate-900 font-heading">Mandatory Student Type Selection *</h3>
+                      <h3 className={cn("font-bold text-base font-heading", errors.studentType ? "text-rose-600" : "text-slate-900")}>
+                        Mandatory Student Type Selection *
+                      </h3>
                       <p className="text-xs text-slate-500 font-medium mt-0.5">Select your applicant classification before proceeding with programme selection.</p>
                     </div>
                     <span className="text-[11px] font-bold bg-[#252D65]/10 text-[#252D65] px-2.5 py-1 rounded-full uppercase tracking-wider font-mono">
@@ -1195,6 +1272,8 @@ export default function ApplicationWizard({
                             "p-5 rounded-2xl border-2 cursor-pointer transition-all duration-200 flex items-start gap-4 relative overflow-hidden",
                             isSelected 
                               ? "border-[#252D65] bg-[#252D65]/5 shadow-2xs" 
+                              : errors.studentType
+                              ? "border-rose-300 bg-rose-50/20 hover:border-rose-400"
                               : "border-slate-200 hover:border-[#252D65]/30 bg-white"
                           )}
                         >
@@ -1227,6 +1306,12 @@ export default function ApplicationWizard({
                       );
                     })}
                   </div>
+                  {errors.studentType && (
+                    <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                      <AlertCircle size={13} className="shrink-0" />
+                      {errors.studentType.message as string}
+                    </p>
+                  )}
                 </div>
 
                 <div className="h-px bg-slate-100" />
@@ -1240,7 +1325,9 @@ export default function ApplicationWizard({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">University Partner *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.universityPartner ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        University Partner *
+                      </Label>
                       <Controller
                         name="universityPartner"
                         control={control}
@@ -1257,7 +1344,12 @@ export default function ApplicationWizard({
                             setValue("packageProgrammes.prog3Level", "");
                             setValue("packageProgrammes.prog3Id", "");
                           }} value={field.value || ""}>
-                            <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#252D65]/15">
+                            <SelectTrigger className={cn(
+                              "h-12 bg-white rounded-xl font-medium focus:ring-2",
+                              errors.universityPartner 
+                                ? "border-rose-500 bg-rose-50/20 text-rose-900 focus:ring-rose-500/20 ring-1 ring-rose-500" 
+                                : "border-slate-200 text-slate-800 focus:ring-[#252D65]/15"
+                            )}>
                               <SelectValue placeholder="Select University Partner" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1272,10 +1364,18 @@ export default function ApplicationWizard({
                           </Select>
                         )}
                       />
+                      {errors.universityPartner && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.universityPartner.message as string}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Mode of Study *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.studyMode ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Mode of Study *
+                      </Label>
                       <Controller
                         name="studyMode"
                         control={control}
@@ -1292,7 +1392,12 @@ export default function ApplicationWizard({
                             setValue("packageProgrammes.prog3Level", "");
                             setValue("packageProgrammes.prog3Id", "");
                           }} value={field.value || ""}>
-                            <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium focus:ring-2 focus:ring-[#252D65]/15">
+                            <SelectTrigger className={cn(
+                              "h-12 bg-white rounded-xl font-medium focus:ring-2",
+                              errors.studyMode 
+                                ? "border-rose-500 bg-rose-50/20 text-rose-900 focus:ring-rose-500/20 ring-1 ring-rose-500" 
+                                : "border-slate-200 text-slate-800 focus:ring-[#252D65]/15"
+                            )}>
                               <SelectValue placeholder="Select Mode of Study" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1303,6 +1408,12 @@ export default function ApplicationWizard({
                           </Select>
                         )}
                       />
+                      {errors.studyMode && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.studyMode.message as string}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1363,7 +1474,9 @@ export default function ApplicationWizard({
                   {watchCourseType === "Standalone Course" ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
                       <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-xs">Academic Level *</Label>
+                        <Label className={cn("font-semibold text-xs", errors.academicLevel ? "text-rose-600 font-bold" : "text-slate-700")}>
+                          Academic Level *
+                        </Label>
                         <Controller
                           name="academicLevel"
                           control={control}
@@ -1373,7 +1486,12 @@ export default function ApplicationWizard({
                               setValue("programmeId", "");
                               setValue("intake", "");
                             }} value={field.value || ""}>
-                              <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
+                              <SelectTrigger className={cn(
+                                "h-12 bg-white rounded-xl font-medium",
+                                errors.academicLevel 
+                                  ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" 
+                                  : "border-slate-200 text-slate-800"
+                              )}>
                                 <SelectValue placeholder="Select Academic Level" />
                               </SelectTrigger>
                               <SelectContent>
@@ -1386,16 +1504,25 @@ export default function ApplicationWizard({
                             </Select>
                           )}
                         />
+                        {errors.academicLevel && (
+                          <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                            <AlertCircle size={13} className="shrink-0" />
+                            {errors.academicLevel.message as string}
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-xs">Available Programme *</Label>
+                        <Label className={cn("font-semibold text-xs", errors.programmeId ? "text-rose-600 font-bold" : "text-slate-700")}>
+                          Available Programme *
+                        </Label>
                         <Controller
                           name="programmeId"
                           control={control}
                           render={({ field }) => (
                             <SearchableProgrammeSelect
                               value={field.value}
+                              error={Boolean(errors.programmeId)}
                               onChange={(newId) => {
                                 field.onChange(newId);
                                 setValue("intake", "");
@@ -1409,16 +1536,29 @@ export default function ApplicationWizard({
                             />
                           )}
                         />
+                        {errors.programmeId && (
+                          <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                            <AlertCircle size={13} className="shrink-0" />
+                            {errors.programmeId.message as string}
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-slate-700 font-semibold text-xs">Intake *</Label>
+                        <Label className={cn("font-semibold text-xs", errors.intake ? "text-rose-600 font-bold" : "text-slate-700")}>
+                          Intake *
+                        </Label>
                         <Controller
                           name="intake"
                           control={control}
                           render={({ field }) => (
                             <Select onValueChange={field.onChange} value={field.value || ""}>
-                              <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-medium">
+                              <SelectTrigger className={cn(
+                                "h-12 bg-white rounded-xl font-medium",
+                                errors.intake 
+                                  ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" 
+                                  : "border-slate-200 text-slate-800"
+                              )}>
                                 <SelectValue placeholder="Select Intake" />
                               </SelectTrigger>
                               <SelectContent className="w-[320px] max-w-md">
@@ -1440,6 +1580,12 @@ export default function ApplicationWizard({
                             </Select>
                           )}
                         />
+                        {errors.intake && (
+                          <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                            <AlertCircle size={13} className="shrink-0" />
+                            {errors.intake.message as string}
+                          </p>
+                        )}
                       </div>
                     </div>
                   ) : (
@@ -1491,13 +1637,20 @@ export default function ApplicationWizard({
                           </div>
 
                           <div className="space-y-2">
-                            <Label className="text-slate-700 font-bold text-xs">Primary Pathway Intake *</Label>
+                            <Label className={cn("font-bold text-xs", errors.intake ? "text-rose-600 font-bold" : "text-slate-700")}>
+                              Primary Pathway Intake *
+                            </Label>
                             <Controller
                               name="intake"
                               control={control}
                               render={({ field }) => (
                                 <Select onValueChange={field.onChange} value={field.value || ""}>
-                                  <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold">
+                                  <SelectTrigger className={cn(
+                                    "h-12 bg-white rounded-xl font-semibold",
+                                    errors.intake 
+                                      ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" 
+                                      : "border-slate-200 text-slate-800"
+                                  )}>
                                     <SelectValue placeholder="Select Intake" />
                                   </SelectTrigger>
                                   <SelectContent className="w-[320px] max-w-md">
@@ -1519,6 +1672,12 @@ export default function ApplicationWizard({
                                 </Select>
                               )}
                             />
+                            {errors.intake && (
+                              <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                <AlertCircle size={13} className="shrink-0" />
+                                {errors.intake.message as string}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -1614,7 +1773,9 @@ export default function ApplicationWizard({
                 {/* 3. Declaration on Pre-Course Counselling */}
                 <div className="space-y-4">
                   <div>
-                    <h3 className="font-bold text-base text-slate-900 font-heading">3. Declaration on Pre-Course Counselling *</h3>
+                    <h3 className={cn("font-bold text-base font-heading", errors.counsellingDeclaration ? "text-rose-600 font-extrabold" : "text-slate-900")}>
+                      3. Declaration on Pre-Course Counselling *
+                    </h3>
                     <p className="text-xs text-slate-600 font-medium leading-relaxed mt-1">
                       To help you confirm that you have gathered sufficient information on your choice of study, we have prepared a checklist of key point for you to take note of. Kindly ensure that you understand the details listed in the key points before submitting your application.{" "}
                       <button 
@@ -1638,8 +1799,12 @@ export default function ApplicationWizard({
                           { val: "read_self", label: "I have read sufficient information on my own and confirm that I do not require pre-course counselling by EGA / EGA Appointed Agents." }
                         ].map((opt) => (
                           <label key={opt.val} className={cn(
-                            "flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer font-medium text-xs text-slate-900 transition-all",
-                            field.value === opt.val ? "bg-[#252D65]/5 border-[#252D65] text-[#252D65] font-bold shadow-2xs" : "bg-white border-slate-200 hover:border-slate-300"
+                            "flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer font-medium text-xs transition-all",
+                            field.value === opt.val 
+                              ? "bg-[#252D65]/5 border-[#252D65] text-[#252D65] font-bold shadow-2xs" 
+                              : errors.counsellingDeclaration
+                              ? "border-rose-300 bg-rose-50/20 text-rose-900 hover:border-rose-400"
+                              : "bg-white border-slate-200 hover:border-slate-300 text-slate-900"
                           )}>
                             <input 
                               type="radio" 
@@ -1655,6 +1820,12 @@ export default function ApplicationWizard({
                       </div>
                     )}
                   />
+                  {errors.counsellingDeclaration && (
+                    <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                      <AlertCircle size={13} className="shrink-0" />
+                      {errors.counsellingDeclaration.message as string}
+                    </p>
+                  )}
                 </div>
 
               </div>
@@ -1665,17 +1836,28 @@ export default function ApplicationWizard({
               <div className="space-y-6 animate-in fade-in duration-300">
                 
                 {/* 9.1 Particulars */}
-                <FormAccordion title="1. Personal Particulars *" defaultOpen={true}>
+                <FormAccordion 
+                  title="1. Personal Particulars *" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.personal)}
+                >
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Title *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.personal?.title ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Title *
+                      </Label>
                       <Controller
                         name="personal.title"
                         control={control}
                         defaultValue="Mr."
                         render={({ field }) => (
                           <Select onValueChange={field.onChange} value={normalizeTitle(field.value)}>
-                            <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                            <SelectTrigger className={cn(
+                              "h-12 bg-white rounded-xl font-medium",
+                              errors.personal?.title 
+                                ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" 
+                                : "border-slate-200"
+                            )}>
                               <SelectValue placeholder="Title" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1689,24 +1871,82 @@ export default function ApplicationWizard({
                           </Select>
                         )}
                       />
+                      {errors.personal?.title && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.personal.title.message as string}
+                        </p>
+                      )}
                     </div>
 
                     <div className="md:col-span-2 space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Full Name (as in NRIC / Passport) *</Label>
-                      <Input {...register("personal.fullName")} placeholder="e.g. John Michael Doe" className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.personal?.fullName ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Full Name (as in NRIC / Passport) *
+                      </Label>
+                      <Input 
+                        {...register("personal.fullName")} 
+                        placeholder="e.g. John Michael Doe" 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.personal?.fullName 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.personal?.fullName && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.personal.fullName.message as string}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Surname *</Label>
-                      <Input {...register("personal.surname")} placeholder="Enter . if no family name" className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.personal?.surname ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Surname *
+                      </Label>
+                      <Input 
+                        {...register("personal.surname")} 
+                        placeholder="Enter . if no family name" 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.personal?.surname 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.personal?.surname && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.personal.surname.message as string}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Date of Birth *</Label>
-                      <Input type="date" max={new Date().toISOString().split("T")[0]} {...register("personal.dob")} className="h-12 rounded-xl" />
-                      {applicantAge !== null && (
+                      <Label className={cn("font-semibold text-xs", errors.personal?.dob ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Date of Birth *
+                      </Label>
+                      <Input 
+                        type="date" 
+                        max={new Date().toISOString().split("T")[0]} 
+                        {...register("personal.dob")} 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.personal?.dob 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.personal?.dob && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.personal.dob.message as string}
+                        </p>
+                      )}
+                      {applicantAge !== null && !errors.personal?.dob && (
                         <div className="pt-1">
                           {isUnder18 ? (
                             <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-0.5 rounded-md inline-block">
@@ -1722,13 +1962,18 @@ export default function ApplicationWizard({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Gender *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.personal?.gender ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Gender *
+                      </Label>
                       <Controller
                         name="personal.gender"
                         control={control}
                         defaultValue="male"
                         render={({ field }) => (
-                          <div className="flex h-12 items-center gap-4 bg-white border border-slate-200 rounded-xl px-4 text-xs font-semibold text-slate-800">
+                          <div className={cn(
+                            "flex h-12 items-center gap-4 bg-white rounded-xl px-4 text-xs font-semibold text-slate-800",
+                            errors.personal?.gender ? "border border-rose-500 bg-rose-50/20" : "border border-slate-200"
+                          )}>
                             {["male", "female"].map(g => (
                               <label key={g} className="flex items-center gap-1.5 capitalize cursor-pointer">
                                 <input type="radio" name="gender" value={g} checked={field.value === g} onChange={() => field.onChange(g)} className="w-4 h-4 text-[#252D65]" />
@@ -1741,14 +1986,21 @@ export default function ApplicationWizard({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Marital Status *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.personal?.maritalStatus ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Marital Status *
+                      </Label>
                       <Controller
                         name="personal.maritalStatus"
                         control={control}
                         defaultValue="Single"
                         render={({ field }) => (
                           <Select onValueChange={field.onChange} value={field.value || "Single"}>
-                            <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                            <SelectTrigger className={cn(
+                              "h-12 bg-white rounded-xl font-medium",
+                              errors.personal?.maritalStatus 
+                                ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" 
+                                : "border-slate-200"
+                            )}>
                               <SelectValue placeholder="Status" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1763,7 +2015,9 @@ export default function ApplicationWizard({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Nationality *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.personal?.nationality ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Nationality *
+                      </Label>
                       <Controller
                         name="personal.nationality"
                         control={control}
@@ -1771,11 +2025,18 @@ export default function ApplicationWizard({
                         render={({ field }) => (
                           <SearchableCountrySelect
                             value={field.value}
+                            error={Boolean(errors.personal?.nationality)}
                             onChange={field.onChange}
                             placeholder="Select Nationality / Country..."
                           />
                         )}
                       />
+                      {errors.personal?.nationality && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.personal.nationality.message as string}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1786,7 +2047,9 @@ export default function ApplicationWizard({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Contact Number *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.personal?.phone ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Contact Number *
+                      </Label>
                       <div className="flex gap-2">
                         <Controller
                           name="personal.phoneCountryCode"
@@ -1822,25 +2085,47 @@ export default function ApplicationWizard({
                             const val = e.target.value.replace(/[^0-9\s-]/g, "");
                             setValue("personal.phone", val, { shouldValidate: true });
                           }}
-                          className="flex-1 h-12 rounded-xl" 
+                          className={cn(
+                            "flex-1 h-12 rounded-xl",
+                            errors.personal?.phone 
+                              ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                              : "border-slate-200"
+                          )} 
                         />
                       </div>
+                      {errors.personal?.phone && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.personal.phone.message as string}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </FormAccordion>
 
                 {/* 9.2 Emergency Contact Details (CR-04 Mandatory) */}
-                <FormAccordion title="2. Emergency Contact Details *" defaultOpen={true}>
+                <FormAccordion 
+                  title="2. Emergency Contact Details *" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.emergencyContact)}
+                >
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Contact Type *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.emergencyContact?.contactType ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Contact Type *
+                      </Label>
                       <Controller
                         name="emergencyContact.contactType"
                         control={control}
                         defaultValue="Parent / Legal Guardian"
                         render={({ field }) => (
                           <Select onValueChange={field.onChange} value={field.value || "Parent / Legal Guardian"}>
-                            <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                            <SelectTrigger className={cn(
+                              "h-12 bg-white rounded-xl font-medium",
+                              errors.emergencyContact?.contactType 
+                                ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" 
+                                : "border-slate-200"
+                            )}>
                               <SelectValue placeholder="Select Type" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1855,19 +2140,55 @@ export default function ApplicationWizard({
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Emergency Contact Full Name *</Label>
-                      <Input {...register("emergencyContact.fullName")} placeholder="e.g. Robert Doe" className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.emergencyContact?.fullName ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Emergency Contact Full Name *
+                      </Label>
+                      <Input 
+                        {...register("emergencyContact.fullName")} 
+                        placeholder="e.g. Robert Doe" 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.emergencyContact?.fullName 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.emergencyContact?.fullName && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.emergencyContact.fullName.message as string}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Relationship to Applicant *</Label>
-                      <Input {...register("emergencyContact.relation")} placeholder="e.g. Father / Sister" className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.emergencyContact?.relation ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Relationship to Applicant *
+                      </Label>
+                      <Input 
+                        {...register("emergencyContact.relation")} 
+                        placeholder="e.g. Father / Sister" 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.emergencyContact?.relation 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.emergencyContact?.relation && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.emergencyContact.relation.message as string}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Emergency Contact Phone *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.emergencyContact?.phone ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Emergency Contact Phone *
+                      </Label>
                       <div className="flex gap-2">
                         <Controller
                           name="emergencyContact.countryCode"
@@ -1903,9 +2224,20 @@ export default function ApplicationWizard({
                             const val = e.target.value.replace(/[^0-9\s-]/g, "");
                             setValue("emergencyContact.phone", val, { shouldValidate: true });
                           }}
-                          className="flex-1 h-12 rounded-xl" 
+                          className={cn(
+                            "flex-1 h-12 rounded-xl",
+                            errors.emergencyContact?.phone 
+                              ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                              : "border-slate-200"
+                          )} 
                         />
                       </div>
+                      {errors.emergencyContact?.phone && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.emergencyContact.phone.message as string}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -1920,6 +2252,7 @@ export default function ApplicationWizard({
                   <FormAccordion 
                     title="3. Parent / Legal Guardian Details *" 
                     defaultOpen={true} 
+                    hasError={Boolean(errors.guardian)}
                     badgeText={applicantAge !== null && !isNaN(applicantAge) ? `Age: ${applicantAge} Years (Under-18 Rule)` : `Under-18 Rule`}
                   >
                     <div className="space-y-4">
@@ -1948,17 +2281,54 @@ export default function ApplicationWizard({
                       {watchIsSameAsEmergency === false && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 animate-in fade-in duration-200">
                           <div className="space-y-2">
-                            <Label className="text-slate-700 font-semibold text-xs">Guardian Full Name (As it appears on NRIC/Passport) *</Label>
-                            <Input {...register("guardian.fullName")} placeholder="e.g. Mary Doe" className="h-12 bg-white rounded-xl" />
+                            <Label className={cn("font-semibold text-xs", errors.guardian?.fullName ? "text-rose-600 font-bold" : "text-slate-700")}>
+                              Guardian Full Name (As it appears on NRIC/Passport) *
+                            </Label>
+                            <Input 
+                              {...register("guardian.fullName")} 
+                              placeholder="e.g. Mary Doe" 
+                              className={cn(
+                                "h-12 bg-white rounded-xl",
+                                errors.guardian?.fullName 
+                                  ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                                  : "border-slate-200"
+                              )} 
+                            />
+                            {errors.guardian?.fullName && (
+                              <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                <AlertCircle size={13} className="shrink-0" />
+                                {errors.guardian.fullName.message as string}
+                              </p>
+                            )}
                           </div>
 
                           <div className="space-y-2">
-                            <Label className="text-slate-700 font-semibold text-xs">Guardian Email Address *</Label>
-                            <Input {...register("guardian.email")} type="email" placeholder="guardian@example.com" className="h-12 bg-white rounded-xl" />
+                            <Label className={cn("font-semibold text-xs", errors.guardian?.email ? "text-rose-600 font-bold" : "text-slate-700")}>
+                              Guardian Email Address *
+                            </Label>
+                            <Input 
+                              {...register("guardian.email")} 
+                              type="email" 
+                              placeholder="guardian@example.com" 
+                              className={cn(
+                                "h-12 bg-white rounded-xl",
+                                errors.guardian?.email 
+                                  ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                                  : "border-slate-200"
+                              )} 
+                            />
+                            {errors.guardian?.email && (
+                              <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                <AlertCircle size={13} className="shrink-0" />
+                                {errors.guardian.email.message as string}
+                              </p>
+                            )}
                           </div>
 
                           <div className="space-y-2">
-                            <Label className="text-slate-700 font-semibold text-xs">Guardian Phone Number *</Label>
+                            <Label className={cn("font-semibold text-xs", errors.guardian?.phone ? "text-rose-600 font-bold" : "text-slate-700")}>
+                              Guardian Phone Number *
+                            </Label>
                             <div className="flex gap-2">
                               <Controller
                                 name="guardian.countryCode"
@@ -1991,14 +2361,42 @@ export default function ApplicationWizard({
                                   const val = e.target.value.replace(/[^0-9\s-]/g, "");
                                   setValue("guardian.phone", val, { shouldValidate: true });
                                 }}
-                                className="flex-1 h-12 bg-white rounded-xl" 
+                                className={cn(
+                                  "flex-1 h-12 bg-white rounded-xl",
+                                  errors.guardian?.phone 
+                                    ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                                    : "border-slate-200"
+                                )} 
                               />
                             </div>
+                            {errors.guardian?.phone && (
+                              <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                <AlertCircle size={13} className="shrink-0" />
+                                {errors.guardian.phone.message as string}
+                              </p>
+                            )}
                           </div>
 
                           <div className="space-y-2">
-                            <Label className="text-slate-700 font-semibold text-xs">Relationship *</Label>
-                            <Input {...register("guardian.relation")} placeholder="e.g. Mother" className="h-12 bg-white rounded-xl" />
+                            <Label className={cn("font-semibold text-xs", errors.guardian?.relation ? "text-rose-600 font-bold" : "text-slate-700")}>
+                              Relationship *
+                            </Label>
+                            <Input 
+                              {...register("guardian.relation")} 
+                              placeholder="e.g. Mother" 
+                              className={cn(
+                                "h-12 bg-white rounded-xl",
+                                errors.guardian?.relation 
+                                  ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                                  : "border-slate-200"
+                              )} 
+                            />
+                            {errors.guardian?.relation && (
+                              <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                <AlertCircle size={13} className="shrink-0" />
+                                {errors.guardian.relation.message as string}
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -2007,15 +2405,38 @@ export default function ApplicationWizard({
                 )}
 
                 {/* 10.1 Passport & Citizenship Details */}
-                <FormAccordion title="Passport & Citizenship Details *" defaultOpen={true}>
+                <FormAccordion 
+                  title="Passport & Citizenship Details *" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.passport)}
+                >
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Passport Number *</Label>
-                      <Input {...register("passport.passportNumber")} placeholder="e.g. S1234567A" className="h-12 rounded-xl font-mono uppercase" />
+                      <Label className={cn("font-semibold text-xs", errors.passport?.passportNumber ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Passport Number *
+                      </Label>
+                      <Input 
+                        {...register("passport.passportNumber")} 
+                        placeholder="e.g. S1234567A" 
+                        className={cn(
+                          "h-12 rounded-xl font-mono uppercase",
+                          errors.passport?.passportNumber 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.passport?.passportNumber && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.passport.passportNumber.message as string}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Passport Country of Issue *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.passport?.countryOfIssue ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Passport Country of Issue *
+                      </Label>
                       <Controller
                         name="passport.countryOfIssue"
                         control={control}
@@ -2023,15 +2444,24 @@ export default function ApplicationWizard({
                         render={({ field }) => (
                           <SearchableCountrySelect
                             value={field.value}
+                            error={Boolean(errors.passport?.countryOfIssue)}
                             onChange={field.onChange}
                             placeholder="Select Country of Issue / Search..."
                           />
                         )}
                       />
+                      {errors.passport?.countryOfIssue && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.passport.countryOfIssue.message as string}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Country of Birth *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.passport?.countryOfBirth ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Country of Birth *
+                      </Label>
                       <Controller
                         name="passport.countryOfBirth"
                         control={control}
@@ -2039,32 +2469,81 @@ export default function ApplicationWizard({
                         render={({ field }) => (
                           <SearchableCountrySelect
                             value={field.value}
+                            error={Boolean(errors.passport?.countryOfBirth)}
                             onChange={field.onChange}
                             placeholder="Select Country of Birth / Search..."
                           />
                         )}
                       />
+                      {errors.passport?.countryOfBirth && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.passport.countryOfBirth.message as string}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Passport Issue Date *</Label>
-                      <Input type="date" max={new Date().toISOString().split("T")[0]} {...register("passport.issueDate")} className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.passport?.issueDate ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Passport Issue Date *
+                      </Label>
+                      <Input 
+                        type="date" 
+                        max={new Date().toISOString().split("T")[0]} 
+                        {...register("passport.issueDate")} 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.passport?.issueDate 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.passport?.issueDate && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.passport.issueDate.message as string}
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Passport Expiry Date *</Label>
-                      <Input type="date" min={new Date().toISOString().split("T")[0]} {...register("passport.expiryDate")} className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.passport?.expiryDate ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Passport Expiry Date *
+                      </Label>
+                      <Input 
+                        type="date" 
+                        min={new Date().toISOString().split("T")[0]} 
+                        {...register("passport.expiryDate")} 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.passport?.expiryDate 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.passport?.expiryDate && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.passport.expiryDate.message as string}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </FormAccordion>
 
                 {/* 10.2 Address (CR-06: Unified Address, Local Address removed) */}
-                <FormAccordion title="Address Details *" defaultOpen={true}>
+                <FormAccordion 
+                  title="Address Details *" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.address)}
+                >
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Country *</Label>
+                      <Label className={cn("font-semibold text-xs", errors.address?.country ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Country *
+                      </Label>
                       <Controller
                         name="address.country"
                         control={control}
@@ -2072,26 +2551,84 @@ export default function ApplicationWizard({
                         render={({ field }) => (
                           <SearchableCountrySelect
                             value={field.value}
+                            error={Boolean(errors.address?.country)}
                             onChange={field.onChange}
                             placeholder="Select Country / Search..."
                           />
                         )}
                       />
+                      {errors.address?.country && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.address.country.message as string}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">State / Region *</Label>
-                      <Input {...register("address.state")} placeholder="Singapore" className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.address?.state ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        State / Region *
+                      </Label>
+                      <Input 
+                        {...register("address.state")} 
+                        placeholder="Singapore" 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.address?.state 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.address?.state && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.address.state.message as string}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">City *</Label>
-                      <Input {...register("address.city")} placeholder="Singapore" className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.address?.city ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        City *
+                      </Label>
+                      <Input 
+                        {...register("address.city")} 
+                        placeholder="Singapore" 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.address?.city 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.address?.city && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.address.city.message as string}
+                        </p>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Address Line 1 *</Label>
-                      <Input {...register("address.addressLine1")} placeholder="123 Orchard Road" className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.address?.addressLine1 ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Address Line 1 *
+                      </Label>
+                      <Input 
+                        {...register("address.addressLine1")} 
+                        placeholder="123 Orchard Road" 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.address?.addressLine1 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.address?.addressLine1 && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.address.addressLine1.message as string}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label className="text-slate-700 font-semibold text-xs">Address (Line 2)</Label>
@@ -2105,8 +2642,25 @@ export default function ApplicationWizard({
                       <Input {...register("address.unitNo")} placeholder="#05-01" className="h-12 rounded-xl" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-slate-700 font-semibold text-xs">Postal Code *</Label>
-                      <Input {...register("address.postalCode")} placeholder="238845" className="h-12 rounded-xl" />
+                      <Label className={cn("font-semibold text-xs", errors.address?.postalCode ? "text-rose-600 font-bold" : "text-slate-700")}>
+                        Postal Code *
+                      </Label>
+                      <Input 
+                        {...register("address.postalCode")} 
+                        placeholder="238845" 
+                        className={cn(
+                          "h-12 rounded-xl",
+                          errors.address?.postalCode 
+                            ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                            : "border-slate-200"
+                        )} 
+                      />
+                      {errors.address?.postalCode && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.address.postalCode.message as string}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </FormAccordion>
@@ -2121,6 +2675,7 @@ export default function ApplicationWizard({
                 <FormAccordion 
                   title="1. Academic Qualifications *" 
                   defaultOpen={true}
+                  hasError={Boolean(errors.education) || (educationList.length === 0 && Boolean(formError?.includes("Qualification")))}
                   actionButton={
                     <Button 
                       type="button" 
@@ -2132,7 +2687,7 @@ export default function ApplicationWizard({
                         });
                         setIsQualModalOpen(true);
                       }}
-                      className="h-9 px-4 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold text-xs"
+                      className="h-9 px-4 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold text-xs cursor-pointer shadow-2xs"
                     >
                       + Add Qualification
                     </Button>
@@ -2140,7 +2695,12 @@ export default function ApplicationWizard({
                 >
                   <p className="text-xs text-slate-500 font-medium">List all prior academic qualifications. Please provide the country, awarding institution/board, and qualification title/level.</p>
                   
-                  <div className="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
+                  <div className={cn(
+                    "border rounded-2xl overflow-hidden bg-white shadow-2xs transition-all",
+                    educationList.length === 0 && formError?.includes("Qualification")
+                      ? "border-rose-500 bg-rose-50/20 ring-1 ring-rose-500"
+                      : "border-slate-200/80"
+                  )}>
                     <table className="w-full text-left text-xs border-collapse">
                       <thead>
                         <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider">
@@ -2166,7 +2726,7 @@ export default function ApplicationWizard({
                                     alert("At least one qualification is required.");
                                   }
                                 }}
-                                className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-600 font-bold transition-colors"
+                                className="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 rounded-lg text-rose-600 font-bold transition-colors cursor-pointer"
                               >
                                 Delete
                               </button>
@@ -2176,10 +2736,20 @@ export default function ApplicationWizard({
                       </tbody>
                     </table>
                   </div>
+                  {educationList.length === 0 && formError?.includes("Qualification") && (
+                    <p className="text-xs font-semibold text-rose-600 mt-2 flex items-center gap-1.5 animate-in fade-in duration-150">
+                      <AlertCircle size={13} className="shrink-0" />
+                      At least one academic qualification is required. Click "+ Add Qualification" above.
+                    </p>
+                  )}
                 </FormAccordion>
 
                 {/* 11.2 English Language Proficiency Test */}
-                <FormAccordion title="2. English Language Proficiency Test" defaultOpen={true}>
+                <FormAccordion 
+                  title="2. English Language Proficiency Test" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.englishTest)}
+                >
                   <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                     <p className="text-xs font-bold text-slate-900 mb-2">
                       Have you taken a formal English Language Test? *
@@ -2225,7 +2795,12 @@ export default function ApplicationWizard({
                           defaultValue="IELTS"
                           render={({ field }) => (
                             <Select onValueChange={field.onChange} value={field.value || "IELTS"}>
-                              <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                              <SelectTrigger className={cn(
+                                "h-12 bg-white rounded-xl font-medium",
+                                errors.englishTest?.testType
+                                  ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500"
+                                  : "border-slate-200"
+                              )}>
                                 <SelectValue placeholder="Select Test" />
                               </SelectTrigger>
                               <SelectContent>
@@ -2236,11 +2811,32 @@ export default function ApplicationWizard({
                             </Select>
                           )}
                         />
+                        {errors.englishTest?.testType && (
+                          <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                            <AlertCircle size={13} className="shrink-0" />
+                            {errors.englishTest.testType.message as string}
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-2">
                         <Label className="text-slate-700 font-semibold text-xs">Actual / Tentative Test Date</Label>
-                        <Input type="date" {...register("englishTest.testDate")} className="h-12 rounded-xl" />
+                        <Input 
+                          type="date" 
+                          {...register("englishTest.testDate")} 
+                          className={cn(
+                            "h-12 rounded-xl",
+                            errors.englishTest?.testDate 
+                              ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" 
+                              : "border-slate-200"
+                          )} 
+                        />
+                        {errors.englishTest?.testDate && (
+                          <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                            <AlertCircle size={13} className="shrink-0" />
+                            {errors.englishTest.testDate.message as string}
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-2 flex flex-col justify-end pb-2">
@@ -2260,20 +2856,42 @@ export default function ApplicationWizard({
               <div className="space-y-6 animate-in fade-in duration-300">
                 
                 {/* 12.1 Health Conditions & Learning Needs */}
-                <FormAccordion title="1. Health Conditions & Learning Needs *" defaultOpen={true}>
+                <FormAccordion 
+                  title="1. Health Conditions & Learning Needs *" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.additionalInfo?.healthConditions)}
+                >
                   <p className="text-xs text-slate-500 font-medium">Describe physical/mental health conditions or learning accommodation needs. Indicate <strong>NA</strong> if not applicable.</p>
                   <textarea 
                     {...register("additionalInfo.healthConditions")} 
                     rows={3} 
-                    className="w-full p-4 rounded-xl border border-slate-200 text-xs font-medium focus:ring-2 focus:ring-[#252D65]/20" 
+                    className={cn(
+                      "w-full p-4 rounded-xl border text-xs font-medium focus:ring-2 focus:ring-[#252D65]/20 outline-hidden transition-all",
+                      errors.additionalInfo?.healthConditions
+                        ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500"
+                        : "border-slate-200"
+                    )}
                     placeholder="Enter NA if not applicable"
                   />
+                  {errors.additionalInfo?.healthConditions && (
+                    <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                      <AlertCircle size={13} className="shrink-0" />
+                      {errors.additionalInfo.healthConditions.message as string}
+                    </p>
+                  )}
                 </FormAccordion>
 
                 {/* 12.2 Conduct Declarations */}
-                <FormAccordion title="2. Conduct Declarations *" defaultOpen={true}>
+                <FormAccordion 
+                  title="2. Conduct Declarations *" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.additionalInfo?.conductSuspended || errors.additionalInfo?.conductConvicted)}
+                >
                   <div className="space-y-4 text-xs font-medium text-slate-800">
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className={cn(
+                      "p-4 rounded-xl bg-slate-50 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all",
+                      errors.additionalInfo?.conductSuspended ? "border-rose-500 bg-rose-50/20 ring-1 ring-rose-500" : "border-slate-200"
+                    )}>
                       <p className="flex-1">Have you ever been suspended, excluded and/or expelled from a course at a university or educational institution?</p>
                       <div className="flex items-center gap-4 shrink-0 font-bold">
                         <label className="flex items-center gap-1 cursor-pointer">
@@ -2284,8 +2902,17 @@ export default function ApplicationWizard({
                         </label>
                       </div>
                     </div>
+                    {errors.additionalInfo?.conductSuspended && (
+                      <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                        <AlertCircle size={13} className="shrink-0" />
+                        {errors.additionalInfo.conductSuspended.message as string}
+                      </p>
+                    )}
 
-                    <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className={cn(
+                      "p-4 rounded-xl bg-slate-50 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all",
+                      errors.additionalInfo?.conductConvicted ? "border-rose-500 bg-rose-50/20 ring-1 ring-rose-500" : "border-slate-200"
+                    )}>
                       <p className="flex-1">Have you been arrested, charged in court, or convicted of an offence in any country?</p>
                       <div className="flex items-center gap-4 shrink-0 font-bold">
                         <label className="flex items-center gap-1 cursor-pointer">
@@ -2296,6 +2923,12 @@ export default function ApplicationWizard({
                         </label>
                       </div>
                     </div>
+                    {errors.additionalInfo?.conductConvicted && (
+                      <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                        <AlertCircle size={13} className="shrink-0" />
+                        {errors.additionalInfo.conductConvicted.message as string}
+                      </p>
+                    )}
 
                     {(watchConductSuspended === "yes" || watchConductConvicted === "yes") && (
                       <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2 animate-in fade-in duration-200">
@@ -2307,7 +2940,11 @@ export default function ApplicationWizard({
                 </FormAccordion>
 
                 {/* 3. Marketing Channel */}
-                <FormAccordion title="3. How did you hear about EGA? *" defaultOpen={true}>
+                <FormAccordion 
+                  title="3. How did you hear about EGA? *" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.additionalInfo?.marketingChannel)}
+                >
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                       {[
@@ -2321,7 +2958,11 @@ export default function ApplicationWizard({
                       ].map((ch) => (
                         <label key={ch} className={cn(
                           "p-3.5 rounded-xl border flex items-center gap-3 cursor-pointer text-xs font-semibold transition-all",
-                          watchMarketingChannel === ch ? "border-[#252D65] bg-[#252D65]/5 text-[#252D65] shadow-2xs" : "border-slate-200 hover:border-slate-300 bg-white"
+                          watchMarketingChannel === ch 
+                            ? "border-[#252D65] bg-[#252D65]/5 text-[#252D65] shadow-2xs font-bold" 
+                            : errors.additionalInfo?.marketingChannel
+                              ? "border-rose-400 bg-rose-50/30 text-rose-900 hover:border-rose-500"
+                              : "border-slate-200 hover:border-slate-300 bg-white"
                         )}>
                           <input 
                             type="radio" 
@@ -2335,6 +2976,13 @@ export default function ApplicationWizard({
                         </label>
                       ))}
                     </div>
+
+                    {errors.additionalInfo?.marketingChannel && (
+                      <p className="text-xs font-semibold text-rose-600 mt-2 flex items-center gap-1.5 animate-in fade-in duration-150">
+                        <AlertCircle size={13} className="shrink-0" />
+                        {errors.additionalInfo.marketingChannel.message as string || "Please select how you heard about EGA"}
+                      </p>
+                    )}
 
                     {watchMarketingChannel === "Referred by EGA Student/Alumni" && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-200 animate-in fade-in duration-200">
@@ -2352,7 +3000,11 @@ export default function ApplicationWizard({
                 </FormAccordion>
 
                 {/* 12.4 EGA Appointed Agent Contact */}
-                <FormAccordion title="4. EGA Appointed Agent Contact" defaultOpen={true}>
+                <FormAccordion 
+                  title="4. EGA Appointed Agent Contact" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.agent)}
+                >
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label className="text-slate-800 font-semibold text-xs sm:text-sm">
@@ -2401,7 +3053,10 @@ export default function ApplicationWizard({
                                 field.onChange(val);
                                 setValue("agent.agencyName", "");
                               }} value={field.value || "Singapore"}>
-                                <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                                <SelectTrigger className={cn(
+                                  "h-12 bg-white rounded-xl font-medium",
+                                  errors.agent?.agentCountry ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" : "border-slate-200"
+                                )}>
                                   <SelectValue placeholder="Select Country" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -2419,6 +3074,12 @@ export default function ApplicationWizard({
                               </Select>
                             )}
                           />
+                          {errors.agent?.agentCountry && (
+                            <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                              <AlertCircle size={13} className="shrink-0" />
+                              {errors.agent.agentCountry.message as string}
+                            </p>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -2446,7 +3107,10 @@ export default function ApplicationWizard({
                                     }} 
                                     value={field.value || ""}
                                   >
-                                    <SelectTrigger className="h-12 bg-white border border-slate-200 rounded-xl font-medium">
+                                    <SelectTrigger className={cn(
+                                      "h-12 bg-white rounded-xl font-medium",
+                                      errors.agent?.agencyName ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" : "border-slate-200"
+                                    )}>
                                       <SelectValue placeholder="Select Agency Name" />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-60">
@@ -2468,6 +3132,12 @@ export default function ApplicationWizard({
                                       className="h-11 bg-white rounded-xl text-xs" 
                                     />
                                   )}
+                                  {errors.agent?.agencyName && (
+                                    <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                      <AlertCircle size={13} className="shrink-0" />
+                                      {errors.agent.agencyName.message as string}
+                                    </p>
+                                  )}
                                 </div>
                               );
                             }}
@@ -2476,12 +3146,39 @@ export default function ApplicationWizard({
 
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-semibold text-xs">Counsellor Name *</Label>
-                          <Input {...register("agent.counsellorName")} placeholder="e.g. Jane Smith" className="h-12 rounded-xl" />
+                          <Input 
+                            {...register("agent.counsellorName")} 
+                            placeholder="e.g. Jane Smith" 
+                            className={cn(
+                              "h-12 rounded-xl",
+                              errors.agent?.counsellorName ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" : "border-slate-200"
+                            )} 
+                          />
+                          {errors.agent?.counsellorName && (
+                            <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                              <AlertCircle size={13} className="shrink-0" />
+                              {errors.agent.counsellorName.message as string}
+                            </p>
+                          )}
                         </div>
 
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-semibold text-xs">Counsellor Email *</Label>
-                          <Input {...register("agent.counsellorEmail")} type="email" placeholder="e.g. counsellor@agency.com" className="h-12 rounded-xl" />
+                          <Input 
+                            {...register("agent.counsellorEmail")} 
+                            type="email" 
+                            placeholder="e.g. counsellor@agency.com" 
+                            className={cn(
+                              "h-12 rounded-xl",
+                              errors.agent?.counsellorEmail ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" : "border-slate-200"
+                            )} 
+                          />
+                          {errors.agent?.counsellorEmail && (
+                            <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                              <AlertCircle size={13} className="shrink-0" />
+                              {errors.agent.counsellorEmail.message as string}
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
@@ -2742,7 +3439,7 @@ export default function ApplicationWizard({
                             <button 
                               type="button" 
                               onClick={() => setCertFiles(certFiles.filter(item => item.id !== f.id))} 
-                              className="text-rose-600 font-bold hover:text-rose-800"
+                              className="text-rose-600 font-bold hover:text-rose-800 cursor-pointer"
                             >
                               Remove
                             </button>
@@ -2754,10 +3451,17 @@ export default function ApplicationWizard({
                 </FormAccordion>
 
                 {/* 3. Section 5: Declarations & Consents (F-059, F-060, F-061, OI-11) */}
-                <FormAccordion title="3. Section 5: Declarations & Consents *" defaultOpen={true}>
+                <FormAccordion 
+                  title="3. Section 5: Declarations & Consents *" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.consent?.applicantDeclaration || errors.consent?.partnerConsent || errors.consent?.dataProcessingConsent)}
+                >
                   <div className="space-y-4 text-xs">
                     {/* Mandatory 1: Applicant Declaration */}
-                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                    <div className={cn(
+                      "p-4 rounded-xl border bg-slate-50 space-y-2 transition-all",
+                      errors.consent?.applicantDeclaration ? "border-rose-500 bg-rose-50/20 ring-1 ring-rose-500" : "border-slate-200"
+                    )}>
                       <label className="flex items-start gap-3 cursor-pointer">
                         <input 
                           type="checkbox" 
@@ -2772,10 +3476,19 @@ export default function ApplicationWizard({
                           </p>
                         </div>
                       </label>
+                      {errors.consent?.applicantDeclaration && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.consent.applicantDeclaration.message as string || "Applicant declaration is required"}
+                        </p>
+                      )}
                     </div>
 
                     {/* Mandatory 2: University Partner Declaration */}
-                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                    <div className={cn(
+                      "p-4 rounded-xl border bg-slate-50 space-y-2 transition-all",
+                      errors.consent?.partnerConsent ? "border-rose-500 bg-rose-50/20 ring-1 ring-rose-500" : "border-slate-200"
+                    )}>
                       <label className="flex items-start gap-3 cursor-pointer">
                         <input 
                           type="checkbox" 
@@ -2790,10 +3503,19 @@ export default function ApplicationWizard({
                           </p>
                         </div>
                       </label>
+                      {errors.consent?.partnerConsent && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.consent.partnerConsent.message as string || "Partner declaration consent is required"}
+                        </p>
+                      )}
                     </div>
 
                     {/* Mandatory 3: Personal Data Protection Act (PDPA) */}
-                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                    <div className={cn(
+                      "p-4 rounded-xl border bg-slate-50 space-y-2 transition-all",
+                      errors.consent?.dataProcessingConsent ? "border-rose-500 bg-rose-50/20 ring-1 ring-rose-500" : "border-slate-200"
+                    )}>
                       <label className="flex items-start gap-3 cursor-pointer">
                         <input 
                           type="checkbox" 
@@ -2808,6 +3530,12 @@ export default function ApplicationWizard({
                           </p>
                         </div>
                       </label>
+                      {errors.consent?.dataProcessingConsent && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          {errors.consent.dataProcessingConsent.message as string || "PDPA consent is required"}
+                        </p>
+                      )}
                     </div>
 
                     {/* Optional: Marketing Consent (F-061) */}
@@ -2833,13 +3561,22 @@ export default function ApplicationWizard({
                 </FormAccordion>
 
                 {/* 4. Native Applicant Digital Signature */}
-                <FormAccordion title="4. Native Applicant Digital Signature *" defaultOpen={true}>
+                <FormAccordion 
+                  title="4. Native Applicant Digital Signature *" 
+                  defaultOpen={true}
+                  hasError={Boolean(errors.digitalSignature) || (!savedSignature && Boolean(formError?.includes("Signature")))}
+                >
                   <div className="space-y-4">
                     <p className="text-xs text-slate-600 font-medium leading-relaxed">
                       Draw your live legal signature in the box below using your mouse, trackpad, stylus, or touch screen.
                     </p>
 
-                    <div className="border-2 border-dashed border-slate-300 rounded-2xl bg-white p-4 text-center space-y-3 relative">
+                    <div className={cn(
+                      "border-2 border-dashed rounded-2xl bg-white p-4 text-center space-y-3 relative transition-all",
+                      ((!savedSignature && formError?.includes("Signature")) || errors.digitalSignature)
+                        ? "border-rose-500 bg-rose-50/20 ring-1 ring-rose-500"
+                        : "border-slate-300"
+                    )}>
                       <canvas
                         ref={canvasRef}
                         width={600}
@@ -2855,10 +3592,10 @@ export default function ApplicationWizard({
                       />
 
                       <div className="flex justify-center gap-3">
-                        <Button type="button" variant="outline" onClick={clearCanvas} className="h-9 px-4 text-xs font-bold gap-1.5">
+                        <Button type="button" variant="outline" onClick={clearCanvas} className="h-9 px-4 text-xs font-bold gap-1.5 cursor-pointer">
                           <Trash2 size={14} /> Clear / Redo
                         </Button>
-                        <Button type="button" onClick={saveSignature} className="h-9 px-5 bg-[#252D65] hover:bg-[#1C224E] text-white text-xs font-bold gap-1.5">
+                        <Button type="button" onClick={saveSignature} className="h-9 px-5 bg-[#252D65] hover:bg-[#1C224E] text-white text-xs font-bold gap-1.5 cursor-pointer shadow-2xs">
                           <PenTool size={14} /> Save Signature
                         </Button>
                       </div>
@@ -2871,6 +3608,13 @@ export default function ApplicationWizard({
                         </div>
                       )}
 
+                      {((!savedSignature && formError?.includes("Signature")) || errors.digitalSignature) && (
+                        <p className="text-xs font-semibold text-rose-600 mt-2 flex items-center justify-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          Digital signature is required. Please draw your signature above and click "Save Signature".
+                        </p>
+                      )}
+
                       <p className="text-[11px] text-slate-500 text-center italic pt-1">
                         By providing your signature above, you acknowledge and agree that this digital signature is legally binding and has the same legal validity and enforceability as a handwritten signature under the Singapore Electronic Transactions Act (ETA).
                       </p>
@@ -2879,7 +3623,12 @@ export default function ApplicationWizard({
                 </FormAccordion>
 
                 {/* 5. Application Fee & Approved Payment Methods */}
-                <FormAccordion title="5. Application Fee & Approved Payment Methods *" defaultOpen={true} badgeText={`SGD ${feeAmount}.00`}>
+                <FormAccordion 
+                  title="5. Application Fee & Approved Payment Methods *" 
+                  defaultOpen={true} 
+                  badgeText={`SGD ${feeAmount}.00`}
+                  hasError={!paymentMethod && Boolean(formError?.includes("Payment"))}
+                >
                   <div className="space-y-4">
                     <div className="flex justify-between items-center bg-[#252D65]/5 p-5 rounded-2xl border border-[#252D65]/20">
                       <div>
@@ -2901,10 +3650,12 @@ export default function ApplicationWizard({
                             setIsPayNowModalOpen(true);
                           }}
                           className={cn(
-                            "flex items-center justify-center gap-2.5 p-4 rounded-xl border-2 font-bold text-xs transition-all",
+                            "flex items-center justify-center gap-2.5 p-4 rounded-xl border-2 font-bold text-xs transition-all cursor-pointer",
                             paymentMethod === "paynow"
                               ? "border-[#252D65] bg-[#252D65]/5 text-[#252D65] shadow-xs"
-                              : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                              : !paymentMethod && formError?.includes("Payment")
+                                ? "border-rose-400 bg-rose-50/20 text-slate-700"
+                                : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
                           )}
                         >
                           <QrCode size={20} className="text-[#252D65]" />
@@ -2921,10 +3672,12 @@ export default function ApplicationWizard({
                             setIsFlywireModalOpen(true);
                           }}
                           className={cn(
-                            "flex items-center justify-center gap-2.5 p-4 rounded-xl border-2 font-bold text-xs transition-all",
+                            "flex items-center justify-center gap-2.5 p-4 rounded-xl border-2 font-bold text-xs transition-all cursor-pointer",
                             paymentMethod === "flywire"
                               ? "border-blue-600 bg-blue-50/50 text-blue-800 shadow-xs"
-                              : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                              : !paymentMethod && formError?.includes("Payment")
+                                ? "border-rose-400 bg-rose-50/20 text-slate-700"
+                                : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
                           )}
                         >
                           <Globe size={20} className="text-blue-600" />
@@ -2934,6 +3687,12 @@ export default function ApplicationWizard({
                           </div>
                         </button>
                       </div>
+                      {!paymentMethod && formError?.includes("Payment") && (
+                        <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                          <AlertCircle size={13} className="shrink-0" />
+                          Please select an approved payment method to proceed.
+                        </p>
+                      )}
                     </div>
 
                     {/* Final Declaration Checkbox */}
