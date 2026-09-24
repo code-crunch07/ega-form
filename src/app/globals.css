@@ -169,3 +169,15 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+/* Application Form Custom Typography & Colors */
+.application-form-container .text-slate-900,
+.text-slate-900 {
+  color: #393939;
+}
+
+.application-form-container .text-slate-500,
+.text-slate-500 {
+  color: #454545;
+  font-size: 13px;
+}
