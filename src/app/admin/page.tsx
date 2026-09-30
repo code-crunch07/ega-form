@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import DashboardClient from "./dashboard-client";
+import { getProgrammesMap, resolveProgrammeNameFromMap } from "@/lib/programme-resolver";
 
 function formatTimeAgo(date: Date) {
   const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
@@ -264,6 +265,12 @@ export default async function AdminDashboard() {
     }
   });
 
+  const progMap = await getProgrammesMap();
+  const formattedLatestApps = latestApplications.map((app) => ({
+    ...app,
+    resolvedProgrammeName: resolveProgrammeNameFromMap(app, progMap),
+  }));
+
   return (
     <DashboardClient 
       stats={stats} 
@@ -273,7 +280,7 @@ export default async function AdminDashboard() {
       calendarDays={calendarDays}
       calendarMonthYear={calendarMonthYear}
       recentActivities={finalActivities}
-      latestApplications={latestApplications}
+      latestApplications={formattedLatestApps}
     />
   );
 }

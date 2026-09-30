@@ -10,6 +10,7 @@ import { InvoicesFilters } from "./invoices-filters";
 import { GenerateInvoiceDialog } from "./generate-invoice-dialog";
 import { EditInvoiceDialog } from "./edit-invoice-dialog";
 import { InvoiceActionsDropdown } from "./invoice-actions-dropdown";
+import { getProgrammesMap, resolveProgrammeNameFromMap } from "@/lib/programme-resolver";
 
 export default async function AdminInvoicesPage({
   searchParams,
@@ -39,7 +40,7 @@ export default async function AdminInvoicesPage({
     whereClause.status = { not: "Paid" };
   }
 
-  const [payments, availableApplications] = await Promise.all([
+  const [payments, availableApplications, programmesMap] = await Promise.all([
     prisma.payment.findMany({
       where: whereClause,
       include: {
@@ -71,7 +72,8 @@ export default async function AdminInvoicesPage({
       },
       orderBy: { createdAt: 'desc' },
       take: 50
-    })
+    }),
+    getProgrammesMap(),
   ]);
 
   const formattedAppOptions = availableApplications.map((app) => ({
@@ -80,7 +82,7 @@ export default async function AdminInvoicesPage({
     applicantName: app.user?.profile
       ? `${app.user.profile.firstName || ''} ${app.user.profile.lastName || ''}`.trim()
       : app.user?.name || app.user?.email || "Student",
-    programmeName: app.programmeLevel || app.programmeId
+    programmeName: resolveProgrammeNameFromMap(app, programmesMap)
   }));
 
   const invoices = payments.map(payment => {

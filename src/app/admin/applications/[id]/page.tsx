@@ -31,6 +31,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { DetailActions } from "./detail-actions";
+import { resolveApplicationProgramme } from "@/lib/programme-resolver";
 
 export default async function ApplicationDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -52,6 +53,8 @@ export default async function ApplicationDetailView({ params }: { params: Promis
   if (!app) {
     notFound();
   }
+
+  const progInfo = await resolveApplicationProgramme(app);
 
   const applicantName = app.user?.profile 
     ? `${app.user.profile.firstName || ''} ${app.user.profile.lastName || ''}`.trim()
@@ -108,9 +111,9 @@ export default async function ApplicationDetailView({ params }: { params: Promis
                 {applicantName}
               </span>
               <span className="hidden sm:inline text-neutral-300">•</span>
-              <span className="flex items-center gap-1.5">
-                <GraduationCap size={15} className="text-neutral-400" />
-                {app.programmeId || "Not Selected"}
+              <span className="flex items-center gap-1.5" title={progInfo.programmeName}>
+                <GraduationCap size={15} className="text-neutral-400 shrink-0" />
+                <span className="max-w-[280px] sm:max-w-[420px] truncate">{progInfo.programmeName}</span>
               </span>
               <span className="hidden sm:inline text-neutral-300">•</span>
               <span className="flex items-center gap-1.5">
@@ -160,26 +163,68 @@ export default async function ApplicationDetailView({ params }: { params: Promis
             
             {/* Programme details */}
             <Card className="col-span-1 border border-neutral-200/60 dark:border-neutral-800/60 shadow-2xs rounded-2xl overflow-hidden">
-              <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5">
+              <CardHeader className="border-b border-neutral-100 dark:border-neutral-800 bg-slate-50/50 p-5 flex flex-row items-center justify-between">
                 <CardTitle className="text-base font-bold text-neutral-850">Programme Selection</CardTitle>
+                {progInfo.isPackage && (
+                  <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200 text-xs font-semibold">
+                    Package Pathway
+                  </Badge>
+                )}
               </CardHeader>
-              <CardContent className="p-6 space-y-5">
-                <div className="grid grid-cols-2 gap-4">
+              <CardContent className="p-6 space-y-4">
+                {progInfo.isPackage && progInfo.packageDetails && progInfo.packageDetails.length > 0 ? (
+                  <div className="space-y-2.5">
+                    {progInfo.packageDetails.map((pkg) => (
+                      <div key={pkg.slot} className="p-3 rounded-xl bg-slate-50 border border-slate-100 dark:bg-neutral-900/40 dark:border-neutral-800">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                            Slot {pkg.slot}
+                          </span>
+                          <span className="text-[11px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                            {pkg.level}
+                          </span>
+                        </div>
+                        <p className="font-semibold text-sm text-neutral-800 dark:text-neutral-200 mt-1">
+                          {pkg.name}
+                        </p>
+                        {pkg.code && (
+                          <span className="text-[11px] font-mono text-neutral-400 block mt-0.5">
+                            Code: {pkg.code}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
                   <div>
                     <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Programme</p>
-                    <p className="font-semibold text-sm text-neutral-700 mt-1">{app.programmeId || "Not Selected"}</p>
+                    <p className="font-semibold text-sm text-neutral-800 dark:text-neutral-100 mt-1">
+                      {progInfo.programmeName}
+                    </p>
+                    {progInfo.programmeCode && (
+                      <span className="text-xs font-mono text-neutral-400 block mt-0.5">
+                        Code: {progInfo.programmeCode}
+                      </span>
+                    )}
                   </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4 pt-3 border-t border-neutral-100 dark:border-neutral-800">
                   <div>
                     <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Campus</p>
-                    <p className="font-semibold text-sm text-neutral-700 mt-1">Main Campus</p>
+                    <p className="font-semibold text-sm text-neutral-700 dark:text-neutral-300 mt-1">{progInfo.campus}</p>
                   </div>
                   <div>
                     <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Intake</p>
-                    <p className="font-semibold text-sm text-neutral-700 mt-1">September 2026</p>
+                    <p className="font-semibold text-sm text-neutral-700 dark:text-neutral-300 mt-1">{progInfo.intake}</p>
                   </div>
                   <div>
                     <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Study Mode</p>
-                    <p className="font-semibold text-sm text-neutral-700 mt-1">Full-Time</p>
+                    <p className="font-semibold text-sm text-neutral-700 dark:text-neutral-300 mt-1">{progInfo.studyMode}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-neutral-400 font-bold uppercase tracking-wider">Awarding Partner</p>
+                    <p className="font-semibold text-sm text-neutral-700 dark:text-neutral-300 mt-1">{progInfo.school}</p>
                   </div>
                 </div>
               </CardContent>

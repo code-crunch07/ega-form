@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ActionsDropdown } from "./actions-dropdown";
 import { ApplicationsFilters } from "./applications-filters";
+import { resolveProgrammeNameFromMap } from "@/lib/programme-resolver";
 
 const getStatusBadge = (status: string) => {
   switch (status) {
@@ -82,11 +83,16 @@ export default async function AdminApplicationsPage({
       orderBy: { openDate: 'desc' }
     }),
     prisma.programme.findMany({
-      where: { status: 'Active' },
-      select: { id: true, name: true, code: true },
+      select: { id: true, name: true, code: true, level: true },
       orderBy: { name: 'asc' }
     })
   ]);
+
+  const progMap = new Map<string, { id: string; name: string; code: string; level: string }>();
+  dynamicProgrammes.forEach((p) => {
+    progMap.set(p.id, p);
+    if (p.code) progMap.set(p.code, p);
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 font-jost text-left">
@@ -138,7 +144,7 @@ export default async function AdminApplicationsPage({
                       </div>
                     </TableCell>
                     <TableCell className="font-medium text-sm text-slate-800">
-                      {app.programmeLevel || app.programmeId || "Not Selected"}
+                      {resolveProgrammeNameFromMap(app, progMap)}
                     </TableCell>
                     <TableCell className="text-xs font-semibold text-slate-600">
                       {app.intake || "N/A"}

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Building2, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { PrintButton } from "./print-button";
+import { resolveApplicationProgramme } from "@/lib/programme-resolver";
 
 export default async function OfferLetterPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -32,6 +33,7 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
   }
 
   const app = offer.application;
+  const progInfo = await resolveApplicationProgramme(app);
   const profile = app.user?.profile;
   const logoUrl = logoSetting?.value || null;
 
@@ -51,10 +53,10 @@ export default async function OfferLetterPage({ params }: { params: Promise<{ id
   const countryPostal = profile?.country && profile?.postalCode ? `PIN: ${profile.postalCode}, ${profile.country.toUpperCase()}` : "PIN: 607308, TAMIL NADU, INDIA";
 
   const appNumber = app.appNumber || "2608001015";
-  const schoolName = app.school || "GLASGOW CALEDONIAN UNIVERSITY, U.K.";
-  const programmeName = (app.programmeLevel || "MASTER OF BUSINESS ADMINISTRATION").toUpperCase();
-  const studyMode = app.studyMode || "Full-Time";
-  const intake = app.intake || "September 2026";
+  const schoolName = progInfo.school || app.school || "GLASGOW CALEDONIAN UNIVERSITY, U.K.";
+  const programmeName = (progInfo.programmeName || app.programmeLevel || "MASTER OF BUSINESS ADMINISTRATION").toUpperCase();
+  const studyMode = progInfo.studyMode || app.studyMode || "Full-Time";
+  const intake = progInfo.intake || app.intake || "September 2026";
   const commencementDate = "14 September 2026";
 
   const feeAmount = (schoolName.toUpperCase().includes("GLASGOW") || schoolName.toUpperCase().includes("KINGSTON") || schoolName.toUpperCase().includes("NCC")) 

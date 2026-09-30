@@ -67,7 +67,7 @@ export default function DashboardClient({
       id: app.appNumber || `APP-${app.id.slice(0, 6).toUpperCase()}`,
       name: name,
       avatar: name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase() || "US",
-      programme: app.programmeId || "General Studies",
+      programme: app.resolvedProgrammeName || app.programmeLevel || app.programmeId || "General Studies",
       intake: app.intake || "Sep 2025",
       status: app.status || "Under Review",
       payment: app.status === "Draft" ? "-" : "Paid",

@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Video, ExternalLink, CalendarPlus } from "lucide-react";
 
 import { ScheduleInterviewDialog } from "./schedule-interview-dialog";
+import { getProgrammesMap, resolveProgrammeNameFromMap } from "@/lib/programme-resolver";
 
 export default async function AdminInterviewsPage() {
-  const [interviews, applications, interviewers] = await Promise.all([
+  const [interviews, applications, interviewers, programmesMap] = await Promise.all([
     prisma.interview.findMany({
       include: {
         application: {
@@ -37,8 +38,11 @@ export default async function AdminInterviewsPage() {
         }
       },
       orderBy: { name: 'asc' }
-    })
+    }),
+    getProgrammesMap(),
   ]);
+
+  const progMap = programmesMap;
 
   const applicationOptions = applications.map(app => ({
     id: app.id,
@@ -90,7 +94,9 @@ export default async function AdminInterviewsPage() {
                   ? `${interview.application.user.profile.firstName || ''} ${interview.application.user.profile.lastName || ''}`.trim()
                   : interview.application?.user?.name || "Unknown";
                   
-                const programmeName = interview.application?.programmeId || "Not Selected"; // fallback
+                const programmeName = interview.application 
+                  ? resolveProgrammeNameFromMap(interview.application, progMap) 
+                  : "Not Selected";
 
                 return (
                   <TableRow key={interview.id}>

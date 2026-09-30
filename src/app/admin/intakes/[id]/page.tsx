@@ -17,6 +17,7 @@ import { EditIntakeDialog } from "../edit-intake-dialog";
 import { ExtendDeadlineDialog } from "../extend-deadline-dialog";
 import { IntakeActionsDropdown } from "../intake-actions-dropdown";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getProgrammesMap, resolveProgrammeNameFromMap } from "@/lib/programme-resolver";
 
 export default async function IntakeDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -30,15 +31,18 @@ export default async function IntakeDetailView({ params }: { params: Promise<{ i
     notFound();
   }
 
-  const applications = await prisma.application.findMany({
-    where: { intake: { contains: intake.name, mode: "insensitive" } },
-    include: {
-      user: {
-        include: { profile: true }
-      }
-    },
-    orderBy: { createdAt: "desc" }
-  });
+  const [applications, programmesMap] = await Promise.all([
+    prisma.application.findMany({
+      where: { intake: { contains: intake.name, mode: "insensitive" } },
+      include: {
+        user: {
+          include: { profile: true }
+        }
+      },
+      orderBy: { createdAt: "desc" }
+    }),
+    getProgrammesMap(),
+  ]);
 
   const capacityStr = intake.capacity ? `${applications.length} / ${intake.capacity} Enrolled` : `${applications.length} Enrolled (Unlimited)`;
   const percentFull = intake.capacity ? Math.min(100, Math.round((applications.length / intake.capacity) * 100)) : 0;
@@ -183,7 +187,7 @@ export default async function IntakeDetailView({ params }: { params: Promise<{ i
                             <p className="text-[11px] text-slate-400 font-mono">{app.user?.email}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="text-xs text-slate-700">{app.programmeLevel || app.programmeId || "N/A"}</TableCell>
+                        <TableCell className="text-xs text-slate-700">{resolveProgrammeNameFromMap(app, programmesMap)}</TableCell>
                         <TableCell>
                           <Badge variant="outline" className="text-[11px] font-semibold">{app.status}</Badge>
                         </TableCell>

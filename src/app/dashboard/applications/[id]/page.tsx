@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { formatRelativeDate } from "@/lib/dashboard-utils";
+import { resolveApplicationProgramme } from "@/lib/programme-resolver";
 
 export const dynamic = "force-dynamic";
 
@@ -62,6 +63,8 @@ export default async function ApplicantApplicationDetailPage({
     notFound();
   }
 
+  const progInfo = await resolveApplicationProgramme(app);
+
   const profile = app.user?.profile;
   const applicantFullName = profile?.firstName 
     ? `${profile.firstName} ${profile.lastName || ''}`.trim() 
@@ -71,10 +74,10 @@ export default async function ApplicantApplicationDetailPage({
   const offer = app.offers?.[0];
   const interview = app.interviews?.[0];
 
-  const programmeName = (app.programmeLevel || "Master of Business Administration").toUpperCase();
-  const schoolName = app.school || "Educare Global Academy";
-  const studyMode = app.studyMode || "Full-Time";
-  const intake = app.intake || "July 2026";
+  const programmeName = (progInfo.programmeName || app.programmeLevel || "Master of Business Administration").toUpperCase();
+  const schoolName = progInfo.school || app.school || "Educare Global Academy";
+  const studyMode = progInfo.studyMode || app.studyMode || "Full-Time";
+  const intake = progInfo.intake || app.intake || "July 2026";
 
   const submittedDateFormatted = app.submittedAt 
     ? new Date(app.submittedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })
