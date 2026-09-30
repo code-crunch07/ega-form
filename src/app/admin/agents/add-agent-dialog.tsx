@@ -102,36 +102,25 @@ export function AddAgentDialog() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="country" className="text-xs font-bold text-slate-700">Country *</Label>
-                    <select 
-                      id="country" 
-                      name="country" 
-                      defaultValue="Singapore"
-                      className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#252D65]/20 focus-visible:border-[#252D65]"
-                    >
-                      <option value="Singapore">Singapore</option>
-                      <option value="Malaysia">Malaysia</option>
-                      <option value="Indonesia">Indonesia</option>
-                      <option value="China">China</option>
-                      <option value="Vietnam">Vietnam</option>
-                      <option value="India">India</option>
-                      <option value="Thailand">Thailand</option>
-                      <option value="Myanmar">Myanmar</option>
-                      <option value="Philippines">Philippines</option>
-                      <option value="Other">Other Country</option>
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="city" className="text-xs font-bold text-slate-700">City</Label>
-                    <Input id="city" name="city" placeholder="e.g. Singapore" className="h-11 rounded-xl border-slate-200 text-slate-800" />
-                  </div>
-                </div>
-
                 <div className="space-y-1.5">
-                  <Label htmlFor="notes" className="text-xs font-bold text-slate-700">Internal Notes / Accreditation</Label>
-                  <Input id="notes" name="notes" placeholder="e.g. Tier-1 partner for Southeast Asia intakes" className="h-11 rounded-xl border-slate-200 text-slate-800" />
+                  <Label htmlFor="country" className="text-xs font-bold text-slate-700">Country *</Label>
+                  <select 
+                    id="country" 
+                    name="country" 
+                    defaultValue="Singapore"
+                    className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#252D65]/20 focus-visible:border-[#252D65]"
+                  >
+                    <option value="Singapore">Singapore</option>
+                    <option value="Malaysia">Malaysia</option>
+                    <option value="Indonesia">Indonesia</option>
+                    <option value="China">China</option>
+                    <option value="Vietnam">Vietnam</option>
+                    <option value="India">India</option>
+                    <option value="Thailand">Thailand</option>
+                    <option value="Myanmar">Myanmar</option>
+                    <option value="Philippines">Philippines</option>
+                    <option value="Other">Other Country</option>
+                  </select>
                 </div>
               </div>
               

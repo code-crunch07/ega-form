@@ -125,9 +125,9 @@ export const applicationSchema = z.object({
   // EGA Appointed Agent Contact
   agent: z.object({
     isAgentRepresented: z.preprocess((val) => val === true || val === "yes" || val === "true", z.boolean().default(false)),
-    agentCountry: z.string().optional(),
-    agencyName: z.string().optional(),
-    counsellorName: z.string().optional(),
+    agentCountry: z.string().optional().or(z.null()),
+    agencyName: z.string().optional().or(z.null()),
+    counsellorName: z.string().optional().or(z.null()),
     counsellorEmail: z.string().email("Invalid counsellor email format").optional().or(z.literal("")).or(z.null()),
   }),
 

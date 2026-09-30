@@ -20,70 +20,7 @@ import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { applicationSchema } from "@/lib/application-schema";
 
-const DEFAULT_AGENCIES_BY_COUNTRY: Record<string, string[]> = {
-  "India": [
-    "IDP Education India",
-    "KC Overseas Education",
-    "Edwise International",
-    "Global Opportunities",
-    "Canam Consultants",
-    "Chopras Global Education",
-    "AECC Global India",
-    "Study Metro India"
-  ],
-  "Singapore": [
-    "Educare Global Agency (EGA Network)",
-    "Overseas Education Pte Ltd",
-    "Study Singapore Admissions Hub",
-    "Global Student Advisory Singapore",
-    "Universal Education Centre"
-  ],
-  "China": [
-    "New Oriental Vision Overseas",
-    "JJL Overseas Education",
-    "EIC Education",
-    "Golden Arrow Overseas Consulting",
-    "Amber Education China"
-  ],
-  "Malaysia": [
-    "AUG Student Services Malaysia",
-    "JM Education Group",
-    "IDP Education Malaysia",
-    "GEN Education Group",
-    "MABECS Malaysia"
-  ],
-  "Indonesia": [
-    "SUN Education Group",
-    "Vista Education",
-    "Alfa Link Overseas Study",
-    "Edlink+ConneX Indonesia",
-    "IDP Education Indonesia"
-  ],
-  "Vietnam": [
-    "IDP Education Vietnam",
-    "Du Hoc SET",
-    "Duc Anh A&T Overseas Study",
-    "GSE-beo Education Vietnam",
-    "ILA Vietnam Study Abroad"
-  ],
-  "Myanmar": [
-    "Crown Education Myanmar",
-    "CSL Education Myanmar",
-    "STUDY ABROAD Information Centre",
-    "Knowledge Zone Education"
-  ],
-  "Thailand": [
-    "IDP Education Thailand",
-    "Hands On Education Consultants",
-    "OEC Global Education Thailand",
-    "Insight Education Consulting"
-  ],
-  "Philippines": [
-    "IDP Education Philippines",
-    "AECC Global Philippines",
-    "Fortrust Education Services"
-  ]
-};
+
 
 const SECTIONS = [
   { id: 1, name: "Programme Selection", shortName: "1. Programme", icon: Building2, desc: "Student type, partner & package pathway" },
@@ -408,6 +345,7 @@ export default function ApplicationWizard({
 
   const [isDraftRestored, setIsDraftRestored] = useState(Boolean(existingDraft || initialDraftData));
   const [customAgencyName, setCustomAgencyName] = useState("");
+  const [isCustomAgency, setIsCustomAgency] = useState(false);
 
   const router = useRouter();
 
@@ -3131,31 +3069,40 @@ export default function ApplicationWizard({
                             name="agent.agentCountry"
                             control={control}
                             defaultValue="Singapore"
-                            render={({ field }) => (
-                              <Select onValueChange={(val) => {
-                                field.onChange(val);
-                                setValue("agent.agencyName", "");
-                              }} value={field.value || "Singapore"}>
-                                <SelectTrigger className={cn(
-                                  "h-12 bg-white rounded-xl font-medium",
-                                  errors.agent?.agentCountry ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" : "border-slate-200"
-                                )}>
-                                  <SelectValue placeholder="Select Country" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Singapore">Singapore</SelectItem>
-                                  <SelectItem value="India">India</SelectItem>
-                                  <SelectItem value="China">China</SelectItem>
-                                  <SelectItem value="Malaysia">Malaysia</SelectItem>
-                                  <SelectItem value="Indonesia">Indonesia</SelectItem>
-                                  <SelectItem value="Vietnam">Vietnam</SelectItem>
-                                  <SelectItem value="Myanmar">Myanmar</SelectItem>
-                                  <SelectItem value="Thailand">Thailand</SelectItem>
-                                  <SelectItem value="Philippines">Philippines</SelectItem>
-                                  <SelectItem value="Other">Other Country</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            )}
+                            render={({ field }) => {
+                              const registeredCountries = Array.from(new Set((agents || []).map((a: any) => a.country).filter(Boolean)));
+                              const countryOptions = Array.from(new Set([
+                                "Singapore", "India", "China", "Malaysia", "Indonesia", "Vietnam", "Myanmar", "Thailand", "Philippines",
+                                ...registeredCountries,
+                                "Other"
+                              ]));
+
+                              return (
+                                <Select onValueChange={(val) => {
+                                  field.onChange(val);
+                                  setValue("agent.agentCountry", val, { shouldValidate: true });
+                                  setValue("agent.agencyName", "", { shouldValidate: true });
+                                  setValue("agent.counsellorName", "", { shouldValidate: true });
+                                  setValue("agent.counsellorEmail", "", { shouldValidate: true });
+                                  setIsCustomAgency(false);
+                                  setCustomAgencyName("");
+                                }} value={field.value || "Singapore"}>
+                                  <SelectTrigger className={cn(
+                                    "h-12 bg-white rounded-xl font-medium",
+                                    errors.agent?.agentCountry ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" : "border-slate-200"
+                                  )}>
+                                    <SelectValue placeholder="Select Country" />
+                                  </SelectTrigger>
+                                  <SelectContent className="max-h-60">
+                                    {countryOptions.map((c) => (
+                                      <SelectItem key={c} value={c}>
+                                        {c === "Other" ? "Other Country" : c}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              );
+                            }}
                           />
                           {errors.agent?.agentCountry && (
                             <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
@@ -3172,23 +3119,36 @@ export default function ApplicationWizard({
                             control={control}
                             render={({ field }) => {
                               const countryVal = watch("agent.agentCountry") || "Singapore";
-                              const dbAgencies = agents
-                                .filter((a: any) => a.country?.toLowerCase() === countryVal.toLowerCase())
-                                .map((a: any) => a.agencyName);
-                              const defaultList = DEFAULT_AGENCIES_BY_COUNTRY[countryVal] || [
-                                "Global Education Agency",
-                                "International Admissions Centre",
-                                "Overseas Study Advisory"
-                              ];
-                              const agencyOptions = Array.from(new Set([...dbAgencies, ...defaultList]));
+                              const dbAgencies = (agents || []).filter((a: any) => 
+                                a.status === "Active" && (!countryVal || countryVal === "Other" || a.country?.toLowerCase() === countryVal.toLowerCase())
+                              );
 
                               return (
                                 <div className="space-y-2">
                                   <Select 
                                     onValueChange={(val) => {
                                       field.onChange(val);
+                                      
+                                      if (val === "Other Agency") {
+                                        setIsCustomAgency(true);
+                                        setValue("agent.agencyName", customAgencyName || "", { shouldValidate: true });
+                                        setValue("agent.counsellorName", "", { shouldValidate: true });
+                                        setValue("agent.counsellorEmail", "", { shouldValidate: true });
+                                      } else {
+                                        setIsCustomAgency(false);
+                                        setValue("agent.agencyName", val, { shouldValidate: true });
+                                        const chosen = (agents || []).find((a: any) => a.agencyName === val);
+                                        if (chosen) {
+                                          if (chosen.contactPerson) {
+                                            setValue("agent.counsellorName", chosen.contactPerson, { shouldValidate: true });
+                                          }
+                                          if (chosen.email) {
+                                            setValue("agent.counsellorEmail", chosen.email, { shouldValidate: true });
+                                          }
+                                        }
+                                      }
                                     }} 
-                                    value={field.value || ""}
+                                    value={isCustomAgency ? "Other Agency" : (field.value || "")}
                                   >
                                     <SelectTrigger className={cn(
                                       "h-12 bg-white rounded-xl font-medium",
@@ -3197,20 +3157,35 @@ export default function ApplicationWizard({
                                       <SelectValue placeholder="Select Agency Name" />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-60">
-                                      {agencyOptions.map((agency) => (
-                                        <SelectItem key={agency} value={agency}>{agency}</SelectItem>
+                                      {dbAgencies.map((agency: any) => (
+                                        <SelectItem key={agency.id} value={agency.agencyName}>
+                                          <div className="flex flex-col text-left py-0.5">
+                                            <span className="font-semibold text-slate-900">{agency.agencyName}</span>
+                                            {agency.contactPerson && (
+                                              <span className="text-[11px] text-slate-500 font-normal">
+                                                Counsellor: {agency.contactPerson} {agency.email ? `• ${agency.email}` : ""}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </SelectItem>
                                       ))}
-                                      <SelectItem value="Other Agency">Other (Specify Custom Agency)</SelectItem>
+                                      <SelectItem value="Other Agency">
+                                        {dbAgencies.length === 0 
+                                          ? `No registered agency for ${countryVal} — Click to enter custom`
+                                          : "Other (Specify Custom Agency)"
+                                        }
+                                      </SelectItem>
                                     </SelectContent>
                                   </Select>
 
-                                  {field.value === "Other Agency" && (
+                                  {isCustomAgency && (
                                     <Input 
                                       placeholder="Enter custom agency name *" 
                                       value={customAgencyName}
                                       onChange={(e) => {
-                                        setCustomAgencyName(e.target.value);
-                                        setValue("agent.agencyName", e.target.value, { shouldValidate: true });
+                                        const v = e.target.value;
+                                        setCustomAgencyName(v);
+                                        setValue("agent.agencyName", v, { shouldValidate: true });
                                       }}
                                       className="h-11 bg-white rounded-xl text-xs" 
                                     />
@@ -3229,13 +3204,23 @@ export default function ApplicationWizard({
 
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-semibold text-xs">Counsellor Name *</Label>
-                          <Input 
-                            {...register("agent.counsellorName")} 
-                            placeholder="e.g. Jane Smith" 
-                            className={cn(
-                              "h-12 rounded-xl",
-                              errors.agent?.counsellorName ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" : "border-slate-200"
-                            )} 
+                          <Controller
+                            name="agent.counsellorName"
+                            control={control}
+                            render={({ field }) => (
+                              <Input 
+                                value={field.value || ""}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                  setValue("agent.counsellorName", e.target.value, { shouldValidate: true });
+                                }}
+                                placeholder="e.g. Jane Smith" 
+                                className={cn(
+                                  "h-12 rounded-xl",
+                                  errors.agent?.counsellorName ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" : "border-slate-200"
+                                )} 
+                              />
+                            )}
                           />
                           {errors.agent?.counsellorName && (
                             <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
@@ -3247,14 +3232,24 @@ export default function ApplicationWizard({
 
                         <div className="space-y-2">
                           <Label className="text-slate-700 font-semibold text-xs">Counsellor Email *</Label>
-                          <Input 
-                            {...register("agent.counsellorEmail")} 
-                            type="email" 
-                            placeholder="e.g. counsellor@agency.com" 
-                            className={cn(
-                              "h-12 rounded-xl",
-                              errors.agent?.counsellorEmail ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" : "border-slate-200"
-                            )} 
+                          <Controller
+                            name="agent.counsellorEmail"
+                            control={control}
+                            render={({ field }) => (
+                              <Input 
+                                type="email" 
+                                value={field.value || ""}
+                                onChange={(e) => {
+                                  field.onChange(e.target.value);
+                                  setValue("agent.counsellorEmail", e.target.value, { shouldValidate: true });
+                                }}
+                                placeholder="e.g. counsellor@agency.com" 
+                                className={cn(
+                                  "h-12 rounded-xl",
+                                  errors.agent?.counsellorEmail ? "border-rose-500 bg-rose-50/20 text-rose-900 focus-visible:ring-rose-500 ring-1 ring-rose-500" : "border-slate-200"
+                                )} 
+                              />
+                            )}
                           />
                           {errors.agent?.counsellorEmail && (
                             <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
@@ -3263,6 +3258,15 @@ export default function ApplicationWizard({
                             </p>
                           )}
                         </div>
+
+                        {watch("agent.agencyName") && !isCustomAgency && (
+                          <div className="col-span-1 md:col-span-2">
+                            <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-xl p-3 flex items-center gap-2">
+                              <Check size={14} className="shrink-0 text-emerald-600" />
+                              <span>Accredited partner counsellor details automatically loaded from EGA Partner Registry. You can edit them if needed.</span>
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

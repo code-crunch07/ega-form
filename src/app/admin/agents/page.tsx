@@ -162,7 +162,7 @@ export default async function AdminAgentsPage({
                   <TableCell className="py-3">
                     <div className="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
                       <Globe size={13} className="text-slate-400" />
-                      <span>{agent.city ? `${agent.city}, ` : ""}{agent.country}</span>
+                      <span>{agent.country}</span>
                     </div>
                   </TableCell>
 

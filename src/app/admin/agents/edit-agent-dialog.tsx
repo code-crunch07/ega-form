@@ -160,7 +160,7 @@ export function EditAgentDialog({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="country" className="text-xs font-bold text-slate-700">Country *</Label>
                     <select 
@@ -182,15 +182,6 @@ export function EditAgentDialog({
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="city" className="text-xs font-bold text-slate-700">City</Label>
-                    <Input 
-                      id="city" 
-                      name="city" 
-                      defaultValue={agent.city || ""}
-                      className="h-11 rounded-xl border-slate-200 text-slate-800" 
-                    />
-                  </div>
-                  <div className="space-y-1.5">
                     <Label htmlFor="status" className="text-xs font-bold text-slate-700">Status *</Label>
                     <select 
                       id="status" 
@@ -203,16 +194,6 @@ export function EditAgentDialog({
                       <option value="Inactive">Inactive</option>
                     </select>
                   </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="notes" className="text-xs font-bold text-slate-700">Internal Notes</Label>
-                  <Input 
-                    id="notes" 
-                    name="notes" 
-                    defaultValue={agent.notes || ""}
-                    className="h-11 rounded-xl border-slate-200 text-slate-800" 
-                  />
                 </div>
               </div>
               

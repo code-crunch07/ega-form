@@ -63,7 +63,7 @@ export function AgentsFilters() {
       <div className="relative flex-1">
         <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
         <Input 
-          placeholder="Search agency name, counsellor, email, city..." 
+          placeholder="Search agency name, counsellor, email..." 
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10 pr-8 h-11 bg-white border-slate-200 rounded-xl text-slate-800 text-sm shadow-2xs focus:border-[#252D65] focus:ring-[#252D65]/10"
