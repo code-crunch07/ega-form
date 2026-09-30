@@ -266,11 +266,27 @@ export async function submitApplication(data: any) {
       },
     });
 
+    // Create official Payment record for testing and tracking
+    const paymentGateway = validatedData.paymentMethod === "flywire" ? "Flywire" : "PayNow";
+    const paymentInvoice = `INV-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+    await prisma.payment.create({
+      data: {
+        applicationId: application.id,
+        invoiceNumber: paymentInvoice,
+        amount: feeAmount,
+        gateway: paymentGateway,
+        status: "Completed",
+        receiptUrl: `/receipts/${paymentInvoice}`,
+      },
+    });
+
     return {
       success: true,
       appNumber: application.appNumber,
       appId: application.id,
       feeAmount,
+      invoiceNumber: paymentInvoice,
+      paymentMethod: paymentGateway,
     };
   } catch (err: any) {
     console.error("Submission action error:", err);

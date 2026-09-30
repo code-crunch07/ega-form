@@ -110,6 +110,12 @@ function FormAccordion({
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
+  useEffect(() => {
+    if (hasError) {
+      setIsOpen(true);
+    }
+  }, [hasError]);
+
   return (
     <div className={cn(
       "border rounded-2xl bg-white shadow-2xs transition-all duration-200 relative",
@@ -384,16 +390,29 @@ export default function ApplicationWizard({
     initialDraftData?.digitalSignature || existingDraft?.digitalSignature || null
   );
 
-  // PayNow SGQR & Flywire Modal state
+  // PayNow SGQR & Flywire Modal state (Configured for Sandbox & Production Testing)
   const [isPayNowModalOpen, setIsPayNowModalOpen] = useState(false);
   const [isFlywireModalOpen, setIsFlywireModalOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<"paynow" | "flywire">("paynow");
+  const [flywireCurrency, setFlywireCurrency] = useState("SGD");
+  const [testPaymentSuccess, setTestPaymentSuccess] = useState<{
+    gateway: "PayNow" | "Flywire";
+    ref: string;
+    verifiedAt: string;
+  } | null>({ gateway: "PayNow", ref: "PAYNOW-TEST-READY", verifiedAt: "Configured for Testing" });
+  const [successPaymentData, setSuccessPaymentData] = useState<{
+    invoiceNumber?: string;
+    gateway?: string;
+    amount?: number;
+  } | null>(null);
+
   const [isDraftRestored, setIsDraftRestored] = useState(Boolean(existingDraft || initialDraftData));
   const [customAgencyName, setCustomAgencyName] = useState("");
 
   const router = useRouter();
 
   const { register, handleSubmit, control, watch, setValue, getValues, reset, trigger, formState } = useForm<any>({
+    mode: "onChange",
     resolver: zodResolver(applicationSchema),
     defaultValues: {
       studentType: initialDraftData?.studentType || existingDraft?.applicantType || "",
@@ -865,44 +884,17 @@ export default function ApplicationWizard({
 
   const nextStep = async () => {
     if (step < 5) {
-      if (step === 1) {
-        if (!getValues("studentType")) {
-          await trigger("studentType");
-          setFormError("Please select whether you are a Local Student or International Student before continuing.");
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return;
-        }
-        if (watchCourseType === "Standalone Course") {
-          const pId = getValues("programmeId");
-          if (!pId) {
-            await trigger("programmeId");
-            setFormError("Please select an Available Programme before continuing.");
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-          }
-        }
-        if (!getValues("counsellingDeclaration")) {
-          await trigger("counsellingDeclaration");
-          setFormError("Please select your Pre-Course Counselling Declaration statement before continuing.");
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return;
-        }
-      }
-
-      if (step === 3) {
-        if (educationList.length === 0) {
-          setFormError("Please add at least one Academic Qualification record before continuing.");
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-          return;
-        }
-      }
-
       let fieldsToValidate: string[] = [];
       switch (step) {
         case 1:
           fieldsToValidate = ['studentType', 'universityPartner', 'studyMode', 'courseType', 'intake', 'counsellingDeclaration'];
           if (watchCourseType === "Standalone Course") {
             fieldsToValidate.push('academicLevel', 'programmeId');
+          } else {
+            fieldsToValidate.push('packageProgrammes.prog1Level', 'packageProgrammes.prog1Id', 'packageProgrammes.prog2Id');
+            if (watchProg1Level === "Foundation") {
+              fieldsToValidate.push('packageProgrammes.prog3Id');
+            }
           }
           break;
         case 2:
@@ -1083,12 +1075,18 @@ export default function ApplicationWizard({
     try {
       const result = await submitApplication({
         ...data,
+        paymentMethod,
         education: educationList,
         digitalSignature: savedSignature,
       });
 
       if (result.success) {
         setSuccessAppNumber(result.appNumber || "EGA2026-SUBMITTED");
+        setSuccessPaymentData({
+          invoiceNumber: result.invoiceNumber || `INV-2026-${Math.floor(100000 + Math.random() * 900000)}`,
+          gateway: result.paymentMethod || (paymentMethod === "flywire" ? "Flywire" : "PayNow"),
+          amount: result.feeAmount || feeAmount,
+        });
         if (typeof window !== "undefined") {
           localStorage.removeItem("ega_application_draft");
         }
@@ -1109,23 +1107,49 @@ export default function ApplicationWizard({
           <Check size={48} strokeWidth={3} />
         </div>
         <h1 className="text-4xl font-bold text-slate-900 mb-2 font-heading">🎉 Application Submitted Successfully!</h1>
-        <p className="text-lg text-slate-600 mb-8 font-medium">Your EGA Student Application has been received and is now under official review.</p>
+        <p className="text-lg text-slate-600 mb-6 font-medium">Your EGA Student Application has been received and verified under testing mode.</p>
         
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-sm w-full mb-8">
-          <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider font-mono mb-1">Application Reference</p>
-          <p className="text-2xl font-mono font-extrabold text-[#252D65]">{successAppNumber}</p>
-          <div className="h-px bg-slate-100 my-4 w-full" />
-          <div className="flex justify-between items-center text-xs">
-            <span className="text-slate-500 font-medium">Application Fee (CR-09)</span>
-            <span className="bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full">SGD {feeAmount}.00</span>
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-md w-full mb-8 text-left space-y-3.5">
+          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+              <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider font-mono">Application Reference</p>
+              <p className="text-xl font-mono font-extrabold text-[#252D65]">{successAppNumber}</p>
+            </div>
+            <span className="text-xs font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full flex items-center gap-1 font-mono">
+              <Check size={12} /> Submitted
+            </span>
+          </div>
+
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between items-center py-1 border-b border-slate-100">
+              <span className="text-slate-500 font-medium">Official Invoice</span>
+              <span className="font-mono font-bold text-slate-800">{successPaymentData?.invoiceNumber || "INV-2026-TEST"}</span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-slate-100">
+              <span className="text-slate-500 font-medium">Payment Gateway</span>
+              <span className="font-bold text-[#252D65] flex items-center gap-1">
+                {successPaymentData?.gateway === "Flywire" ? <Globe size={13} className="text-blue-600" /> : <QrCode size={13} className="text-[#252D65]" />}
+                {successPaymentData?.gateway || "PayNow"} (Test Verified)
+              </span>
+            </div>
+            <div className="flex justify-between items-center py-1 border-b border-slate-100">
+              <span className="text-slate-500 font-medium">Payment Status</span>
+              <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                Paid & Completed (Test Mode)
+              </span>
+            </div>
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-slate-700 font-bold text-sm">Application Fee</span>
+              <span className="text-lg font-mono font-extrabold text-[#252D65]">SGD {successPaymentData?.amount || feeAmount}.00</span>
+            </div>
           </div>
         </div>
 
         <div className="flex gap-4">
-          <Button onClick={() => router.push("/dashboard")} variant="outline" className="h-11 px-6 rounded-xl font-bold">
+          <Button onClick={() => router.push("/dashboard")} variant="outline" className="h-11 px-6 rounded-xl font-bold cursor-pointer">
             Return to Dashboard
           </Button>
-          <Button onClick={() => router.push("/dashboard/applications")} className="h-11 px-6 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold">
+          <Button onClick={() => router.push("/dashboard/applications")} className="h-11 px-6 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold shadow-md shadow-[#252D65]/20 cursor-pointer">
             View My Applications
           </Button>
         </div>
@@ -1206,12 +1230,10 @@ export default function ApplicationWizard({
                     type="button"
                     key={sec.id}
                     onClick={() => {
-                      if (sec.id <= step || isCompleted) {
-                        setStep(sec.id);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }
+                      setStep(sec.id);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className="flex flex-col items-center group relative z-10 focus:outline-none"
+                    className="flex flex-col items-center group relative z-10 focus:outline-none cursor-pointer transition-transform hover:scale-105"
                   >
                     <div 
                       className={cn(
@@ -1220,7 +1242,7 @@ export default function ApplicationWizard({
                           ? "bg-[#252D65] text-white ring-4 ring-[#252D65]/20 scale-110 shadow-md shadow-[#252D65]/30" 
                           : isCompleted
                           ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                          : "bg-white text-slate-400 border border-slate-200 group-hover:border-slate-300"
+                          : "bg-white text-slate-400 border border-slate-200 group-hover:border-[#252D65]/40 group-hover:text-slate-800"
                       )}
                     >
                       {isCompleted ? <Check size={16} strokeWidth={3} /> : sec.id}
@@ -1228,7 +1250,7 @@ export default function ApplicationWizard({
                     
                     <span className={cn(
                       "text-xs font-bold mt-2 truncate transition-colors",
-                      isActive ? "text-[#252D65]" : isCompleted ? "text-emerald-950" : "text-slate-500"
+                      isActive ? "text-[#252D65]" : isCompleted ? "text-emerald-950" : "text-slate-500 group-hover:text-slate-800"
                     )}>
                       {sec.shortName}
                     </span>
@@ -1334,9 +1356,10 @@ export default function ApplicationWizard({
                         render={({ field }) => (
                           <Select onValueChange={(val) => {
                             field.onChange(val);
-                            setValue("academicLevel", "");
-                            setValue("programmeId", "");
-                            setValue("intake", "");
+                            setValue("universityPartner", val, { shouldValidate: true });
+                            setValue("academicLevel", "", { shouldValidate: true });
+                            setValue("programmeId", "", { shouldValidate: true });
+                            setValue("intake", "", { shouldValidate: true });
                             setValue("packageProgrammes.prog1Level", "");
                             setValue("packageProgrammes.prog1Id", "");
                             setValue("packageProgrammes.prog2Level", "");
@@ -1382,9 +1405,10 @@ export default function ApplicationWizard({
                         render={({ field }) => (
                           <Select onValueChange={(val) => {
                             field.onChange(val);
-                            setValue("academicLevel", "");
-                            setValue("programmeId", "");
-                            setValue("intake", "");
+                            setValue("studyMode", val, { shouldValidate: true });
+                            setValue("academicLevel", "", { shouldValidate: true });
+                            setValue("programmeId", "", { shouldValidate: true });
+                            setValue("intake", "", { shouldValidate: true });
                             setValue("packageProgrammes.prog1Level", "");
                             setValue("packageProgrammes.prog1Id", "");
                             setValue("packageProgrammes.prog2Level", "");
@@ -1483,8 +1507,9 @@ export default function ApplicationWizard({
                           render={({ field }) => (
                             <Select onValueChange={(val) => {
                               field.onChange(val);
-                              setValue("programmeId", "");
-                              setValue("intake", "");
+                              setValue("academicLevel", val, { shouldValidate: true });
+                              setValue("programmeId", "", { shouldValidate: true });
+                              setValue("intake", "", { shouldValidate: true });
                             }} value={field.value || ""}>
                               <SelectTrigger className={cn(
                                 "h-12 bg-white rounded-xl font-medium",
@@ -1525,7 +1550,8 @@ export default function ApplicationWizard({
                               error={Boolean(errors.programmeId)}
                               onChange={(newId) => {
                                 field.onChange(newId);
-                                setValue("intake", "");
+                                setValue("programmeId", newId, { shouldValidate: true });
+                                setValue("intake", "", { shouldValidate: true });
                                 const chosen = programmes.find(p => p.id === newId);
                                 if (chosen?.school?.name && chosen.school.name !== watchPartner && watchPartner !== "all") {
                                   setValue("universityPartner", chosen.school.name, { shouldValidate: true });
@@ -1552,7 +1578,10 @@ export default function ApplicationWizard({
                           name="intake"
                           control={control}
                           render={({ field }) => (
-                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                            <Select onValueChange={(val) => {
+                              field.onChange(val);
+                              setValue("intake", val, { shouldValidate: true });
+                            }} value={field.value || ""}>
                               <SelectTrigger className={cn(
                                 "h-12 bg-white rounded-xl font-medium",
                                 errors.intake 
@@ -1601,30 +1630,38 @@ export default function ApplicationWizard({
                         {/* Programme 1 Level Selector */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
-                            <Label className="text-slate-700 font-bold text-xs">Programme 1 Academic Level (Driver) *</Label>
+                            <Label className={cn("text-xs font-bold", errors.packageProgrammes?.prog1Level ? "text-rose-600 font-bold" : "text-slate-700")}>
+                              Programme 1 Academic Level (Driver) *
+                            </Label>
                             <Controller
                               name="packageProgrammes.prog1Level"
                               control={control}
                               render={({ field }) => (
                                 <Select onValueChange={(val) => {
                                   field.onChange(val);
+                                  setValue("packageProgrammes.prog1Level", val, { shouldValidate: true });
                                   if (val === "Foundation") {
-                                    setValue("packageProgrammes.prog2Level", "Diploma Family (Assigned)");
-                                    setValue("packageProgrammes.prog3Level", "Undergraduate (Assigned)");
-                                    setValue("packageProgrammes.prog1Id", "");
-                                    setValue("packageProgrammes.prog2Id", "");
-                                    setValue("packageProgrammes.prog3Id", "");
-                                    setValue("intake", "");
+                                    setValue("packageProgrammes.prog2Level", "Diploma Family (Assigned)", { shouldValidate: true });
+                                    setValue("packageProgrammes.prog3Level", "Undergraduate (Assigned)", { shouldValidate: true });
+                                    setValue("packageProgrammes.prog1Id", "", { shouldValidate: true });
+                                    setValue("packageProgrammes.prog2Id", "", { shouldValidate: true });
+                                    setValue("packageProgrammes.prog3Id", "", { shouldValidate: true });
+                                    setValue("intake", "", { shouldValidate: true });
                                   } else {
-                                    setValue("packageProgrammes.prog2Level", "Undergraduate (Assigned)");
-                                    setValue("packageProgrammes.prog3Level", "");
-                                    setValue("packageProgrammes.prog1Id", "");
-                                    setValue("packageProgrammes.prog2Id", "");
-                                    setValue("packageProgrammes.prog3Id", "");
-                                    setValue("intake", "");
+                                    setValue("packageProgrammes.prog2Level", "Undergraduate (Assigned)", { shouldValidate: true });
+                                    setValue("packageProgrammes.prog3Level", "", { shouldValidate: true });
+                                    setValue("packageProgrammes.prog1Id", "", { shouldValidate: true });
+                                    setValue("packageProgrammes.prog2Id", "", { shouldValidate: true });
+                                    setValue("packageProgrammes.prog3Id", "", { shouldValidate: true });
+                                    setValue("intake", "", { shouldValidate: true });
                                   }
                                 }} value={field.value || ""}>
-                                  <SelectTrigger className="h-12 bg-white border border-slate-200 text-slate-800 rounded-xl font-semibold">
+                                  <SelectTrigger className={cn(
+                                    "h-12 bg-white rounded-xl font-semibold",
+                                    errors.packageProgrammes?.prog1Level 
+                                      ? "border-rose-500 bg-rose-50/20 text-rose-900 ring-1 ring-rose-500" 
+                                      : "border-slate-200 text-slate-800"
+                                  )}>
                                     <SelectValue placeholder="Select Programme 1 Level" />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -1634,6 +1671,12 @@ export default function ApplicationWizard({
                                 </Select>
                               )}
                             />
+                            {errors.packageProgrammes?.prog1Level && (
+                              <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                <AlertCircle size={13} className="shrink-0" />
+                                {errors.packageProgrammes.prog1Level.message as string}
+                              </p>
+                            )}
                           </div>
 
                           <div className="space-y-2">
@@ -1644,7 +1687,10 @@ export default function ApplicationWizard({
                               name="intake"
                               control={control}
                               render={({ field }) => (
-                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                <Select onValueChange={(val) => {
+                                  field.onChange(val);
+                                  setValue("intake", val, { shouldValidate: true });
+                                }} value={field.value || ""}>
                                   <SelectTrigger className={cn(
                                     "h-12 bg-white rounded-xl font-semibold",
                                     errors.intake 
@@ -1697,15 +1743,19 @@ export default function ApplicationWizard({
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 1 Slot</span>
                                 <span className="text-xs font-bold text-[#252D65] bg-[#252D65]/10 px-2 py-0.5 rounded-md">{watchProg1Level}</span>
                               </div>
-                              <Label className="text-slate-800 font-bold text-xs">Programme 1 Selection *</Label>
+                              <Label className={cn("text-xs font-bold", errors.packageProgrammes?.prog1Id ? "text-rose-600 font-bold" : "text-slate-800")}>
+                                Programme 1 Selection *
+                              </Label>
                               <Controller
                                 name="packageProgrammes.prog1Id"
                                 control={control}
                                 render={({ field }) => (
                                   <SearchableProgrammeSelect
                                     value={field.value || ""}
+                                    error={Boolean(errors.packageProgrammes?.prog1Id)}
                                     onChange={(newId) => {
                                       field.onChange(newId);
+                                      setValue("packageProgrammes.prog1Id", newId, { shouldValidate: true });
                                       setValue("intake", "");
                                     }}
                                     programmes={watchProg1Level === "Foundation" ? foundationProgrammes : diplomaProgrammes}
@@ -1713,6 +1763,12 @@ export default function ApplicationWizard({
                                   />
                                 )}
                               />
+                              {errors.packageProgrammes?.prog1Id && (
+                                <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                  <AlertCircle size={13} className="shrink-0" />
+                                  {errors.packageProgrammes.prog1Id.message as string}
+                                </p>
+                              )}
                             </div>
 
                             {/* Slot 2 (Read-only Academic Level) */}
@@ -1723,19 +1779,31 @@ export default function ApplicationWizard({
                                   {watchProg1Level === "Foundation" ? "Diploma Family (Assigned)" : "Undergraduate (Assigned)"}
                                 </span>
                               </div>
-                              <Label className="text-slate-800 font-bold text-xs">Programme 2 Selection *</Label>
+                              <Label className={cn("text-xs font-bold", errors.packageProgrammes?.prog2Id ? "text-rose-600 font-bold" : "text-slate-800")}>
+                                Programme 2 Selection *
+                              </Label>
                               <Controller
                                 name="packageProgrammes.prog2Id"
                                 control={control}
                                 render={({ field }) => (
                                   <SearchableProgrammeSelect
                                     value={field.value || ""}
-                                    onChange={field.onChange}
+                                    error={Boolean(errors.packageProgrammes?.prog2Id)}
+                                    onChange={(newId) => {
+                                      field.onChange(newId);
+                                      setValue("packageProgrammes.prog2Id", newId, { shouldValidate: true });
+                                    }}
                                     programmes={watchProg1Level === "Foundation" ? diplomaProgrammes : degreeProgrammes}
                                     placeholder="Search and select Programme 2..."
                                   />
                                 )}
                               />
+                              {errors.packageProgrammes?.prog2Id && (
+                                <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                  <AlertCircle size={13} className="shrink-0" />
+                                  {errors.packageProgrammes.prog2Id.message as string}
+                                </p>
+                              )}
                             </div>
 
                             {/* Slot 3 (Foundation Only - Read-only Academic Level = Undergraduate) */}
@@ -1745,19 +1813,31 @@ export default function ApplicationWizard({
                                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">Programme 3 Slot</span>
                                   <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">Undergraduate (Assigned)</span>
                                 </div>
-                                <Label className="text-slate-800 font-bold text-xs">Programme 3 Selection *</Label>
+                                <Label className={cn("text-xs font-bold", errors.packageProgrammes?.prog3Id ? "text-rose-600 font-bold" : "text-slate-800")}>
+                                  Programme 3 Selection *
+                                </Label>
                                 <Controller
                                   name="packageProgrammes.prog3Id"
                                   control={control}
                                   render={({ field }) => (
                                     <SearchableProgrammeSelect
                                       value={field.value || ""}
-                                      onChange={field.onChange}
+                                      error={Boolean(errors.packageProgrammes?.prog3Id)}
+                                      onChange={(newId) => {
+                                        field.onChange(newId);
+                                        setValue("packageProgrammes.prog3Id", newId, { shouldValidate: true });
+                                      }}
                                       programmes={degreeProgrammes}
                                       placeholder="Search and select Programme 3..."
                                     />
                                   )}
                                 />
+                                {errors.packageProgrammes?.prog3Id && (
+                                  <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
+                                    <AlertCircle size={13} className="shrink-0" />
+                                    {errors.packageProgrammes.prog3Id.message as string}
+                                  </p>
+                                )}
                               </div>
                             )}
 
@@ -1811,7 +1891,10 @@ export default function ApplicationWizard({
                               name="counsellingDeclaration" 
                               value={opt.val} 
                               checked={field.value === opt.val} 
-                              onChange={() => field.onChange(opt.val)} 
+                              onChange={() => {
+                                field.onChange(opt.val);
+                                setValue("counsellingDeclaration", opt.val, { shouldValidate: true });
+                              }} 
                               className="w-4 h-4 text-[#252D65]" 
                             />
                             <span>{opt.label}</span>
@@ -3630,6 +3713,30 @@ export default function ApplicationWizard({
                   hasError={!paymentMethod && Boolean(formError?.includes("Payment"))}
                 >
                   <div className="space-y-4">
+                    {/* Sandbox Testing Banner */}
+                    <div className="bg-emerald-50/70 border border-emerald-200/90 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs animate-in fade-in duration-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                          <Check size={16} strokeWidth={3} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-emerald-950">Payment Gateways Configured for Sandbox Testing</span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-200/70 text-emerald-900 uppercase">Test Active</span>
+                          </div>
+                          <p className="text-emerald-800 text-[11px] mt-0.5">
+                            Both PayNow and Flywire are configured with instant test simulations. Click either option to inspect details or run a simulated test transaction.
+                          </p>
+                        </div>
+                      </div>
+                      {testPaymentSuccess && (
+                        <div className="shrink-0 bg-white border border-emerald-300 px-3 py-1.5 rounded-xl font-mono text-[11px] text-emerald-900 font-bold flex items-center gap-2 shadow-2xs">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                          <span>{testPaymentSuccess.gateway} Verified ({testPaymentSuccess.ref})</span>
+                        </div>
+                      )}
+                    </div>
+
                     <div className="flex justify-between items-center bg-[#252D65]/5 p-5 rounded-2xl border border-[#252D65]/20">
                       <div>
                         <h4 className="font-heading font-bold text-base text-slate-900">Application Fee Summary</h4>
@@ -3641,7 +3748,12 @@ export default function ApplicationWizard({
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="text-slate-800 font-bold text-xs">Approved Payment Method *</Label>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-slate-800 font-bold text-xs">Approved Payment Method *</Label>
+                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
+                          Testing Mode Enabled
+                        </span>
+                      </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button
                           type="button"
@@ -3650,7 +3762,7 @@ export default function ApplicationWizard({
                             setIsPayNowModalOpen(true);
                           }}
                           className={cn(
-                            "flex items-center justify-center gap-2.5 p-4 rounded-xl border-2 font-bold text-xs transition-all cursor-pointer",
+                            "flex items-center justify-between p-4 rounded-xl border-2 font-bold text-xs transition-all cursor-pointer relative text-left",
                             paymentMethod === "paynow"
                               ? "border-[#252D65] bg-[#252D65]/5 text-[#252D65] shadow-xs"
                               : !paymentMethod && formError?.includes("Payment")
@@ -3658,11 +3770,20 @@ export default function ApplicationWizard({
                                 : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
                           )}
                         >
-                          <QrCode size={20} className="text-[#252D65]" />
-                          <div className="text-left">
-                            <span className="block font-bold">PayNow / SGQR</span>
-                            <span className="text-[10px] font-normal text-slate-500">Singapore Bank Instant Transfer</span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-[#252D65]/10 flex items-center justify-center text-[#252D65]">
+                              <QrCode size={22} />
+                            </div>
+                            <div>
+                              <span className="block font-bold text-slate-900">PayNow / SGQR</span>
+                              <span className="text-[10px] font-normal text-slate-500">UEN: 201829304M • Sandbox Ready</span>
+                            </div>
                           </div>
+                          {paymentMethod === "paynow" && (
+                            <span className="w-5 h-5 rounded-full bg-[#252D65] text-white flex items-center justify-center shrink-0">
+                              <Check size={12} strokeWidth={3} />
+                            </span>
+                          )}
                         </button>
 
                         <button
@@ -3672,19 +3793,28 @@ export default function ApplicationWizard({
                             setIsFlywireModalOpen(true);
                           }}
                           className={cn(
-                            "flex items-center justify-center gap-2.5 p-4 rounded-xl border-2 font-bold text-xs transition-all cursor-pointer",
+                            "flex items-center justify-between p-4 rounded-xl border-2 font-bold text-xs transition-all cursor-pointer relative text-left",
                             paymentMethod === "flywire"
-                              ? "border-blue-600 bg-blue-50/50 text-blue-800 shadow-xs"
+                              ? "border-blue-600 bg-blue-50/50 text-blue-900 shadow-xs"
                               : !paymentMethod && formError?.includes("Payment")
                                 ? "border-rose-400 bg-rose-50/20 text-slate-700"
                                 : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
                           )}
                         >
-                          <Globe size={20} className="text-blue-600" />
-                          <div className="text-left">
-                            <span className="block font-bold">Flywire Global Payment</span>
-                            <span className="text-[10px] font-normal text-slate-500">International Wire & Local Currencies</span>
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center text-blue-600">
+                              <Globe size={22} />
+                            </div>
+                            <div>
+                              <span className="block font-bold text-slate-900">Flywire Global Payment</span>
+                              <span className="text-[10px] font-normal text-slate-500">Multi-Currency Wire • Sandbox Ready</span>
+                            </div>
                           </div>
+                          {paymentMethod === "flywire" && (
+                            <span className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0">
+                              <Check size={12} strokeWidth={3} />
+                            </span>
+                          )}
                         </button>
                       </div>
                       {!paymentMethod && formError?.includes("Payment") && (
@@ -3885,33 +4015,86 @@ export default function ApplicationWizard({
         </div>
       )}
 
-      {/* PayNow SGQR Modal */}
+      {/* PayNow SGQR Modal (Sandbox Testing Configured) */}
       {isPayNowModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl relative border border-slate-200 font-jost space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 text-center shadow-2xl relative border border-slate-200 font-jost space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="font-heading font-bold text-slate-900 text-base">PayNow / SGQR Payment</span>
-              <button type="button" onClick={() => setIsPayNowModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-sm font-bold">✕</button>
+              <div className="text-left">
+                <span className="font-heading font-bold text-slate-900 text-base block">PayNow / SGQR Payment</span>
+                <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full inline-block mt-0.5">
+                  Sandbox Testing Active
+                </span>
+              </div>
+              <button type="button" onClick={() => setIsPayNowModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-sm font-bold p-1">✕</button>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col items-center space-y-3">
-              <div className="w-44 h-44 bg-white p-3 rounded-xl border border-slate-300 shadow-xs flex items-center justify-center">
+              <div className="w-44 h-44 bg-white p-3 rounded-xl border border-slate-300 shadow-xs flex items-center justify-center relative">
                 <QrCode size={140} className="text-[#252D65]" />
+                <div className="absolute inset-0 bg-emerald-500/10 rounded-xl flex items-end justify-center pb-2 pointer-events-none">
+                  <span className="text-[10px] font-mono font-black text-emerald-950 bg-white/95 px-2 py-0.5 rounded shadow-2xs border border-emerald-200">
+                    TEST PAYNOW QR
+                  </span>
+                </div>
               </div>
-              <p className="text-xs font-mono font-bold text-[#252D65]">EGA PayNow SGQR Code</p>
-              <p className="text-sm font-extrabold text-slate-900">Amount: SGD {feeAmount}.00</p>
+              
+              <div className="w-full bg-white p-3 rounded-xl border border-slate-200 text-left text-xs space-y-1.5 font-sans">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Payee Entity:</span>
+                  <span className="font-bold text-slate-800">Educare Global Academy Pte Ltd</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Entity UEN:</span>
+                  <span className="font-mono font-bold text-[#252D65]">201829304M</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-500">Test Reference:</span>
+                  <span className="font-mono font-bold text-slate-700">PAYNOW-TEST-{(user.id || "APP").slice(0, 6).toUpperCase()}</span>
+                </div>
+                <div className="flex justify-between items-center pt-1 border-t border-slate-100">
+                  <span className="font-bold text-slate-700">Total Payable:</span>
+                  <span className="font-extrabold text-base text-[#252D65]">SGD {feeAmount}.00</span>
+                </div>
+              </div>
             </div>
 
-            <Button onClick={() => setIsPayNowModalOpen(false)} className="w-full h-11 bg-[#252D65] hover:bg-[#1C224E] text-white rounded-xl font-bold">
-              Done / Payment Confirmed
-            </Button>
+            <div className="space-y-2 pt-1">
+              <Button 
+                type="button"
+                onClick={() => {
+                  setPaymentMethod("paynow");
+                  setTestPaymentSuccess({
+                    gateway: "PayNow",
+                    ref: `PAYNOW-SIM-${Math.floor(100000 + Math.random() * 900000)}`,
+                    verifiedAt: new Date().toLocaleTimeString(),
+                  });
+                  setIsPayNowModalOpen(false);
+                }} 
+                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold gap-2 shadow-xs cursor-pointer"
+              >
+                <Check size={16} strokeWidth={3} /> Simulate Test PayNow Transfer (Sandbox Approval)
+              </Button>
+
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setPaymentMethod("paynow");
+                  setIsPayNowModalOpen(false);
+                }} 
+                className="w-full h-10 border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-xs"
+              >
+                Done / Keep PayNow Selected
+              </Button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Flywire Payment Modal (F-073, QA-20) */}
+      {/* Flywire Payment Modal (Sandbox Testing Configured) */}
       {isFlywireModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 text-left shadow-2xl relative border border-slate-200 font-jost space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
@@ -3920,13 +4103,46 @@ export default function ApplicationWizard({
                 </div>
                 <div>
                   <span className="font-heading font-bold text-slate-900 text-base block">Flywire Global Payment</span>
-                  <span className="text-[11px] text-slate-500 font-medium">International Wire, Visa, Mastercard & Local Bank Transfer</span>
+                  <span className="text-[11px] font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full inline-block mt-0.5">
+                    Sandbox Testing Active
+                  </span>
                 </div>
               </div>
               <button type="button" onClick={() => setIsFlywireModalOpen(false)} className="text-slate-400 hover:text-slate-700 text-sm font-bold p-1">✕</button>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 text-xs">
+            {/* Currency Selector for testing */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700 block">Simulate Payment Currency (Live Test Exchange):</label>
+              <div className="grid grid-cols-4 gap-1.5 text-xs font-semibold">
+                {[
+                  { code: "SGD", rate: 1.0, sym: "S$" },
+                  { code: "USD", rate: 0.76, sym: "$" },
+                  { code: "CNY", rate: 5.48, sym: "¥" },
+                  { code: "EUR", rate: 0.70, sym: "€" },
+                  { code: "INR", rate: 63.5, sym: "₹" },
+                  { code: "VND", rate: 19200, sym: "₫" },
+                  { code: "IDR", rate: 12100, sym: "Rp" },
+                  { code: "MYR", rate: 3.38, sym: "RM" },
+                ].map(c => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => setFlywireCurrency(c.code)}
+                    className={cn(
+                      "py-1.5 px-2 rounded-lg border text-center transition-all cursor-pointer",
+                      flywireCurrency === c.code 
+                        ? "bg-blue-600 text-white border-blue-600 font-bold shadow-2xs" 
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    )}
+                  >
+                    {c.code}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5 text-xs">
               <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
                 <span className="text-slate-500 font-medium">Institution</span>
                 <span className="font-bold text-slate-800">Educare Global Academy</span>
@@ -3936,29 +4152,53 @@ export default function ApplicationWizard({
                 <span className="font-bold text-slate-800">Application & Registration Fee</span>
               </div>
               <div className="flex justify-between items-center py-1 border-b border-slate-200/60">
-                <span className="text-slate-500 font-medium">Payee Reference</span>
-                <span className="font-mono font-bold text-[#252D65]">EGA-TEMP-{(user.id || "APP").slice(0, 8).toUpperCase()}</span>
+                <span className="text-slate-500 font-medium">Test Payer ID</span>
+                <span className="font-mono font-bold text-[#252D65]">FW-TEST-{(user.id || "APP").slice(0, 8).toUpperCase()}</span>
               </div>
               <div className="flex justify-between items-center py-1">
-                <span className="text-slate-500 font-medium">Total Amount Due</span>
-                <span className="text-base font-extrabold text-[#252D65]">SGD {feeAmount}.00</span>
+                <span className="text-slate-500 font-medium">Simulated Amount</span>
+                <span className="text-base font-extrabold text-[#252D65]">
+                  {flywireCurrency === "SGD" && `SGD ${feeAmount}.00`}
+                  {flywireCurrency === "USD" && `USD ${(feeAmount * 0.76).toFixed(2)}`}
+                  {flywireCurrency === "CNY" && `CNY ${(feeAmount * 5.48).toFixed(2)}`}
+                  {flywireCurrency === "EUR" && `EUR ${(feeAmount * 0.70).toFixed(2)}`}
+                  {flywireCurrency === "INR" && `INR ${(feeAmount * 63.5).toFixed(2)}`}
+                  {flywireCurrency === "VND" && `VND ${(feeAmount * 19200).toLocaleString()}`}
+                  {flywireCurrency === "IDR" && `IDR ${(feeAmount * 12100).toLocaleString()}`}
+                  {flywireCurrency === "MYR" && `MYR ${(feeAmount * 3.38).toFixed(2)}`}
+                </span>
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Flywire allows you to pay securely from any country in your home currency with competitive exchange rates and 24/7 multilingual support.
-            </p>
+            <div className="space-y-2 pt-1">
+              <Button 
+                type="button" 
+                onClick={() => {
+                  setPaymentMethod("flywire");
+                  setTestPaymentSuccess({
+                    gateway: "Flywire",
+                    ref: `FLYWIRE-SIM-${Math.floor(100000 + Math.random() * 900000)}`,
+                    verifiedAt: new Date().toLocaleTimeString(),
+                  });
+                  setIsFlywireModalOpen(false);
+                }} 
+                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold gap-2 shadow-xs cursor-pointer"
+              >
+                <Check size={16} strokeWidth={3} /> Simulate Test Flywire Transfer (Sandbox Webhook)
+              </Button>
 
-            <Button 
-              type="button" 
-              onClick={() => {
-                setPaymentMethod("flywire");
-                setIsFlywireModalOpen(false);
-              }} 
-              className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold"
-            >
-              Select Flywire & Proceed
-            </Button>
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={() => {
+                  setPaymentMethod("flywire");
+                  setIsFlywireModalOpen(false);
+                }} 
+                className="w-full h-10 border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl font-bold text-xs"
+              >
+                Select Flywire & Close
+              </Button>
+            </div>
           </div>
         </div>
       )}

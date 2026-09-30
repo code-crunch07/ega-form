@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const phoneRegex = /^[0-9\s-]{6,20}$/;
+const phoneRegex = /^[+]?[0-9\s-]{4,25}$/;
 
 export const applicationSchema = z.object({
   // Mandatory Student Type Selection
@@ -64,9 +64,9 @@ export const applicationSchema = z.object({
     isUnder18: z.boolean().optional(),
     isSameAsEmergency: z.boolean().optional(),
     fullName: z.string().optional(),
-    email: z.string().email("Invalid guardian email format").optional().or(z.literal("")),
+    email: z.string().email("Invalid guardian email format").optional().or(z.literal("")).or(z.null()),
     countryCode: z.string().optional(),
-    phone: z.string().regex(phoneRegex, "Guardian phone must contain digits only").optional().or(z.literal("")),
+    phone: z.string().regex(phoneRegex, "Guardian phone must contain digits only").optional().or(z.literal("")).or(z.null()),
     relation: z.string().optional(),
   }).optional(),
 
@@ -100,7 +100,7 @@ export const applicationSchema = z.object({
 
   // English Proficiency
   englishTest: z.object({
-    hasTakenTest: z.boolean().default(false),
+    hasTakenTest: z.preprocess((val) => val === true || val === "yes" || val === "true", z.boolean().default(false)),
     testType: z.string().optional(),
     testDate: z.string().optional(),
     isTentativeDate: z.boolean().optional(),
@@ -109,8 +109,8 @@ export const applicationSchema = z.object({
   // Section 4: Additional Information
   additionalInfo: z.object({
     healthConditions: z.string().min(1, "Health conditions details are required (enter NA if none)"),
-    conductSuspended: z.boolean().default(false),
-    conductConvicted: z.boolean().default(false),
+    conductSuspended: z.preprocess((val) => val === true || val === "yes", z.boolean().default(false)),
+    conductConvicted: z.preprocess((val) => val === true || val === "yes", z.boolean().default(false)),
     marketingChannel: z.enum([
       "EGA Website",
       "Print Advertising",
@@ -124,23 +124,26 @@ export const applicationSchema = z.object({
 
   // EGA Appointed Agent Contact
   agent: z.object({
-    isAgentRepresented: z.boolean().default(false),
+    isAgentRepresented: z.preprocess((val) => val === true || val === "yes" || val === "true", z.boolean().default(false)),
     agentCountry: z.string().optional(),
     agencyName: z.string().optional(),
     counsellorName: z.string().optional(),
-    counsellorEmail: z.string().email("Invalid counsellor email format").optional().or(z.literal("")),
+    counsellorEmail: z.string().email("Invalid counsellor email format").optional().or(z.literal("")).or(z.null()),
   }),
 
   // Section 5: Declaration & Consent
   consent: z.object({
-    dataProcessingConsent: z.boolean().default(true),
-    partnerConsent: z.boolean().default(true),
-    applicantDeclaration: z.boolean().default(true),
-    marketingConsent: z.boolean().default(false),
+    dataProcessingConsent: z.preprocess((val) => val === true || val === "true" || val === "on", z.boolean().default(true)),
+    partnerConsent: z.preprocess((val) => val === true || val === "true" || val === "on", z.boolean().default(true)),
+    applicantDeclaration: z.preprocess((val) => val === true || val === "true" || val === "on", z.boolean().default(true)),
+    marketingConsent: z.preprocess((val) => val === true || val === "true" || val === "on", z.boolean().default(false)),
   }),
 
   // Native Applicant Digital Signature
   digitalSignature: z.string().min(1, "Applicant signature is required"),
+
+  // Approved Payment Method (PayNow or Flywire)
+  paymentMethod: z.enum(["paynow", "flywire"]).default("paynow"),
 });
 
 export type ApplicationData = z.infer<typeof applicationSchema>;
