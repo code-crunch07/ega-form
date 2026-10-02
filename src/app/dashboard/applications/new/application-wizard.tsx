@@ -344,8 +344,6 @@ export default function ApplicationWizard({
   } | null>(null);
 
   const [isDraftRestored, setIsDraftRestored] = useState(Boolean(existingDraft || initialDraftData));
-  const [customAgencyName, setCustomAgencyName] = useState("");
-  const [isCustomAgency, setIsCustomAgency] = useState(false);
 
   const router = useRouter();
 
@@ -3071,10 +3069,12 @@ export default function ApplicationWizard({
                             defaultValue="Singapore"
                             render={({ field }) => {
                               const registeredCountries = Array.from(new Set((agents || []).map((a: any) => a.country).filter(Boolean)));
+                              const defaultCountries = [
+                                "Singapore", "India", "China", "Malaysia", "Indonesia", "Vietnam", "Myanmar", "Thailand", "Philippines"
+                              ];
                               const countryOptions = Array.from(new Set([
-                                "Singapore", "India", "China", "Malaysia", "Indonesia", "Vietnam", "Myanmar", "Thailand", "Philippines",
-                                ...registeredCountries,
-                                "Other"
+                                ...defaultCountries,
+                                ...registeredCountries
                               ]));
 
                               return (
@@ -3084,8 +3084,6 @@ export default function ApplicationWizard({
                                   setValue("agent.agencyName", "", { shouldValidate: true });
                                   setValue("agent.counsellorName", "", { shouldValidate: true });
                                   setValue("agent.counsellorEmail", "", { shouldValidate: true });
-                                  setIsCustomAgency(false);
-                                  setCustomAgencyName("");
                                 }} value={field.value || "Singapore"}>
                                   <SelectTrigger className={cn(
                                     "h-12 bg-white rounded-xl font-medium",
@@ -3096,7 +3094,7 @@ export default function ApplicationWizard({
                                   <SelectContent className="max-h-60">
                                     {countryOptions.map((c) => (
                                       <SelectItem key={c} value={c}>
-                                        {c === "Other" ? "Other Country" : c}
+                                        {c}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -3120,7 +3118,7 @@ export default function ApplicationWizard({
                             render={({ field }) => {
                               const countryVal = watch("agent.agentCountry") || "Singapore";
                               const dbAgencies = (agents || []).filter((a: any) => 
-                                a.status === "Active" && (!countryVal || countryVal === "Other" || a.country?.toLowerCase() === countryVal.toLowerCase())
+                                a.status === "Active" && a.country?.toLowerCase() === countryVal.toLowerCase()
                               );
 
                               return (
@@ -3128,27 +3126,18 @@ export default function ApplicationWizard({
                                   <Select 
                                     onValueChange={(val) => {
                                       field.onChange(val);
-                                      
-                                      if (val === "Other Agency") {
-                                        setIsCustomAgency(true);
-                                        setValue("agent.agencyName", customAgencyName || "", { shouldValidate: true });
-                                        setValue("agent.counsellorName", "", { shouldValidate: true });
-                                        setValue("agent.counsellorEmail", "", { shouldValidate: true });
-                                      } else {
-                                        setIsCustomAgency(false);
-                                        setValue("agent.agencyName", val, { shouldValidate: true });
-                                        const chosen = (agents || []).find((a: any) => a.agencyName === val);
-                                        if (chosen) {
-                                          if (chosen.contactPerson) {
-                                            setValue("agent.counsellorName", chosen.contactPerson, { shouldValidate: true });
-                                          }
-                                          if (chosen.email) {
-                                            setValue("agent.counsellorEmail", chosen.email, { shouldValidate: true });
-                                          }
+                                      setValue("agent.agencyName", val, { shouldValidate: true });
+                                      const chosen = (agents || []).find((a: any) => a.agencyName === val);
+                                      if (chosen) {
+                                        if (chosen.contactPerson) {
+                                          setValue("agent.counsellorName", chosen.contactPerson, { shouldValidate: true });
+                                        }
+                                        if (chosen.email) {
+                                          setValue("agent.counsellorEmail", chosen.email, { shouldValidate: true });
                                         }
                                       }
                                     }} 
-                                    value={isCustomAgency ? "Other Agency" : (field.value || "")}
+                                    value={field.value || ""}
                                   >
                                     <SelectTrigger className={cn(
                                       "h-12 bg-white rounded-xl font-medium",
@@ -3157,39 +3146,27 @@ export default function ApplicationWizard({
                                       <SelectValue placeholder="Select Agency Name" />
                                     </SelectTrigger>
                                     <SelectContent className="max-h-60">
-                                      {dbAgencies.map((agency: any) => (
-                                        <SelectItem key={agency.id} value={agency.agencyName}>
-                                          <div className="flex flex-col text-left py-0.5">
-                                            <span className="font-semibold text-slate-900">{agency.agencyName}</span>
-                                            {agency.contactPerson && (
-                                              <span className="text-[11px] text-slate-500 font-normal">
-                                                Counsellor: {agency.contactPerson} {agency.email ? `• ${agency.email}` : ""}
-                                              </span>
-                                            )}
-                                          </div>
+                                      {dbAgencies.length === 0 ? (
+                                        <SelectItem value="_no_agency" disabled className="text-xs text-slate-400">
+                                          No appointed agency for {countryVal}
                                         </SelectItem>
-                                      ))}
-                                      <SelectItem value="Other Agency">
-                                        {dbAgencies.length === 0 
-                                          ? `No registered agency for ${countryVal} — Click to enter custom`
-                                          : "Other (Specify Custom Agency)"
-                                        }
-                                      </SelectItem>
+                                      ) : (
+                                        dbAgencies.map((agency: any) => (
+                                          <SelectItem key={agency.id} value={agency.agencyName}>
+                                            <div className="flex flex-col text-left py-0.5">
+                                              <span className="font-semibold text-slate-900">{agency.agencyName}</span>
+                                              {agency.contactPerson && (
+                                                <span className="text-[11px] text-slate-500 font-normal">
+                                                  Counsellor: {agency.contactPerson} {agency.email ? `• ${agency.email}` : ""}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </SelectItem>
+                                        ))
+                                      )}
                                     </SelectContent>
                                   </Select>
 
-                                  {isCustomAgency && (
-                                    <Input 
-                                      placeholder="Enter custom agency name *" 
-                                      value={customAgencyName}
-                                      onChange={(e) => {
-                                        const v = e.target.value;
-                                        setCustomAgencyName(v);
-                                        setValue("agent.agencyName", v, { shouldValidate: true });
-                                      }}
-                                      className="h-11 bg-white rounded-xl text-xs" 
-                                    />
-                                  )}
                                   {errors.agent?.agencyName && (
                                     <p className="text-xs font-semibold text-rose-600 mt-1 flex items-center gap-1.5 animate-in fade-in duration-150">
                                       <AlertCircle size={13} className="shrink-0" />
@@ -3259,7 +3236,7 @@ export default function ApplicationWizard({
                           )}
                         </div>
 
-                        {watch("agent.agencyName") && !isCustomAgency && (
+                        {watch("agent.agencyName") && (
                           <div className="col-span-1 md:col-span-2">
                             <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-xl p-3 flex items-center gap-2">
                               <Check size={14} className="shrink-0 text-emerald-600" />

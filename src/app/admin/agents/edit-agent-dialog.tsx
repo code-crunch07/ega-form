@@ -178,7 +178,6 @@ export function EditAgentDialog({
                       <option value="Thailand">Thailand</option>
                       <option value="Myanmar">Myanmar</option>
                       <option value="Philippines">Philippines</option>
-                      <option value="Other">Other Country</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
