@@ -44,6 +44,7 @@ import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { DetailActions } from "./detail-actions";
 import { resolveApplicationProgramme } from "@/lib/programme-resolver";
+import { DocumentsViewer } from "./documents-viewer";
 
 export default async function ApplicationDetailView({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
@@ -898,48 +899,7 @@ export default async function ApplicationDetailView({ params }: { params: Promis
               <CardDescription className="text-xs font-semibold text-neutral-400">Validate applicant verification papers and test certificates.</CardDescription>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="space-y-4">
-                {allDocuments.length > 0 ? (
-                  allDocuments.map((doc: any) => (
-                    <div key={doc.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-neutral-200/50 rounded-xl dark:border-neutral-800 hover:bg-slate-50/30 transition-all gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/20 flex items-center justify-center text-blue-600 shrink-0">
-                          <FileText size={20} />
-                        </div>
-                        <div>
-                          <a 
-                            href={doc.url} 
-                            download={doc.filename || "Document"}
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            className="font-bold text-sm text-blue-600 hover:underline cursor-pointer flex items-center gap-1.5"
-                          >
-                            {doc.filename || `${doc.type} Document`}
-                            <Download size={13} />
-                          </a>
-                          <p className="text-xs text-neutral-400 font-semibold">{doc.type || "Certificate / Academic Document"}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 justify-between sm:justify-end">
-                        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400 border-none font-semibold">Uploaded</Badge>
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={doc.url}
-                            download={doc.filename || "Document"}
-                            className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-all"
-                          >
-                            <Download size={12} /> Download
-                          </a>
-                          <Button size="sm" variant="outline" className="h-8 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 font-semibold rounded-lg transition-all text-xs">Approve</Button>
-                          <Button size="sm" variant="outline" className="h-8 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 font-semibold rounded-lg transition-all text-xs">Reject</Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-sm text-neutral-500 py-4">No documents uploaded for this application.</p>
-                )}
-              </div>
+              <DocumentsViewer documents={allDocuments} />
             </CardContent>
           </Card>
         </TabsContent>
