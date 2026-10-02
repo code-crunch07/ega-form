@@ -907,16 +907,29 @@ export default async function ApplicationDetailView({ params }: { params: Promis
                           <FileText size={20} />
                         </div>
                         <div>
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="font-bold text-sm text-blue-600 hover:underline cursor-pointer flex items-center gap-1.5">
+                          <a 
+                            href={doc.url} 
+                            download={doc.filename || "Document"}
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="font-bold text-sm text-blue-600 hover:underline cursor-pointer flex items-center gap-1.5"
+                          >
                             {doc.filename || `${doc.type} Document`}
-                            <ExternalLink size={13} />
+                            <Download size={13} />
                           </a>
                           <p className="text-xs text-neutral-400 font-semibold">{doc.type || "Certificate / Academic Document"}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 justify-between sm:justify-end">
                         <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50 dark:bg-emerald-900/30 dark:text-emerald-400 border-none font-semibold">Uploaded</Badge>
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={doc.url}
+                            download={doc.filename || "Document"}
+                            className="inline-flex items-center gap-1.5 h-8 px-3 text-xs font-semibold rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 transition-all"
+                          >
+                            <Download size={12} /> Download
+                          </a>
                           <Button size="sm" variant="outline" className="h-8 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:border-emerald-300 font-semibold rounded-lg transition-all text-xs">Approve</Button>
                           <Button size="sm" variant="outline" className="h-8 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300 font-semibold rounded-lg transition-all text-xs">Reject</Button>
                         </div>

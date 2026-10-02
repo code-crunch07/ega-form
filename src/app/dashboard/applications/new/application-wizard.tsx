@@ -315,10 +315,55 @@ export default function ApplicationWizard({
     qualificationTitle: "",
   });
 
-  // Education Certificate Uploads
-  const [certFiles, setCertFiles] = useState<{ id: string; name: string; size: string }[]>(
+  // Uploaded Verification Documents & Certificates
+  const [certFiles, setCertFiles] = useState<{ id: string; name: string; size: string; type?: string; url?: string }[]>(
     initialDraftData?.certFiles || []
   );
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, docType: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileId = `doc_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const sizeStr = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+
+    // Read as Data URL so the file can be viewed and downloaded in Admin Portal on Vercel
+    if (file.size <= 3 * 1024 * 1024) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        const newDoc = {
+          id: fileId,
+          name: file.name,
+          size: sizeStr,
+          type: docType,
+          url: dataUrl,
+        };
+        setCertFiles((prev) => {
+          if (docType === "Education Certificate") {
+            return [...prev, newDoc];
+          }
+          return [...prev.filter((d) => d.type !== docType), newDoc];
+        });
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const newDoc = {
+        id: fileId,
+        name: file.name,
+        size: sizeStr,
+        type: docType,
+        url: `/uploads/${file.name}`,
+      };
+      setCertFiles((prev) => {
+        if (docType === "Education Certificate") {
+          return [...prev, newDoc];
+        }
+        return [...prev.filter((d) => d.type !== docType), newDoc];
+      });
+    }
+    e.target.value = "";
+  };
 
   // Native Applicant Signature Pad state
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -3421,47 +3466,139 @@ export default function ApplicationWizard({
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Passport Copy */}
                       <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                         <span className="font-bold text-slate-900 block">1. Passport Copy *</span>
-                        <div className="flex items-center gap-3">
-                          <Input type="file" className="h-10 text-xs bg-white" />
-                        </div>
+                        {certFiles.some((f) => f.type === "Passport Copy") ? (
+                          <div className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
+                            <div className="flex items-center gap-2 truncate">
+                              <Check size={16} className="text-emerald-500 shrink-0" />
+                              <span className="font-bold text-slate-800 truncate">{certFiles.find((f) => f.type === "Passport Copy")?.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">({certFiles.find((f) => f.type === "Passport Copy")?.size})</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setCertFiles(certFiles.filter((f) => f.type !== "Passport Copy"))}
+                              className="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer shrink-0 ml-2"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <Input
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg"
+                              onChange={(e) => handleFileUpload(e, "Passport Copy")}
+                              className="h-10 text-xs bg-white cursor-pointer"
+                            />
+                          </div>
+                        )}
                       </div>
 
+                      {/* Birth Certificate */}
                       <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
                         <span className="font-bold text-slate-900 block">2. Birth Certificate *</span>
-                        <div className="flex items-center gap-3">
-                          <Input type="file" className="h-10 text-xs bg-white" />
-                        </div>
+                        {certFiles.some((f) => f.type === "Birth Certificate") ? (
+                          <div className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
+                            <div className="flex items-center gap-2 truncate">
+                              <Check size={16} className="text-emerald-500 shrink-0" />
+                              <span className="font-bold text-slate-800 truncate">{certFiles.find((f) => f.type === "Birth Certificate")?.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">({certFiles.find((f) => f.type === "Birth Certificate")?.size})</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setCertFiles(certFiles.filter((f) => f.type !== "Birth Certificate"))}
+                              className="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer shrink-0 ml-2"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <Input
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg"
+                              onChange={(e) => handleFileUpload(e, "Birth Certificate")}
+                              className="h-10 text-xs bg-white cursor-pointer"
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Master's Conditional Documents (F-078 / QA-22) */}
+                    {/* Master's Conditional Documents */}
                     {isMasterCourse && (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
+                        {/* Resume / CV */}
                         <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-900 block">3. Resume / Curriculum Vitae (CV) *</span>
                             <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">Master's Requirement</span>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <Input type="file" className="h-10 text-xs bg-white" />
-                          </div>
+                          {certFiles.some((f) => f.type === "Resume / CV") ? (
+                            <div className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
+                              <div className="flex items-center gap-2 truncate">
+                                <Check size={16} className="text-emerald-500 shrink-0" />
+                                <span className="font-bold text-slate-800 truncate">{certFiles.find((f) => f.type === "Resume / CV")?.name}</span>
+                                <span className="text-[10px] text-slate-400 font-mono">({certFiles.find((f) => f.type === "Resume / CV")?.size})</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setCertFiles(certFiles.filter((f) => f.type !== "Resume / CV"))}
+                                className="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer shrink-0 ml-2"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <Input
+                                type="file"
+                                accept=".pdf,.doc,.docx"
+                                onChange={(e) => handleFileUpload(e, "Resume / CV")}
+                                className="h-10 text-xs bg-white cursor-pointer"
+                              />
+                            </div>
+                          )}
                         </div>
 
+                        {/* Statement of Purpose */}
                         <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-2">
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-slate-900 block">4. Statement of Purpose (SOP) *</span>
                             <span className="text-[10px] font-bold bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full">Master's Requirement</span>
                           </div>
-                          <div className="flex items-center gap-3">
-                            <Input type="file" className="h-10 text-xs bg-white" />
-                          </div>
+                          {certFiles.some((f) => f.type === "Statement of Purpose") ? (
+                            <div className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
+                              <div className="flex items-center gap-2 truncate">
+                                <Check size={16} className="text-emerald-500 shrink-0" />
+                                <span className="font-bold text-slate-800 truncate">{certFiles.find((f) => f.type === "Statement of Purpose")?.name}</span>
+                                <span className="text-[10px] text-slate-400 font-mono">({certFiles.find((f) => f.type === "Statement of Purpose")?.size})</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setCertFiles(certFiles.filter((f) => f.type !== "Statement of Purpose"))}
+                                className="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer shrink-0 ml-2"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-3">
+                              <Input
+                                type="file"
+                                accept=".pdf,.doc,.docx"
+                                onChange={(e) => handleFileUpload(e, "Statement of Purpose")}
+                                className="h-10 text-xs bg-white cursor-pointer"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
 
-                    {/* Under-18 Guardian Document (F-079) */}
+                    {/* Under-18 Guardian Document */}
                     {isUnder18 && (
                       <div className="p-4 rounded-xl border border-indigo-200 bg-indigo-50/50 space-y-2 animate-in fade-in duration-300">
                         <div className="flex items-center justify-between">
@@ -3469,33 +3606,51 @@ export default function ApplicationWizard({
                           <span className="text-[10px] font-bold bg-indigo-200 text-indigo-900 px-2 py-0.5 rounded-full">Under-18 Rule</span>
                         </div>
                         <p className="text-[11px] text-slate-600">Please attach a signed Parent/Guardian Consent Letter or proof of legal guardianship.</p>
-                        <div className="flex items-center gap-3">
-                          <Input type="file" className="h-10 text-xs bg-white" />
-                        </div>
+                        {certFiles.some((f) => f.type === "Guardian Consent") ? (
+                          <div className="flex items-center justify-between bg-white p-2.5 rounded-lg border border-slate-200 text-xs">
+                            <div className="flex items-center gap-2 truncate">
+                              <Check size={16} className="text-emerald-500 shrink-0" />
+                              <span className="font-bold text-slate-800 truncate">{certFiles.find((f) => f.type === "Guardian Consent")?.name}</span>
+                              <span className="text-[10px] text-slate-400 font-mono">({certFiles.find((f) => f.type === "Guardian Consent")?.size})</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setCertFiles(certFiles.filter((f) => f.type !== "Guardian Consent"))}
+                              className="text-rose-600 hover:text-rose-800 font-semibold cursor-pointer shrink-0 ml-2"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <Input
+                              type="file"
+                              accept=".pdf,.png,.jpg,.jpeg"
+                              onChange={(e) => handleFileUpload(e, "Guardian Consent")}
+                              className="h-10 text-xs bg-white cursor-pointer"
+                            />
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    {/* Multiple Education Certificates (CR-11) */}
+                    {/* Multiple Education Certificates */}
                     <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
                       <div className="flex justify-between items-center">
-                        <span className="font-bold text-slate-900">3. Education Certificates (Multiple Attachments Allowed) *</span>
+                        <span className="font-bold text-slate-900">5. Education Certificates & Transcripts (Multiple Attachments) *</span>
                         <label className="cursor-pointer bg-[#252D65] hover:bg-[#1C224E] text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5">
                           <Plus size={14} /> Attach Certificate
                           <input 
                             type="file" 
+                            accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
                             className="hidden" 
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                setCertFiles([...certFiles, { id: `c_${Date.now()}`, name: file.name, size: `${(file.size / 1024 / 1024).toFixed(1)} MB` }]);
-                              }
-                            }}
+                            onChange={(e) => handleFileUpload(e, "Education Certificate")}
                           />
                         </label>
                       </div>
 
                       <div className="space-y-2">
-                        {certFiles.map((f) => (
+                        {certFiles.filter(f => !f.type || f.type === "Education Certificate" || f.type === "Certificate / Academic Document").map((f) => (
                           <div key={f.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-slate-200 text-xs font-medium">
                             <div className="flex items-center gap-2.5 truncate">
                               <FileText size={16} className="text-[#252D65] shrink-0" />
@@ -3511,6 +3666,9 @@ export default function ApplicationWizard({
                             </button>
                           </div>
                         ))}
+                        {certFiles.filter(f => !f.type || f.type === "Education Certificate" || f.type === "Certificate / Academic Document").length === 0 && (
+                          <p className="text-xs text-slate-400 italic py-1">No education certificates attached yet. Click 'Attach Certificate' above.</p>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -89,6 +89,20 @@ export async function saveDraftApplication(data: any, step: number = 1) {
       });
     }
 
+    // Persist uploaded documents from certFiles if present
+    const certFiles = Array.isArray(data.certFiles) ? data.certFiles : [];
+    if (certFiles.length > 0) {
+      await prisma.document.deleteMany({ where: { applicationId: draft.id } });
+      await prisma.document.createMany({
+        data: certFiles.map((f: any) => ({
+          applicationId: draft.id,
+          type: f.type || "Certificate / Academic Document",
+          filename: f.name || "Document",
+          url: f.url || f.preview || `/uploads/${f.name}`,
+        })),
+      });
+    }
+
     // Upsert profile info if provided
     if (data.personal || data.address || data.emergencyContact || data.passport) {
       const profilePayload: any = {};
