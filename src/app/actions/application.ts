@@ -158,6 +158,15 @@ export async function submitApplication(data: any) {
 
     let application;
 
+    const draftPayload = JSON.stringify({
+      ...data,
+      step: 5,
+      education: data.education || data.educationList || [],
+      educationList: data.educationList || data.education || [],
+      certFiles: data.certFiles || [],
+      digitalSignature: validatedData.digitalSignature || data.digitalSignature || "",
+    });
+
     if (existingDraft) {
       // Clear previous sub-records if any before adding final ones
       await prisma.educationHistory.deleteMany({ where: { applicationId: existingDraft.id } });
@@ -179,6 +188,7 @@ export async function submitApplication(data: any) {
           termsAccepted: true,
           privacyAccepted: true,
           digitalSignature: validatedData.digitalSignature || validatedData.personal.fullName,
+          draftData: draftPayload,
           submittedAt: new Date(),
           educationHistory: {
             create: validatedData.education.map((ed: any) => ({
@@ -216,6 +226,7 @@ export async function submitApplication(data: any) {
           termsAccepted: true,
           privacyAccepted: true,
           digitalSignature: validatedData.digitalSignature || validatedData.personal.fullName,
+          draftData: draftPayload,
           submittedAt: new Date(),
           educationHistory: {
             create: validatedData.education.map((ed: any) => ({
@@ -234,6 +245,38 @@ export async function submitApplication(data: any) {
             }] : [],
           },
         },
+      });
+    }
+
+    // Persist uploaded documents from certFiles
+    const certFiles = Array.isArray(data.certFiles) ? data.certFiles : [];
+    if (certFiles.length > 0) {
+      await prisma.document.deleteMany({ where: { applicationId: application.id } });
+      await prisma.document.createMany({
+        data: certFiles.map((f: any) => ({
+          applicationId: application.id,
+          type: f.type || "Certificate / Academic Document",
+          filename: f.name || "Document",
+          url: f.url || f.preview || `/uploads/${f.name}`,
+        }))
+      });
+    }
+
+    // Persist employment history if provided
+    const employmentItems = Array.isArray(data.employment) && data.employment.length > 0 
+      ? data.employment 
+      : (Array.isArray(data.employmentList) && data.employmentList.length > 0 ? data.employmentList : []);
+    if (employmentItems.length > 0) {
+      await prisma.employmentHistory.deleteMany({ where: { applicationId: application.id } });
+      await prisma.employmentHistory.createMany({
+        data: employmentItems.map((emp: any) => ({
+          applicationId: application.id,
+          employer: emp.employer || emp.company || "Employer",
+          position: emp.position || emp.jobTitle || "Role",
+          industry: emp.industry || "General",
+          yearsExperience: Number(emp.yearsExperience) || 1,
+          currentlyEmployed: Boolean(emp.currentlyEmployed),
+        }))
       });
     }
 

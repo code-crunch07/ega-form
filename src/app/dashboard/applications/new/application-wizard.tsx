@@ -1013,6 +1013,8 @@ export default function ApplicationWizard({
         ...data,
         paymentMethod,
         education: educationList,
+        educationList: educationList,
+        certFiles: certFiles,
         digitalSignature: savedSignature,
       });
 
