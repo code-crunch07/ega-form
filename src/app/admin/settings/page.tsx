@@ -83,11 +83,11 @@ export default function AdminSettingsPage() {
   };
 
   // Form states with sensible production defaults
-  const [institutionName, setInstitutionName] = useState("EGA University & Global Academy");
-  const [supportEmail, setSupportEmail] = useState("admissions@ega.edu");
-  const [supportPhone, setSupportPhone] = useState("+1 (800) 555-0199");
-  const [campusAddress, setCampusAddress] = useState("100 University Square, Boston, MA 02115");
-  const [currency, setCurrency] = useState("USD");
+  const [institutionName, setInstitutionName] = useState("Educare Global Academy");
+  const [supportEmail, setSupportEmail] = useState("admissions@ega.edu.sg");
+  const [supportPhone, setSupportPhone] = useState("+65 6223 3555");
+  const [campusAddress, setCampusAddress] = useState("Singapore Campus, Educare Global Academy");
+  const [currency, setCurrency] = useState("SGD");
   const [primaryColor, setPrimaryColor] = useState("#252D65");
   const [autoAssign, setAutoAssign] = useState(true);
   const [allowEdits, setAllowEdits] = useState(false);
@@ -403,6 +403,7 @@ export default function AdminSettingsPage() {
                     onChange={(e) => setCurrency(e.target.value)}
                     className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-medium text-slate-800"
                   >
+                    <option value="SGD">SGD ($ - Singapore Dollar)</option>
                     <option value="USD">USD ($ - US Dollar)</option>
                     <option value="GBP">GBP (£ - British Pound)</option>
                     <option value="EUR">EUR (€ - Euro)</option>
@@ -411,8 +412,8 @@ export default function AdminSettingsPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-bold text-slate-700">Standard Application Fee</Label>
-                  <Input defaultValue="50.00" className="h-11 rounded-xl border-slate-200 text-slate-800 font-mono" />
+                  <Label className="text-xs font-bold text-slate-700">Standard Application Fee (SGD)</Label>
+                  <Input defaultValue="160.00" className="h-11 rounded-xl border-slate-200 text-slate-800 font-mono" />
                 </div>
               </div>
 

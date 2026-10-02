@@ -46,10 +46,10 @@ export default async function AdminFeesPage({
   if (fees.length === 0 && !search && !status && !type) {
     await prisma.fee.createMany({
       data: [
-        { name: "Standard Application Fee", amount: 50.00, currency: "USD", type: "Mandatory", appliesTo: "All Programs", status: "Active" },
-        { name: "International Student Surcharge", amount: 250.00, currency: "USD", type: "Conditional", appliesTo: "International Applicants", status: "Active" },
-        { name: "Late Registration Fee", amount: 100.00, currency: "USD", type: "Penalty", appliesTo: "Late Enrollments", status: "Active" },
-        { name: "Medical School Application", amount: 150.00, currency: "USD", type: "Program Specific", appliesTo: "School of Medicine", status: "Draft" },
+        { name: "Standard Application Fee", amount: 160.00, currency: "SGD", type: "Mandatory", appliesTo: "All Programs", status: "Active" },
+        { name: "International Student Surcharge", amount: 320.00, currency: "SGD", type: "Conditional", appliesTo: "International Applicants", status: "Active" },
+        { name: "Late Registration Fee", amount: 100.00, currency: "SGD", type: "Penalty", appliesTo: "Late Enrollments", status: "Active" },
+        { name: "Partner Programme Application Fee", amount: 320.00, currency: "SGD", type: "Program Specific", appliesTo: "Degree / Master Programs", status: "Active" },
       ]
     });
     fees = await prisma.fee.findMany({

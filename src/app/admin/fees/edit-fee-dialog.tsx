@@ -122,7 +122,7 @@ export function EditFeeDialog({ fee, trigger }: EditFeeDialogProps) {
                     <Input 
                       id="currency" 
                       name="currency" 
-                      defaultValue={fee.currency || "USD"} 
+                      defaultValue={fee.currency || "SGD"} 
                       className="h-11 rounded-xl border-slate-200 text-slate-800 uppercase font-mono" 
                       required 
                     />

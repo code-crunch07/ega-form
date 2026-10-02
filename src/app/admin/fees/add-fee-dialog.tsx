@@ -70,8 +70,8 @@ export function AddFeeDialog() {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="amount">Amount (USD)</Label>
-                    <Input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="e.g. 100.00" required />
+                    <Label htmlFor="amount">Amount (SGD)</Label>
+                    <Input id="amount" name="amount" type="number" step="0.01" min="0" placeholder="e.g. 160.00" required />
                   </div>
                   
                   <div className="space-y-2">
