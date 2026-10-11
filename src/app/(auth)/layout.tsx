@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Auth | Admissions Management",
+  title: "Applicant Portal | EGA Admissions",
 };
 
 export default function AuthLayout({

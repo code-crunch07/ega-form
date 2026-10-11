@@ -70,7 +70,7 @@ export default function LoginPage() {
         </div>
 
         <div className="w-full">
-          <h2 className="text-xl font-medium tracking-tight text-left">Log In</h2>
+          <h2 className="text-xl font-medium tracking-tight text-left">Applicant Log In</h2>
         </div>
       </CardHeader>
       <CardContent className="pb-4">
