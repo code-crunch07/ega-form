@@ -25,11 +25,8 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Generate Prisma Client code
-RUN npx prisma generate
-
-# Build Next.js with standalone output
-RUN npm run build
+# Generate Prisma Client code and build Next.js application
+RUN npx prisma generate && npm run build
 
 # ==============================================================================
 # Stage 3: Production Runner Image
@@ -43,12 +40,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Create secure non-root user
+# Create secure non-root user and set up uploads directory
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
-# Set up uploads directory and permissions
-RUN mkdir -p /app/public/uploads && \
+    adduser --system --uid 1001 nextjs && \
+    mkdir -p /app/public/uploads && \
     chown -R nextjs:nodejs /app/public
 
 # Copy assets and standalone server from builder stage

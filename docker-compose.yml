@@ -1,13 +1,40 @@
 services:
+  # ---------------------------------------------------------------------------
+  # Optional: PostgreSQL Database Container
+  # (If using CloudPanel's native DB or external DB, you can comment this out)
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: ega-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-ega_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-ega_password_secure123}
+      POSTGRES_DB: ${DB_NAME:-ega_database}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ega_user} -d ${DB_NAME:-ega_database}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Next.js Web Application Container
+  # ---------------------------------------------------------------------------
   app:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: ega-portal
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+        required: false
     ports:
-      # Bind to 127.0.0.1 so the port is only accessible via CloudPanel reverse proxy
-      - "127.0.0.1:3000:3000"
+      # Bind to free host port 3033 (mapped to Next.js internal port 3000)
+      - "127.0.0.1:3033:3000"
     env_file:
       - .env
     environment:
@@ -18,5 +45,8 @@ services:
       - uploads_data:/app/public/uploads
 
 volumes:
+  postgres_data:
+    driver: local
   uploads_data:
     driver: local
+
